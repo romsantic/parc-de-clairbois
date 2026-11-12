@@ -12,7 +12,7 @@
 
 ## 2. Concept
 
-Le joueur reprend un terrain en friche à l'orée de **Clairbois**, un village endormi. Il démarre avec un peu d'argent, quelques emplacements et un couple de chèvres naines.
+Le joueur reprend un terrain en friche à l'orée de **Clairbois**, un village endormi. Il démarre avec un peu d'argent, quelques emplacements et un couple de moutons.
 
 **Boucle principale**
 1. Des animaux bien soignés attirent des visiteurs, qui paient un billet.
@@ -33,22 +33,22 @@ Le joueur reprend un terrain en friche à l'orée de **Clairbois**, un village e
 - Trois tailles : petit (4 animaux), moyen (8), grand (12). Agrandir coûte de l'argent. L'agrandissement moyen est débloqué par une mission.
 - Un enclos plein bloque les naissances ; un enclos surpeuplé fait baisser le bonheur.
 
-### Espèces V1 (provisoire)
+### Espèces V1
 
-La liste sera ajustée aux modèles 3D disponibles dans les packs choisis (voir §8). Les règles restent les mêmes.
+Liste arrêtée le 12/11/2026 d'après les modèles 3D CC0 disponibles (voir §8). Le parc commence comme une petite ferme-parc ; les animaux deviennent plus sauvages avec les niveaux. Les espèces exotiques (ours, grands félins…) arriveront avec les expéditions (V3).
 
-| Biome | Espèce | Prix adulte | Gestation | Portée | Attrait | Régime | Rations/jour |
-|---|---|---|---|---|---|---|---|
-| Prairie | Lapin géant | 80 | 1 h | 2–4 | 1 | fourrage | 1 |
-| Prairie | Chèvre naine | 150 | 2 h | 1–2 | 1 | fourrage | 1 |
-| Prairie | Âne | 400 | 8 h | 1 | 2 | fourrage | 3 |
-| Prairie | Alpaga | 600 | 10 h | 1 | 2 | fourrage | 3 |
-| Forêt | Renard roux | 700 | 6 h | 2–4 | 2 | viande | 1 |
-| Forêt | Sanglier | 900 | 8 h | 2–4 | 2 | fourrage | 2 |
-| Forêt | Cerf | 1 200 | 12 h | 1 | 3 | fourrage | 3 |
-| Forêt | Ours brun | 3 000 | 24 h | 1–2 | 4 | les deux | 6 |
-| Montagne | Bouquetin | 1 500 | 12 h | 1 | 3 | fourrage | 2 |
-| Montagne | Loup gris | 2 500 | 16 h | 2–4 | 4 | viande | 3 |
+| Biome | Espèce | Prix adulte | Gestation | Portée | Attrait | Régime | Rations/jour | Modèle |
+|---|---|---|---|---|---|---|---|---|
+| Prairie | Mouton *(départ)* | 120 | 2 h | 1–2 | 1 | fourrage | 1 | pack ferme Quaternius |
+| Prairie | Cochon | 150 | 3 h | 2–4 | 1 | les deux | 2 | pack ferme Quaternius |
+| Prairie | Âne | 400 | 8 h | 1 | 2 | fourrage | 3 | Donkey |
+| Prairie | Alpaga | 600 | 10 h | 1 | 2 | fourrage | 3 | Alpaca |
+| Forêt | Renard roux | 700 | 6 h | 2–4 | 2 | viande | 1 | Fox |
+| Forêt | Cerf | 1 200 | 12 h | 1 | 3 | fourrage | 3 | Deer (femelle) / Stag (mâle) |
+| Forêt | Cheval sauvage | 1 500 | 14 h | 1 | 3 | fourrage | 4 | Horse / Horse_White |
+| Montagne | Lama | 900 | 10 h | 1 | 2 | fourrage | 3 | pack ferme Quaternius |
+| Montagne | Taureau des montagnes | 2 000 | 18 h | 1 | 3 | fourrage | 5 | Bull (mâle) / Cow (femelle) |
+| Montagne | Loup gris | 2 500 | 16 h | 2–4 | 4 | viande | 3 | Wolf |
 
 Durées en heures réelles. Tous les chiffres sont des réglages initiaux, centralisés dans un fichier de données pour être ajustés facilement.
 
@@ -57,7 +57,7 @@ Durées en heures réelles. Tous les chiffres sont des réglages initiaux, centr
 - Un bébé devient jeune à 1× la durée de gestation, adulte à 2×. Un bébé ne peut pas être vendu.
 - **Reproduction** : un mâle et une femelle adultes dans le même enclos, de la place, bonheur de la femelle > 60 %. Chaque heure, la femelle a une chance de devenir gestante. La gestation est visible sur sa fiche.
 - **Vente** au marchand : jeune 40 % du prix adulte, adulte 60 %.
-- Espèces sociales (chèvre, lapin, loup, sanglier, alpaga) : un animal seul de son espèce est malheureux.
+- Espèces sociales (mouton, cochon, loup, alpaga, lama) : un animal seul de son espèce est malheureux.
 
 ### Attrait et visiteurs
 - Attrait total = somme, par espèce présente, de son attrait de base + un petit bonus par animal supplémentaire (rendement décroissant).
@@ -75,7 +75,7 @@ Durées en heures réelles. Tous les chiffres sont des réglages initiaux, centr
 | Bonheur | animal | Calculé : satiété, propreté, espace, santé, compagnie |
 
 ### Garde-manger
-- Deux nourritures : **fourrage** et **viande**. L'ours accepte les deux.
+- Deux nourritures : **fourrage** et **viande**. Le cochon accepte les deux.
 - Chaque heure, chaque animal prend sa part de rations tant qu'il reste du stock.
 - Capacité limitée, agrandissable (le niveau 3 du village débloque la grande taille). Les rations s'achètent à la ferme.
 - L'**autonomie** (temps avant épuisement du premier type de nourriture) est affichée en permanence. Orange sous 1 jour, rouge sous 6 h.
@@ -138,13 +138,13 @@ Fin de V1 : 10 emplacements de zoo, 6 de village.
 ### Premiers pas (tutoriel)
 Guidés par **Margaux**, la maire de Clairbois. Une mission à la fois, le bouton concerné est mis en évidence, petite récompense à chaque étape. Bouton « Passer le tutoriel » (donne les récompenses de base).
 
-1. Ouvrir la fiche de l'enclos des chèvres — lire les jauges
+1. Ouvrir la fiche de l'enclos des moutons — lire les jauges
 2. Acheter 20 rations de fourrage à la ferme — garde-manger et autonomie
 3. Nettoyer l'enclos — propreté
 4. Régler le prix du billet — prix juste
 5. Construire le café — bâtiments du village
 6. Construire un deuxième enclos de prairie — emplacements et biomes
-7. Acheter un couple de lapins géants — marchand, stock, sexes
+7. Acheter un couple de cochons — marchand, stock, sexes
 8. Attendre la première gestation — conditions de reproduction
 9. Vérifier l'autonomie — absence et conséquences
 
@@ -155,7 +155,7 @@ Une seule à la fois, présentée par un habitant, avec récompense : pièces, r
 |---|---|
 | Hameau | Construire le café · Première naissance · Posséder 3 espèces (débloque l'agrandissement moyen) · 20 visiteurs/h |
 | Village | Construire l'auberge · 2 espèces de forêt · 2 jours d'autonomie · 50 habitants |
-| Bourg | Faire naître un ours ou un loup · Posséder les 10 espèces · 150 habitants → fin de la V1 |
+| Bourg | Faire naître un loup ou un taureau · Posséder les 10 espèces · 150 habitants → fin de la V1 |
 
 ### Missions quotidiennes
 - 3 par jour réel, renouvelées à minuit (heure locale).
