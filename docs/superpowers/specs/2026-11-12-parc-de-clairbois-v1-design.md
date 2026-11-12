@@ -1,0 +1,218 @@
+# Le Parc de Clairbois — Document de conception V1
+
+*Date : 12 novembre 2026 · Statut : en relecture*
+
+## 1. Intention
+
+**Pour qui, pourquoi.** Un jeu personnel pour retrouver le plaisir des jeux de gestion de zoo dans le navigateur (dans l'esprit de MonZoo, en jeu original). On revient régulièrement faire grandir son parc, pendant des semaines.
+
+**Critère de réussite de la V1.** Le joueur a envie de revenir chaque jour : vérifier ses animaux, découvrir les naissances, réinvestir, avancer dans les missions.
+
+**Hors périmètre V1.** Comptes, serveur, multijoueur, synchronisation entre appareils (la sauvegarde est propre à chaque navigateur).
+
+## 2. Concept
+
+Le joueur reprend un terrain en friche à l'orée de **Clairbois**, un village endormi. Il démarre avec un peu d'argent, quelques emplacements et un couple de chèvres naines.
+
+**Boucle principale**
+1. Des animaux bien soignés attirent des visiteurs, qui paient un billet.
+2. L'argent sert à acheter de la nourriture, construire des enclos, acheter des espèces.
+3. Plus d'espèces et des animaux plus heureux donnent plus d'attrait, donc plus de visiteurs.
+4. Les touristes dépensent aussi au village (café, boutique, auberge) : revenus et habitants supplémentaires.
+5. Un village plus grand débloque de nouveaux emplacements, de nouveaux biomes et des espèces plus rares.
+
+**Temps.** Le jeu tourne en temps réel, que le joueur soit là ou non. Au retour, le temps écoulé est rejoué et un résumé s'affiche.
+
+**Objectifs.** Pas de fin. Fil conducteur : missions, liste de collection des espèces, niveaux du village.
+
+## 3. Le zoo
+
+### Enclos
+- Un emplacement de zoo accueille un enclos d'un biome, pour une seule espèce.
+- Biomes V1 : **prairie** (départ), **forêt** (niveau 2), **montagne** (niveau 3).
+- Trois tailles : petit (4 animaux), moyen (8), grand (12). Agrandir coûte de l'argent. L'agrandissement moyen est débloqué par une mission.
+- Un enclos plein bloque les naissances ; un enclos surpeuplé fait baisser le bonheur.
+
+### Espèces V1 (provisoire)
+
+La liste sera ajustée aux modèles 3D disponibles dans les packs choisis (voir §8). Les règles restent les mêmes.
+
+| Biome | Espèce | Prix adulte | Gestation | Portée | Attrait | Régime | Rations/jour |
+|---|---|---|---|---|---|---|---|
+| Prairie | Lapin géant | 80 | 1 h | 2–4 | 1 | fourrage | 1 |
+| Prairie | Chèvre naine | 150 | 2 h | 1–2 | 1 | fourrage | 1 |
+| Prairie | Âne | 400 | 8 h | 1 | 2 | fourrage | 3 |
+| Prairie | Alpaga | 600 | 10 h | 1 | 2 | fourrage | 3 |
+| Forêt | Renard roux | 700 | 6 h | 2–4 | 2 | viande | 1 |
+| Forêt | Sanglier | 900 | 8 h | 2–4 | 2 | fourrage | 2 |
+| Forêt | Cerf | 1 200 | 12 h | 1 | 3 | fourrage | 3 |
+| Forêt | Ours brun | 3 000 | 24 h | 1–2 | 4 | les deux | 6 |
+| Montagne | Bouquetin | 1 500 | 12 h | 1 | 3 | fourrage | 2 |
+| Montagne | Loup gris | 2 500 | 16 h | 2–4 | 4 | viande | 3 |
+
+Durées en heures réelles. Tous les chiffres sont des réglages initiaux, centralisés dans un fichier de données pour être ajustés facilement.
+
+### Animaux
+- Chaque animal est un individu : nom (généré, modifiable), sexe, âge (bébé → jeune → adulte), jauges propres.
+- Un bébé devient jeune à 1× la durée de gestation, adulte à 2×. Un bébé ne peut pas être vendu.
+- **Reproduction** : un mâle et une femelle adultes dans le même enclos, de la place, bonheur de la femelle > 60 %. Chaque heure, la femelle a une chance de devenir gestante. La gestation est visible sur sa fiche.
+- **Vente** au marchand : jeune 40 % du prix adulte, adulte 60 %.
+- Espèces sociales (chèvre, lapin, loup, sanglier, alpaga) : un animal seul de son espèce est malheureux.
+
+### Attrait et visiteurs
+- Attrait total = somme, par espèce présente, de son attrait de base + un petit bonus par animal supplémentaire (rendement décroissant).
+- Visiteurs par heure = attrait × bonheur moyen × multiplicateur de prix du billet × bonus de bâtiments (auberge +20 %).
+- Une nouvelle espèce rapporte nettement plus qu'un animal de plus d'une espèce déjà présente.
+
+## 4. Soin et absence
+
+### Jauges
+| Jauge | Niveau | Évolution |
+|---|---|---|
+| Satiété | animal | Baisse en continu, remonte quand il mange au garde-manger |
+| Propreté | enclos | 100 % → 0 % en ~24 h ; « Nettoyer » la remet à 100 % pour un petit coût |
+| Santé | animal | Baisse en cas de faim prolongée ou de saleté |
+| Bonheur | animal | Calculé : satiété, propreté, espace, santé, compagnie |
+
+### Garde-manger
+- Deux nourritures : **fourrage** et **viande**. L'ours accepte les deux.
+- Chaque heure, chaque animal prend sa part de rations tant qu'il reste du stock.
+- Capacité limitée, agrandissable (le niveau 3 du village débloque la grande taille). Les rations s'achètent à la ferme.
+- L'**autonomie** (temps avant épuisement du premier type de nourriture) est affichée en permanence. Orange sous 1 jour, rouge sous 6 h.
+
+### Conséquences de la négligence
+| Temps sans nourriture | Conséquence |
+|---|---|
+| 0 h | Stock vide, la satiété baisse |
+| 12 h | **Affamé** : bonheur minimal, pas de reproduction, moins de visiteurs |
+| 24 h | **Malade** : il faut payer un soin (cher) puis le nourrir |
+| 48 h de maladie sans soin | **Mort**, annoncée dans le résumé |
+
+Un enclos sale depuis plus de 24 h donne une chance de maladie par jour à chacun de ses animaux. Un parc bien préparé tient 2 à 3 jours sans le joueur.
+
+### Rattrapage d'absence
+- Au chargement, le temps écoulé depuis la dernière sauvegarde est rejoué par pas de 10 minutes, avec exactement les mêmes règles que le jeu en direct.
+- Les visiteurs continuent de venir selon le bonheur courant.
+- Résumé d'absence : argent gagné, naissances, nourriture consommée, malades, morts, missions quotidiennes renouvelées.
+
+### Prévu pour plus tard (V2)
+Avec le personnel arrivera un vrai système de maladies et un **centre vétérinaire** à rechercher, construire et améliorer. En V1, la maladie reste un état unique avec un bouton « Soigner » payant. Le modèle de données de la santé doit permettre d'ajouter des maladies sans réécriture.
+
+## 5. Le village
+
+### Bâtiments V1
+Construits sur les emplacements du village (distincts de ceux du zoo). Trois niveaux d'amélioration chacun.
+
+| Bâtiment | Disponible | Effet |
+|---|---|---|
+| Ferme | départ | Vente des rations ; en l'améliorant, rations moins chères et petite production gratuite de fourrage |
+| Café | départ | Une part des visiteurs y consomme : revenu par visite |
+| Boutique de souvenirs | niveau 2 | Revenu par visiteur, croissant avec le nombre d'espèces différentes |
+| Auberge | niveau 2 | Revenu de nuit et +20 % de visiteurs |
+
+### Niveaux du village
+Passage de niveau : population atteinte **et** mission d'histoire du palier terminée. La population augmente avec les bâtiments construits et les visiteurs.
+
+| Niveau | Condition | Débloque |
+|---|---|---|
+| 1. Hameau | départ | 4 emplacements zoo, 2 village, prairie, ferme, café |
+| 2. Village | 50 habitants + mission | +3 zoo, +2 village, forêt, boutique, auberge, catalogue marchand élargi |
+| 3. Bourg | 150 habitants + mission | +3 zoo, +2 village, montagne, grand garde-manger, dernières espèces |
+
+Fin de V1 : 10 emplacements de zoo, 6 de village.
+
+### Prix du billet
+- Réglable avec un curseur. Le jeu calcule un **prix juste** selon le niveau du village et l'attrait du zoo.
+- Effet sur l'affluence : moitié prix +30 % ; prix juste 100 % ; 1,5× −40 % ; 2× −75 % et baisse lente de la réputation.
+- Le meilleur revenu immédiat est un peu au-dessus du prix juste ; un prix bas remplit les bâtiments du village et fait croître la population plus vite.
+- Estimation en direct pendant le réglage (« ≈ 42 visiteurs/h · 380 pièces/h »).
+
+## 6. Marchand et missions
+
+### Marchand d'animaux
+- Catalogue selon le niveau du village (prairie → forêt → montagne).
+- Stock limité, renouvelé toutes les 6 h réelles ; il peut ne proposer que des mâles ou que des femelles d'une espèce.
+- Vend des adultes et des jeunes (moins chers). Rachète les animaux du joueur.
+- Achat possible seulement avec un enclos du bon biome qui a de la place ; sinon le bouton explique ce qui manque.
+
+### Premiers pas (tutoriel)
+Guidés par **Margaux**, la maire de Clairbois. Une mission à la fois, le bouton concerné est mis en évidence, petite récompense à chaque étape. Bouton « Passer le tutoriel » (donne les récompenses de base).
+
+1. Ouvrir la fiche de l'enclos des chèvres — lire les jauges
+2. Acheter 20 rations de fourrage à la ferme — garde-manger et autonomie
+3. Nettoyer l'enclos — propreté
+4. Régler le prix du billet — prix juste
+5. Construire le café — bâtiments du village
+6. Construire un deuxième enclos de prairie — emplacements et biomes
+7. Acheter un couple de lapins géants — marchand, stock, sexes
+8. Attendre la première gestation — conditions de reproduction
+9. Vérifier l'autonomie — absence et conséquences
+
+### Missions d'histoire
+Une seule à la fois, présentée par un habitant, avec récompense : pièces, rations ou déblocage. Environ 4 par palier ; la dernière du palier permet le passage de niveau.
+
+| Palier | Missions |
+|---|---|
+| Hameau | Construire le café · Première naissance · Posséder 3 espèces (débloque l'agrandissement moyen) · 20 visiteurs/h |
+| Village | Construire l'auberge · 2 espèces de forêt · 2 jours d'autonomie · 50 habitants |
+| Bourg | Faire naître un ours ou un loup · Posséder les 10 espèces · 150 habitants → fin de la V1 |
+
+### Missions quotidiennes
+- 3 par jour réel, renouvelées à minuit (heure locale).
+- Petits objectifs (nettoyer 3 enclos, vendre un animal, 100 visiteurs, une naissance…). Récompense : pièces et rations.
+- Série de jours consécutifs ; au 7ᵉ jour, réduction chez le marchand. Sauter un jour remet la série à zéro, sans autre pénalité.
+
+### Prévu pour plus tard (V3)
+Missions extraordinaires (animaux rares) liées aux expéditions. Le système de missions V1 doit accepter un nouveau type de mission sans réécriture.
+
+## 7. Écran et contrôles
+
+- **Carte 3D plein écran** montrant tout le domaine : zoo d'un côté de la rivière, village de l'autre, route jusqu'à l'entrée. Zones non débloquées dans la brume (« Bois sombre », « Falaises »…), révélées aux montées de niveau.
+- **Emplacements fixes** placés sur la carte ; clic sur un enclos ou bâtiment pour le sélectionner.
+- **Caméra** : rotation libre (glisser), inclinaison bornée, zoom (molette / pincement), boutons de quart de tour. Sur téléphone : glisser pour déplacer, pincer pour zoomer.
+- **Barre de ressources** en haut : argent, visiteurs/h, prix du billet (ouvre le curseur), autonomie, population, niveau du village.
+- **Barre de commande** en bas, façon jeu de stratégie, **repliable** :
+  - gauche : la sélection (état, animaux, gestations) ;
+  - milieu : grille d'actions contextuelle (nettoyer, agrandir, soigner, vendre, renommer ; améliorer pour un bâtiment ; construire pour un emplacement libre) ;
+  - droite : suivi des missions, accès au marchand, aux missions et à la Gazette.
+- **Missions** : marqueur « ! » au-dessus de la mairie quand Margaux a une mission ; bannière « Nouvelle mission » qui apparaît puis se range dans la barre du bas.
+- **Fenêtres** (marchand, missions, Gazette/résumé, fiche détaillée d'un animal) en HTML par-dessus la carte.
+- Interface en français.
+
+## 8. Rendu visuel
+
+- **3D low-poly** avec Three.js.
+- Modèles issus de **packs gratuits sous licence CC0** : Quaternius (animaux animés, nature), Kenney (nature, clôtures, chemins), KayKit (village). Poly Pizza en complément. La licence de chaque pack est vérifiée au téléchargement et listée dans un fichier `CREDITS.md`.
+- Rendu soigné : ombres douces, ciel en dégradé, eau animée, éclairage qui suit l'heure réelle (jour/nuit).
+- Les animaux se déplacent dans leurs enclos avec leurs animations ; quelques visiteurs marchent sur les chemins.
+- **Test visuel en première étape** : une scène avec un enclos, 3 animaux animés, quelques maisons et l'éclairage final, validée par le joueur avant de construire le reste.
+
+## 9. Architecture technique
+
+- **Vite + TypeScript**, dépôt GitHub du joueur, publication automatique sur **GitHub Pages** à chaque push (dépôt public ; sinon Netlify ou Cloudflare Pages).
+- Trois couches séparées :
+  1. **Données** (`data/`) : espèces, bâtiments, niveaux, missions, réglages. Aucune logique.
+  2. **Simulation** (`sim/`) : fonctions pures `état + durée → nouvel état + événements`. Aucun accès au DOM, à Three.js ni à l'horloge système. C'est la même fonction qui fait avancer le jeu en direct et rattrape l'absence.
+  3. **Présentation** : `scene/` (Three.js, caméra, modèles) et `ui/` (barres, fenêtres, HTML). Lit l'état, envoie des actions.
+- **Actions du joueur** : objets typés (`acheterAnimal`, `nettoyerEnclos`…) validés par la simulation, qui renvoie un refus explicite si l'action est impossible.
+- **Hasard** : générateur pseudo-aléatoire à graine stockée dans la sauvegarde, pour que le rattrapage et les tests soient reproductibles.
+- **Sauvegarde** : `localStorage`, toutes les 30 s et à la fermeture de l'onglet. Le format porte un numéro de version ; chaque version suivante fournit une migration pour que les sauvegardes survivent aux mises à jour. En cas de lecture impossible, le jeu propose une nouvelle partie sans écraser l'ancienne sauvegarde.
+- **Rattrapage** : pas de 10 minutes ; plafond technique de 30 jours rejoués (au-delà, les jours suivants sont traités comme le 30ᵉ).
+
+## 10. Tests
+
+- **Simulation testée automatiquement** (Vitest) : faim, paliers de négligence, maladie, mort, gestation, naissances, croissance, attrait, visiteurs, prix du billet, missions, niveaux du village.
+- Scénarios d'absence obligatoires, par exemple : 3 jours d'absence avec 2 jours de stock → animaux malades mais vivants ; 5 jours sans stock → morts annoncées dans le résumé.
+- Tests de migration de sauvegarde à chaque changement de format.
+- Rendu 3D et interface vérifiés à la main dans le navigateur.
+
+## 11. Feuille de route après la V1
+
+| Version | Contenu |
+|---|---|
+| V2 — Le village s'éveille | Personnel (soigneurs, vétérinaire, entretien), maladies et centre vétérinaire, ferme et production de nourriture, décoration et confort visiteurs, niveaux 4–5, ~20 espèces, marchand itinérant, trophées |
+| V3 — Les grandes découvertes | Expéditions en temps réel, missions extraordinaires et animaux rares, musée et collections |
+| V4 — La science | Laboratoire et arbre de recherches, variantes rares à la naissance, conservation (relâcher des animaux) |
+| V5 — Le fil des saisons | Saisons réelles, événements (fête du village), Gazette complète avec avis et nouvelles |
+
+Chaque version est jouable, publiée, et conserve la sauvegarde du joueur.
