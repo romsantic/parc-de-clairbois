@@ -1,6 +1,8 @@
 import { SPECIES, type Food } from '../data/species'
 import { TUNING } from '../data/tuning'
-import type { GameState } from './types'
+import type { GameState, Rect } from './types'
+import { animalsIn, capacity, cleanliness } from './enclosure'
+import { checkPlacement, enclosureCost, resizeCost, snapRect } from './placement'
 
 /** Résultat d'une action : nouvel état, ou raison du refus (en français, affichable telle quelle). */
 export type ActionResult = { ok: true; state: GameState } | { ok: false; reason: string }
@@ -11,7 +13,9 @@ const noMoney = (cost: number): ActionResult => ({ ok: false, reason: `Pas assez
 export const cureCost = (price: number): number => Math.max(TUNING.CURE_MIN_COST, Math.round(price * TUNING.CURE_PRICE_SHARE))
 
 export function cleanEnclosure(state: GameState, encId: number): ActionResult {
-  if (!state.enclosures.some((e) => e.id === encId)) return NOT_FOUND
+  const enc = state.enclosures.find((e) => e.id === encId)
+  if (!enc) return NOT_FOUND
+  if (cleanliness(enc, state.time) > 0.95) return { ok: false, reason: "L'enclos est déjà propre." }
   if (state.coins < TUNING.CLEAN_COST) return noMoney(TUNING.CLEAN_COST)
   const s = structuredClone(state)
   s.coins -= TUNING.CLEAN_COST
@@ -51,4 +55,72 @@ export function renameAnimal(state: GameState, animalId: number, name: string): 
   const s = structuredClone(state)
   s.animals.find((x) => x.id === animalId)!.name = clean
   return { ok: true, state: s }
+}
+
+/** Pose un nouvel enclos (vide) dans une zone débloquée. */
+export function buildEnclosure(state: GameState, rect: Rect): ActionResult {
+  const r = snapRect(rect)
+  const check = checkPlacement(state, r)
+  if (!check.ok) return check
+  const cost = enclosureCost(r)
+  if (state.coins < cost) return noMoney(cost)
+  const s = structuredClone(state)
+  s.coins -= cost
+  s.enclosures.push({ id: s.nextId++, biome: check.zone.id, species: null, rect: r, cleanedAt: s.time })
+  return { ok: true, state: s }
+}
+
+/** Agrandit (on paie la différence) ou rétrécit (gratuit) un enclos. */
+export function resizeEnclosure(state: GameState, encId: number, rect: Rect): ActionResult {
+  const enc = state.enclosures.find((e) => e.id === encId)
+  if (!enc) return NOT_FOUND
+  const r = snapRect(rect)
+  const check = checkPlacement(state, r, encId)
+  if (!check.ok) return check
+  const here = animalsIn(state, encId).length
+  if (capacity({ ...enc, rect: r }) < here)
+    return { ok: false, reason: `Trop d'animaux pour cette taille (il faut de la place pour ${here}).` }
+  const cost = resizeCost(enc.rect, r)
+  if (state.coins < cost) return noMoney(cost)
+  const s = structuredClone(state)
+  s.coins -= cost
+  s.enclosures.find((e) => e.id === encId)!.rect = r
+  return { ok: true, state: s }
+}
+
+/** Soigne tous les malades d'un enclos ; coût = somme des soins. */
+export function cureAllInEnclosure(state: GameState, encId: number): ActionResult {
+  if (!state.enclosures.some((e) => e.id === encId)) return NOT_FOUND
+  const sick = animalsIn(state, encId).filter((a) => a.health.status === 'malade')
+  if (sick.length === 0) return { ok: false, reason: 'Aucun animal malade ici.' }
+  const cost = sick.reduce((t, a) => t + cureCost(SPECIES[a.species].price), 0)
+  if (state.coins < cost) return noMoney(cost)
+  const s = structuredClone(state)
+  s.coins -= cost
+  for (const a of s.animals) {
+    if (a.enclosureId === encId && a.health.status === 'malade') { a.health = { status: 'ok' }; a.lastFedAt = s.time }
+  }
+  return { ok: true, state: s }
+}
+
+/** Toutes les actions du joueur, pour l'interface. */
+export type Action =
+  | { type: 'nettoyer'; encId: number }
+  | { type: 'soignerTout'; encId: number }
+  | { type: 'soigner'; animalId: number }
+  | { type: 'construire'; rect: Rect }
+  | { type: 'redimensionner'; encId: number; rect: Rect }
+  | { type: 'renommer'; animalId: number; name: string }
+  | { type: 'rations'; food: Food; n: number }
+
+export function applyAction(state: GameState, a: Action): ActionResult {
+  switch (a.type) {
+    case 'nettoyer': return cleanEnclosure(state, a.encId)
+    case 'soignerTout': return cureAllInEnclosure(state, a.encId)
+    case 'soigner': return cureAnimal(state, a.animalId)
+    case 'construire': return buildEnclosure(state, a.rect)
+    case 'redimensionner': return resizeEnclosure(state, a.encId, a.rect)
+    case 'renommer': return renameAnimal(state, a.animalId, a.name)
+    case 'rations': return addRations(state, a.food, a.n)
+  }
 }
