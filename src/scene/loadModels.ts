@@ -2,6 +2,7 @@ import type { AnimationClip, Object3D } from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js'
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js'
 import { modelUrl, type ModelKey } from '../assets/manifest'
 
 /** Un modèle chargé, quel que soit son format. */
@@ -24,6 +25,10 @@ export async function loadByExtension(url: string): Promise<LoadedModel> {
     materials.preload()
     const scene = await new OBJLoader().setMaterials(materials).loadAsync(url)
     return { scene, animations: [] }
+  }
+  if (url.endsWith('.fbx')) {
+    const group = await new FBXLoader().loadAsync(url)
+    return { scene: group, animations: group.animations }
   }
   const gltf = await new GLTFLoader().loadAsync(url)
   return { scene: gltf.scene, animations: gltf.animations }

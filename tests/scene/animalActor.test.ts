@@ -10,6 +10,10 @@ describe('resolveClip', () => {
   it('se rabat sur Idle si le modèle ne connaît pas l’animation', () => {
     expect(resolveClip('Eating', ['Idle', 'Walk'])).toBe('Idle')
   })
+  it('comprend les noms préfixés des modèles FBX (« Armature|Idle »)', () => {
+    expect(resolveClip('Idle', ['Armature|Jump', 'Armature|Idle'])).toBe('Armature|Idle')
+    expect(resolveClip('Walk', ['Armature|Jump', 'Armature|Idle'])).toBe('Armature|Idle')
+  })
   it('renvoie undefined pour un modèle sans animation', () => {
     expect(resolveClip('Walk', [])).toBeUndefined()
   })

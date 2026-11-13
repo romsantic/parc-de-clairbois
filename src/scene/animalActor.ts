@@ -75,11 +75,18 @@ const CLIP_ALIASES: Record<string, string[]> = {
   Idle_2_HeadLow: ['Idle_2_HeadLow', 'Idle_Headlow', 'Idle_HeadLow'],
 }
 
-/** Nom réel de l'animation à jouer pour ce modèle ; « Idle » par défaut. */
+/**
+ * Nom réel de l'animation à jouer pour ce modèle ; « Idle » par défaut.
+ * Les modèles FBX préfixent leurs noms (« Armature|Idle ») : on les reconnaît aussi.
+ */
 export function resolveClip(wanted: string, available: string[]): string | undefined {
-  for (const name of CLIP_ALIASES[wanted] ?? [wanted]) if (available.includes(name)) return name
-  return available.includes('Idle') ? 'Idle' : undefined
+  const find = (name: string) => available.find((a) => a === name || a.endsWith(`|${name}`))
+  for (const name of CLIP_ALIASES[wanted] ?? [wanted]) { const hit = find(name); if (hit) return hit }
+  return find('Idle')
 }
+
+/** Vrai si le modèle a une vraie animation de marche (sinon on simule un balancement). */
+export const hasWalk = (available: string[]): boolean => available.some((a) => a === 'Walk' || a.endsWith('|Walk'))
 
 /**
  * Met un objet à la hauteur voulue (en mètres) et pose sa base à son origine (y = 0),

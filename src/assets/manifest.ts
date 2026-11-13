@@ -10,6 +10,16 @@ export const MODELS = {
   renard: 'models/animaux/Fox.gltf',
   biche: 'models/animaux/Deer.gltf',
   cerf: 'models/animaux/Stag.gltf',
+  cheval: 'models/animaux/Horse.gltf',
+  chevalBlanc: 'models/animaux/Horse_White.gltf',
+  vache: 'models/animaux/Cow.gltf',
+  taureau: 'models/animaux/Bull.gltf',
+  loup: 'models/animaux/Wolf.gltf',
+
+  // Animaux de la ferme — Quaternius, Farm Animal Pack (FBX ; animations repos et saut seulement)
+  mouton: 'models/ferme/Sheep.fbx',
+  cochon: 'models/ferme/Pig.fbx',
+  lama: 'models/ferme/Llama.fbx',
 
   // Nature — Quaternius, Ultimate Nature Pack
   arbre1: 'models/nature/CommonTree_1.obj',

@@ -9,3 +9,4 @@ Tous les modèles 3D du jeu sont sous licence **CC0 1.0 (domaine public)**. Le c
 | Medieval Village Pack (décembre 2020) | Quaternius | https://quaternius.com/packs/medievalvillage.html | CC0 1.0 | 12/11/2026 |
 
 Soutenir l'auteur : https://www.patreon.com/quaternius
+| Farm Animal Pack (juin 2018) | Quaternius | https://quaternius.com/packs/farmanimal.html | CC0 1.0 | 13/11/2026 |
