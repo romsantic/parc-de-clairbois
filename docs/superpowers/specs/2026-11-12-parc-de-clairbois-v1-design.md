@@ -185,11 +185,13 @@ Missions extraordinaires (animaux rares) liées aux expéditions. Le système de
 - **Carte 3D plein écran** montrant tout le domaine : zoo d'un côté de la rivière, village de l'autre, route jusqu'à l'entrée. Zones non débloquées dans la brume (« Bois sombre », « Falaises »…), révélées aux montées de niveau.
 - **Zoo** : zones de biome où l'on pose et redimensionne ses enclos (poignées aux coins, clôture fantôme verte ou rouge, prix en direct). **Village** : emplacements fixes pour les bâtiments. Clic sur un enclos ou un bâtiment pour le sélectionner.
 - **Caméra** : rotation libre (glisser), inclinaison bornée, zoom (molette / pincement), boutons de quart de tour. Sur téléphone : glisser pour déplacer, pincer pour zoomer.
-- **Barre de ressources** en haut : argent, visiteurs/h, prix du billet (ouvre le curseur), autonomie, population, niveau du village.
-- **Barre de commande** en bas, façon jeu de stratégie, **repliable** :
-  - gauche : la sélection (état, animaux, gestations) ;
-  - milieu : grille d'actions contextuelle (nettoyer, redimensionner, soigner, vendre, renommer ; améliorer pour un bâtiment ; construire un enclos dans une zone, ou un bâtiment sur un emplacement libre) ;
-  - droite : suivi des missions, accès au marchand, aux missions et à la Gazette.
+- **Barre de ressources** en haut, fine, en icônes : argent, fourrage, viande, autonomie (couleur selon l'urgence), visiteurs/h, prix du billet (ouvre le curseur), niveau du village et population, heure.
+- **Barre de commande** en bas, façon jeu de stratégie, **compacte sur une seule ligne** (validée sur maquette le 13/11/2026), **repliable** :
+  - gauche : la sélection résumée en une ligne (nom, n/capacité, mini-barre de propreté, malades) ;
+  - milieu : actions contextuelles en **petites icônes** (prix dans un coin, nom au survol) : nettoyer, soigner, rations, redimensionner, vendre, renommer ; améliorer pour un bâtiment ; construire un enclos dans une zone, ou un bâtiment sur un emplacement libre ;
+  - droite : la mission en cours sur une ligne (avec l'avancée des missions du jour), puis les icônes Marchand, Gazette, Replier.
+  - **Elle s'agrandit à la demande** : un clic sur la mission, sur la sélection (liste détaillée des animaux), sur le marchand ou la Gazette déplie un volet plus haut au-dessus de la ligne, avec le détail. Un nouveau clic, Échap ou un clic sur la carte le referme. La ligne compacte reste visible en dessous.
+- **Retour visuel de chaque action** : le bouton passe en vert (réussi) ou en rouge (refusé) un court instant ; la ressource concernée s'allume dans la barre du haut avec « +20 » ou « −40 » qui s'envole ; un court message s'affiche en bas de la carte (« +20 viande dans le garde-manger », « Pas assez de pièces (il en faut 60). »). Une mission accomplie passe en vert dans la barre.
 - **Missions** : marqueur « ! » au-dessus de la mairie quand Margaux a une mission ; bannière « Nouvelle mission » qui apparaît puis se range dans la barre du bas.
 - **Fenêtres** (marchand, missions, Gazette/résumé, fiche détaillée d'un animal) en HTML par-dessus la carte.
 - Interface en français.
