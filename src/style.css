@@ -37,6 +37,25 @@ html, body {
 .ecran-message p { max-width: 36ch; margin: 0; line-height: 1.5; }
 .ecran-message.chargement { background: #9fc7e8; color: var(--encre); font-weight: 600; }
 
+.boutons-camera {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  right: calc(12px + env(safe-area-inset-right, 0px));
+  display: flex;
+  gap: 6px;
+  z-index: 5;
+}
+.boutons-camera button {
+  width: 40px;
+  height: 40px;
+  padding: 8px;
+  display: grid;
+  place-items: center;
+  background: rgba(246, 240, 225, 0.92);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+}
+.boutons-camera svg { width: 20px; height: 20px; }
+
 button {
   font: inherit;
   cursor: pointer;

@@ -4,6 +4,8 @@ import { MODELS, type ModelKey } from './assets/manifest'
 import { loadModels, AssetLoadError } from './scene/loadModels'
 import { createWorld } from './scene/world'
 import { showError, showLoading } from './ui/errorScreen'
+import { createCameraRig } from './scene/cameraRig'
+import { mountCameraButtons } from './ui/cameraButtons'
 
 async function start(): Promise<void> {
   const canvas = document.querySelector<HTMLCanvasElement>('#monde')
@@ -16,18 +18,19 @@ async function start(): Promise<void> {
   try {
     const models = await loadModels(Object.keys(MODELS) as ModelKey[])
     const world = createWorld(canvas, models)
+    const rig = createCameraRig(world, canvas)
+    mountCameraButtons(rig)
     window.addEventListener('resize', () => world.resize())
     hideLoading()
     let last = performance.now()
     const frame = (now: number) => {
       const dt = Math.min(0.1, (now - last) / 1000)
       last = now
+      rig.update(dt)
       world.update(dt)
       world.renderer.render(world.scene, world.camera)
       requestAnimationFrame(frame)
     }
-    world.camera.position.set(30, 30, 38)
-    world.camera.lookAt(0, 0, 0)
     requestAnimationFrame(frame)
   } catch (e) {
     hideLoading()
