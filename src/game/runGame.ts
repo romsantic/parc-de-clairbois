@@ -6,6 +6,8 @@ import { startSession } from './session'
 import { mountDebugPanel } from '../ui/debugPanel'
 import { showError, showNotice } from '../ui/errorScreen'
 import { mountTopBar } from '../ui/topBar'
+import { flash, toast } from '../ui/feedback'
+import { applyAction, type Action } from '../sim/actions'
 
 const SAVE_EVERY_MS = 30_000
 export const RESET_BACKUP_KEY = `${SAVE_KEY}-avant-nouvelle-partie`
@@ -15,7 +17,12 @@ export const RESET_BACKUP_KEY = `${SAVE_KEY}-avant-nouvelle-partie`
  * sauvegarde toutes les 30 s et dès que la page est cachée ou fermée.
  * Renvoie l'accès à l'état courant (la carte s'en servira à l'étape 3).
  */
-export function runGame(store: Storage, storageOk = true): { get(): GameState } | null {
+export interface Game {
+  get(): GameState
+  dispatch(action: Action, from?: HTMLElement | null): boolean
+}
+
+export function runGame(store: Storage, storageOk = true): Game | null {
   const session = startSession(store, Date.now(), storageOk)
   if (session.problem === 'trop-recente') {
     showError("Cette sauvegarde vient d'une version plus récente du jeu. Recharge la page pour obtenir la dernière version.")
@@ -32,7 +39,6 @@ export function runGame(store: Storage, storageOk = true): { get(): GameState } 
 
   let state = session.state
   const topBar = mountTopBar(() => state)
-  void topBar // utilisé par dispatch (tâche 7)
   let canSave = session.canSave
   let warnedError = false
   /** Avance de l'horloge du jeu sur l'heure réelle (boutons du panneau de test). */
@@ -75,5 +81,38 @@ export function runGame(store: Storage, storageOk = true): { get(): GameState } 
     summary: session.summary,
     skippedMs: session.skippedMs,
   })
-  return { get: () => state }
+  /**
+   * Toutes les actions du joueur passent par ici : on applique, on sauvegarde, et on le montre
+   * (bouton vert ou rouge, ressources qui s'allument, message court).
+   */
+  function dispatch(action: Action, from?: HTMLElement | null): boolean {
+    const before = state
+    const r = applyAction(state, action)
+    flash(from, r.ok)
+    if (!r.ok) { toast(r.reason, false); return false }
+    state = r.state
+    save()
+    const dc = state.coins - before.coins
+    if (dc) topBar.pulse('coins', dc)
+    const df = state.pantry.fourrage - before.pantry.fourrage
+    if (df) topBar.pulse('fourrage', df)
+    const dv = state.pantry.viande - before.pantry.viande
+    if (dv) topBar.pulse('viande', dv)
+    toast(successMessage(action), true)
+    return true
+  }
+
+  return { get: () => state, dispatch }
+}
+
+function successMessage(a: Action): string {
+  switch (a.type) {
+    case 'nettoyer': return 'Enclos nettoyé'
+    case 'soignerTout': return 'Les animaux malades sont soignés'
+    case 'soigner': return 'Animal soigné'
+    case 'construire': return 'Nouvel enclos construit'
+    case 'redimensionner': return 'Enclos redimensionné'
+    case 'renommer': return 'Nom changé'
+    case 'rations': return `+${a.n} ${a.food} dans le garde-manger`
+  }
 }

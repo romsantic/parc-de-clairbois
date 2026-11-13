@@ -1,0 +1,48 @@
+/** Volet qui s'ouvre au-dessus de la barre du bas pour montrer un détail (spec §7). */
+let panel: HTMLElement | null = null
+let currentKey: string | null = null
+let refresh: (() => void) | null = null
+
+export function isDrawerOpen(key?: string): boolean {
+  return panel !== null && (key === undefined || key === currentKey)
+}
+
+/** Ouvre (ou remplace) le volet. `render` est rappelé pour le tenir à jour. */
+export function openDrawer(key: string, title: string, render: (body: HTMLElement) => void): void {
+  closeDrawer()
+  panel = document.createElement('section')
+  panel.className = 'volet'
+  panel.setAttribute('role', 'dialog')
+  panel.setAttribute('aria-label', title)
+  const head = document.createElement('header')
+  const h = document.createElement('h2')
+  h.textContent = title
+  const close = document.createElement('button')
+  close.type = 'button'
+  close.className = 'fermer'
+  close.textContent = '✕'
+  close.setAttribute('aria-label', 'Fermer')
+  close.addEventListener('click', closeDrawer)
+  head.append(h, close)
+  const body = document.createElement('div')
+  body.className = 'volet-corps'
+  panel.append(head, body)
+  document.body.append(panel)
+  currentKey = key
+  refresh = () => render(body)
+  refresh()
+}
+
+export function refreshDrawer(): void {
+  // Ne pas redessiner pendant que le joueur tape (le champ perdrait sa saisie).
+  if (panel && refresh && !panel.contains(document.activeElement)) refresh()
+}
+
+export function closeDrawer(): void {
+  panel?.remove()
+  panel = null
+  currentKey = null
+  refresh = null
+}
+
+window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDrawer() })

@@ -157,3 +157,57 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   .envol { animation: none; display: none; }
   .ressource, .message-action { transition: none; }
 }
+
+/* ---------- Barre de commande (bas) ---------- */
+.barre-bas {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 4;
+  display: flex; align-items: center; gap: 10px; min-height: 48px; max-height: 48px;
+  padding: 0 max(10px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(10px, env(safe-area-inset-left, 0px));
+  background: rgba(246, 240, 225, 0.95); border-top: 1px solid var(--bord); color: var(--encre); font-size: 14px;
+}
+.barre-bas > * { min-width: 0; }
+.zone-selection { display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; }
+.zone-selection svg { width: 18px; height: 18px; flex: none; }
+.zone-selection .compte { color: #6f6852; font-variant-numeric: tabular-nums; }
+.zone-selection .malades { color: #b23a2a; font-size: 13px; }
+.zone-selection .discret, .barre-bas .discret { color: #6f6852; }
+.jauge { width: 44px; height: 6px; background: #e6dcc1; border-radius: 4px; overflow: hidden; flex: none; }
+.jauge i { display: block; height: 100%; background: #6fa84a; transition: width .3s; }
+.jauge i[data-niveau="moyen"] { background: #d9a43a; }
+.jauge i[data-niveau="bas"] { background: #c8553d; }
+.zone-actions { display: flex; gap: 4px; padding: 0 8px; border-left: 1px solid var(--bord); border-right: 1px solid var(--bord); }
+.zone-actions:empty { display: none; }
+.zone-mission { flex: 1; display: flex; align-items: center; gap: 6px; background: none; border: 0; padding: 4px 6px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #6f6852; }
+.zone-mission svg { width: 18px; height: 18px; flex: none; }
+.zone-droite { display: flex; gap: 4px; }
+button.icone { position: relative; width: 34px; height: 34px; padding: 0; display: grid; place-items: center; border-radius: 9px; transition: background .25s, color .25s, border-color .25s; }
+button.icone svg { width: 18px; height: 18px; }
+button.icone small { position: absolute; bottom: -3px; right: -4px; font-size: 10px; line-height: 13px; padding: 0 3px; border-radius: 6px; background: var(--papier); border: 1px solid var(--bord); font-variant-numeric: tabular-nums; }
+button.icone small:empty { display: none; }
+button.icone[aria-disabled="true"] { opacity: .5; }
+button.icone::after { content: attr(data-bulle); position: absolute; bottom: 42px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 12px; padding: 2px 7px; border-radius: 6px; background: #2b2a24; color: #fff; opacity: 0; pointer-events: none; transition: opacity .15s; }
+button.icone:hover::after, button.icone:focus-visible::after { opacity: 1; }
+[hidden] { display: none !important; }
+.languette { position: fixed; bottom: calc(6px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); z-index: 4; width: 48px; height: 26px; padding: 0; display: grid; place-items: center; }
+.languette svg { width: 18px; height: 18px; }
+.message-action { bottom: calc(60px + env(safe-area-inset-bottom, 0px)); }
+
+/* ---------- Volet de détails ---------- */
+.volet {
+  position: fixed; left: max(10px, env(safe-area-inset-left, 0px)); right: max(10px, env(safe-area-inset-right, 0px));
+  bottom: calc(54px + env(safe-area-inset-bottom, 0px)); z-index: 5; max-height: 40vh; overflow: auto;
+  background: rgba(246, 240, 225, 0.97); color: var(--encre); border: 1px solid var(--bord); border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.2); padding: 10px 14px; font-size: 14px;
+}
+.volet header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.volet h2 { margin: 0; font-size: 15px; }
+.volet .fermer { padding: 2px 9px; }
+.volet table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.volet th, .volet td { text-align: left; padding: 3px 5px; border-bottom: 1px solid #e3d8bb; }
+.volet input { width: 9em; max-width: 100%; font: inherit; padding: 2px 5px; border: 1px solid var(--bord); border-radius: 6px; background: #fffaf0; }
+.volet .rouge { color: #b23a2a; font-weight: 600; }
+.volet .vert { color: #2f6a12; }
+@media (max-width: 640px) {
+  .zone-mission span { display: none; }
+  .barre-bas { gap: 6px; }
+}

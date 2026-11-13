@@ -12,6 +12,9 @@ import { buildDecor } from './scene/decor'
 import { drawZones } from './scene/zonesView'
 import { createParkView } from './scene/parkView'
 import { createPicker, type Pick } from './scene/picking'
+import { mountBottomBar } from './ui/bottomBar'
+import { closeDrawer } from './ui/drawer'
+import { toast } from './ui/feedback'
 import { SPECIES_MODELS } from './data/speciesModels'
 import { TUNING } from './data/tuning'
 import { createRng } from './core/rng'
@@ -85,7 +88,16 @@ async function start(): Promise<void> {
     const picker = createPicker(world, canvas, () => park.enclosureMeshes())
     let selection: Pick = { kind: 'rien' }
     picker.onPick((p) => { selection = p; park.setSelected(p.kind === 'enclos' ? p.id : null) })
-    void selection // lue par la barre du bas (tâche 7)
+    const bottomBar = mountBottomBar({
+      get: getState,
+      selection: () => selection,
+      dispatch: game.dispatch,
+      startBuild: () => toast("La pose d’enclos arrive à la tâche suivante", true),
+      startResize: () => toast("Le redimensionnement arrive à la tâche suivante", true),
+    })
+    picker.onPick(() => bottomBar.refresh())
+    // Un clic sur la carte ferme le volet de détails.
+    picker.onPick(() => closeDrawer())
     const rig = createCameraRig(world, canvas)
     mountCameraButtons(rig)
     window.addEventListener('resize', () => world.resize())
