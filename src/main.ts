@@ -16,9 +16,12 @@ async function start(): Promise<void> {
     showError('Ton navigateur ne peut pas afficher la 3D. Essaie avec une version récente de Chrome, Firefox ou Edge.')
     return
   }
-  const hideLoading = showLoading('Chargement du parc…')
+  const loading = showLoading('Chargement du parc…')
+  const hideLoading = () => loading.hide()
   try {
-    const models = await loadModels(Object.keys(MODELS) as ModelKey[])
+    const models = await loadModels(Object.keys(MODELS) as ModelKey[], undefined, (done, total) =>
+      loading.update(`Chargement du parc… ${Math.round((done / total) * 100)} %`),
+    )
     const world = createWorld(canvas, models)
     const testScene = buildTestScene(world, createRng(2026))
     const rig = createCameraRig(world, canvas)

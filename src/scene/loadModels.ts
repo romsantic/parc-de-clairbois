@@ -32,7 +32,9 @@ export async function loadByExtension(url: string): Promise<LoadedModel> {
 export async function loadModels(
   keys: ModelKey[],
   load: (url: string) => Promise<LoadedModel> = loadByExtension,
+  onProgress?: (done: number, total: number) => void,
 ): Promise<Map<ModelKey, LoadedModel>> {
+  let done = 0
   const entries = await Promise.all(
     keys.map(async (key) => {
       try {
@@ -41,6 +43,7 @@ export async function loadModels(
         model.scene.traverse((o) => { if ((o as { isMesh?: boolean }).isMesh) meshes++ })
         // Un fichier manquant peut être remplacé par une page web : le modèle est alors vide.
         if (meshes === 0) throw new Error('modèle vide')
+        onProgress?.(++done, keys.length)
         return [key, model] as const
       } catch (e) {
         throw new AssetLoadError(key, e)

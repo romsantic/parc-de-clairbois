@@ -15,10 +15,11 @@ export function showError(message: string): void {
 }
 
 /** Message de chargement, retiré dès que la scène est prête. */
-export function showLoading(text: string): () => void {
+export function showLoading(text: string): { update(text: string): void; hide(): void } {
   const box = document.createElement('div')
   box.className = 'ecran-message chargement'
+  box.setAttribute('role', 'status')
   box.textContent = text
   document.body.append(box)
-  return () => box.remove()
+  return { update: (t) => { box.textContent = t }, hide: () => box.remove() }
 }

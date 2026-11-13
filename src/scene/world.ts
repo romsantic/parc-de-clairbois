@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { sunForHour } from './sun'
+import { hourFromLocation } from './clock'
 import type { LoadedModel } from './loadModels'
 import type { ModelKey } from '../assets/manifest'
 
@@ -161,7 +162,7 @@ export function createWorld(canvas: HTMLCanvasElement, models: Map<ModelKey, Loa
   const river = makeRiver()
   scene.add(river.mesh)
 
-  let time = 0
+  let time = 0, sinceClock = 0
   const world: World = {
     scene, camera, renderer, models, groundHeight, riverDistance,
     setHour(hour) {
@@ -179,6 +180,13 @@ export function createWorld(canvas: HTMLCanvasElement, models: Map<ModelKey, Loa
     update(dt) {
       time += dt
       river.update(time)
+      // La lumière suit l'heure réelle : on la recalcule une fois par minute.
+      sinceClock += dt
+      if (sinceClock >= 60) {
+        sinceClock = 0
+        const c = hourFromLocation(location.search, new Date())
+        if (!c.forced) world.setHour(c.hour)
+      }
     },
     resize() {
       const w = canvas.clientWidth, h = canvas.clientHeight
@@ -188,9 +196,7 @@ export function createWorld(canvas: HTMLCanvasElement, models: Map<ModelKey, Loa
     },
   }
   // ?heure=14 dans l'adresse force l'heure (pratique pour tester le jour et la nuit)
-  const forced = Number(new URLSearchParams(location.search).get('heure'))
-  const now = new Date()
-  world.setHour(forced || forced === 0 && location.search.includes('heure=') ? forced : now.getHours() + now.getMinutes() / 60)
+  world.setHour(hourFromLocation(location.search, new Date()).hour)
   world.resize()
   return world
 }

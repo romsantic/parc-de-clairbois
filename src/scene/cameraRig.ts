@@ -21,11 +21,16 @@ export function clampOrbit(o: Orbit, limits: typeof CAMERA_LIMITS = CAMERA_LIMIT
   }
 }
 
-/** Angle du quart de tour suivant (dir = 1) ou précédent (dir = -1). */
+/**
+ * Angle de la vue en biais suivante (dir = 1) ou précédente (dir = -1). Les vues en biais
+ * sont à π/4 + k·π/2 (la vue de départ en fait partie) : depuis l'une d'elles, on tourne
+ * d'exactement un quart de tour ; après une rotation à la main, on se recale sur la plus proche.
+ */
 export function quarterTurn(azimuth: number, dir: 1 | -1): number {
-  const step = Math.PI / 2, eps = 1e-6
-  const k = dir === 1 ? Math.floor(azimuth / step + eps) + 1 : Math.ceil(azimuth / step - eps) - 1
-  return k * step
+  const step = Math.PI / 2, base = Math.PI / 4, eps = 1e-6
+  const k = (azimuth - base) / step
+  const next = dir === 1 ? Math.floor(k + eps) + 1 : Math.ceil(k - eps) - 1
+  return base + next * step
 }
 
 export interface CameraRig {

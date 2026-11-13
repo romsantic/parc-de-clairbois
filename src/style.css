@@ -16,6 +16,7 @@ html, body {
   display: block;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   touch-action: none;
   cursor: grab;
 }
@@ -38,6 +39,7 @@ html, body {
 .ecran-message.chargement { background: #9fc7e8; color: var(--encre); font-weight: 600; }
 
 .boutons-camera {
+  touch-action: manipulation;
   position: fixed;
   top: calc(12px + env(safe-area-inset-top, 0px));
   right: calc(12px + env(safe-area-inset-right, 0px));

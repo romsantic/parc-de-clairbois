@@ -16,13 +16,12 @@ describe('clampOrbit', () => {
 })
 
 describe('quarterTurn', () => {
-  it('va au quart de tour suivant', () => {
-    expect(quarterTurn(0, 1)).toBeCloseTo(Math.PI / 2)
-    expect(quarterTurn(0.3, 1)).toBeCloseTo(Math.PI / 2)
-    expect(quarterTurn(0.3, -1)).toBeCloseTo(0)
+  it('tourne toujours d’exactement un quart de tour, même depuis la vue de départ en biais', () => {
+    expect(quarterTurn(Math.PI / 4, 1)).toBeCloseTo((3 * Math.PI) / 4)
+    expect(quarterTurn(Math.PI / 4, -1)).toBeCloseTo(-Math.PI / 4)
   })
-  it('depuis un quart exact, passe au suivant dans les deux sens', () => {
-    expect(quarterTurn(Math.PI / 2, -1)).toBeCloseTo(0)
-    expect(quarterTurn(-Math.PI / 2, -1)).toBeCloseTo(-Math.PI)
+  it('se recale sur la grille des vues en biais si la caméra a été tournée à la main', () => {
+    expect(quarterTurn(0.9, 1)).toBeCloseTo((3 * Math.PI) / 4)
+    expect(quarterTurn(0.9, -1)).toBeCloseTo(Math.PI / 4)
   })
 })

@@ -23,6 +23,11 @@ describe('loadModels', () => {
     expect(err).toBeInstanceOf(AssetLoadError)
     expect((err as AssetLoadError).key).toBe('maison1')
   })
+  it('signale la progression du chargement', async () => {
+    const seen: string[] = []
+    await loadModels(['arbre1', 'maison1', 'puits'], ok, (done, total) => seen.push(`${done}/${total}`))
+    expect(seen).toEqual(['1/3', '2/3', '3/3'])
+  })
   it('refuse un modèle vide (fichier remplacé par une page web)', async () => {
     const empty = async (): Promise<LoadedModel> => ({ scene: new Group(), animations: [] })
     const err = await loadModels(['puits'], empty).catch((e: unknown) => e)
