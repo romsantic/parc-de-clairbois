@@ -17,6 +17,8 @@ export interface DebugController {
   advanceBy(ms: number): void
   reset(): void
   summary: Summary | null
+  /** Temps d'absence au-delà de 30 jours, non rejoué. */
+  skippedMs: number
 }
 
 const AGE = { bebe: 'bébé', jeune: 'jeune', adulte: 'adulte' } as const
@@ -63,6 +65,9 @@ export function mountDebugPanel(ctl: DebugController): void {
     const m = ctl.summary
     if (m && (m.naissances || m.malades || m.morts.length || m.fourrage || m.viande)) {
       panel.append(el('p', `Pendant ton absence : ${m.naissances} naissance(s), ${m.malades} malade(s), ${m.morts.length} mort(s), ${m.fourrage.toFixed(1)} fourrage et ${m.viande.toFixed(1)} viande mangés.`, 'resume'))
+    }
+    if (ctl.skippedMs > 0) {
+      panel.append(el('p', `Absence très longue : seuls les 30 derniers jours ont été rejoués (${Math.round(ctl.skippedMs / DAY_MS)} jours ignorés).`, 'resume'))
     }
 
     const bar = el('div', '', 'rangee')

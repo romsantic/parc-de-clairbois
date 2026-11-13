@@ -25,11 +25,22 @@ describe('advanceTo', () => {
     expect(advanceTo(s, s.time + 9 * MIN).state.time).toBe(s.time)
     expect(advanceTo(s, s.time + 10 * MIN).state.time).toBe(s.time + 10 * MIN)
   })
-  it("ne touche à rien si l'horloge de l'appareil recule", () => {
+  it("horloge qui recule de moins d'un pas : rien ne change", () => {
     const s = start()
-    const r = advanceTo(s, s.time - HOUR_MS)
+    const r = advanceTo(s, s.time - 5 * MIN)
     expect(r.state).toEqual(s)
     expect(r.events).toEqual([])
+  })
+  it("horloge qui recule nettement : le parc se recale sans rajeunir, puis continue de vivre", () => {
+    const s = start()
+    const back = s.time - 3 * DAY_MS
+    const r = advanceTo(s, back)
+    expect(r.events).toEqual([])
+    expect(r.state.time).toBe(back - (back % (10 * MIN)))
+    const a0 = s.animals[0], a1 = r.state.animals[0]
+    expect(a1.bornAt - r.state.time).toBe(a0.bornAt - s.time) // même âge
+    expect(a1.lastFedAt - r.state.time).toBe(a0.lastFedAt - s.time)
+    expect(advanceTo(r.state, back + HOUR_MS).state.time).toBeGreaterThan(r.state.time) // il n'est plus figé
   })
   it("ne modifie jamais l'état d'origine", () => {
     const s = start()

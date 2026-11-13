@@ -35,6 +35,30 @@ describe('startSession', () => {
     expect(r.canSave).toBe(false)
     expect(m.data[SAVE_KEY]).toBe(raw)
   })
+  it("prend la main sur la sauvegarde : les autres onglets n'écriront plus par-dessus", () => {
+    const m = memory()
+    const r = startSession(m, NOW)
+    expect(JSON.parse(m.data[SAVE_KEY]).owner).toBe(r.owner)
+    expect(startSession(m, NOW).owner).not.toBe(r.owner)
+  })
+  it('migration impossible : la partie est gardée intacte et on ne sauvegarde pas', () => {
+    const raw = JSON.stringify({ version: 0, savedAt: 1, state: {} })
+    const m = memory({ [SAVE_KEY]: raw })
+    const r = startSession(m, NOW)
+    expect(r.problem).toBe('migration-impossible')
+    expect(r.canSave).toBe(false)
+    expect(m.data[SAVE_KEY]).toBe(raw)
+  })
+  it('stockage indisponible : on joue sans sauvegarder', () => {
+    const r = startSession(memory(), NOW, false)
+    expect(r.canSave).toBe(false)
+    expect(r.problem).toBeNull()
+  })
+  it('signale le temps non rejoué au-delà de 30 jours', () => {
+    const m = memory()
+    saveGame(m, newGame(5, NOW - 100 * DAY_MS), NOW - 100 * DAY_MS)
+    expect(startSession(m, NOW).skippedMs).toBeGreaterThan(60 * DAY_MS)
+  })
   it('sauvegarde abîmée : nouvelle partie, problème signalé', () => {
     const r = startSession(memory({ [SAVE_KEY]: 'zut' }), NOW)
     expect(r.problem).toBe('illisible')

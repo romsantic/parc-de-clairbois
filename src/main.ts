@@ -3,25 +3,41 @@ import WebGL from 'three/examples/jsm/capabilities/WebGL.js'
 import { MODELS, type ModelKey } from './assets/manifest'
 import { loadModels, AssetLoadError } from './scene/loadModels'
 import { createWorld } from './scene/world'
-import { showError, showLoading, showNotice } from './ui/errorScreen'
+import { showError, showLoading } from './ui/errorScreen'
 import { runGame } from './game/runGame'
+import type { Storage } from './save/save'
 import { createCameraRig } from './scene/cameraRig'
 import { mountCameraButtons } from './ui/cameraButtons'
 import { buildTestScene } from './scene/testScene'
 import { createRng } from './core/rng'
 
-const NO_3D = 'Ton navigateur ne peut pas afficher la 3D. Essaie avec une version récente de Chrome, Firefox ou Edge.'
+/** Le stockage du navigateur, ou une mémoire temporaire s'il est bloqué. */
+function openStorage(): { store: Storage; ok: boolean } {
+  try {
+    const ls = window.localStorage
+    ls.setItem('parc-clairbois:test', '1')
+    ls.removeItem('parc-clairbois:test')
+    return { store: ls, ok: true }
+  } catch {
+    const mem = new Map<string, string>()
+    return { store: { getItem: (k) => mem.get(k) ?? null, setItem: (k, v) => { mem.set(k, v) } }, ok: false }
+  }
+}
+
+const NO_3D ='Ton navigateur ne peut pas afficher la 3D. Essaie avec une version récente de Chrome, Firefox ou Edge.'
 
 async function start(): Promise<void> {
   const canvas = document.querySelector<HTMLCanvasElement>('#monde')
   if (!canvas) return
   // La partie tourne même si la 3D n'est pas disponible : rien n'est perdu.
   // Si le stockage du navigateur est bloqué (navigation privée stricte), on joue sans sauvegarde.
+  const { store, ok } = openStorage()
   try {
-    runGame(window.localStorage)
+    runGame(store, ok)
   } catch (e) {
     console.error(e)
-    showNotice("Ton navigateur bloque la sauvegarde : la partie ne sera pas conservée après fermeture.")
+    showError("La partie n'a pas pu démarrer. Ta sauvegarde n'a pas été modifiée ; recharge la page.")
+    return
   }
   if (!WebGL.isWebGL2Available()) {
     showError(NO_3D)

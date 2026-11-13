@@ -1,4 +1,5 @@
 import type { GameState } from '../sim/types'
+import { SPECIES } from '../data/species'
 import { CURRENT_VERSION, MIGRATIONS, type Migration } from './migrations'
 
 export const SAVE_KEY = 'parc-clairbois:sauvegarde'
@@ -15,39 +16,78 @@ export type LoadResult =
   | { kind: 'ok'; state: GameState }
   | { kind: 'illisible' }
   | { kind: 'trop-recente'; version: number }
+  | { kind: 'migration-impossible'; version: number }
 
-export function saveGame(store: Storage, state: GameState, nowMs: number): void {
-  store.setItem(SAVE_KEY, JSON.stringify({ version: CURRENT_VERSION, savedAt: nowMs, state }))
+export type SaveOutcome = 'ok' | 'pris-ailleurs' | 'trop-recente' | 'erreur'
+
+/**
+ * Écrit la partie. `owner` identifie l'onglet qui joue. Avec `guard`, on vérifie d'abord
+ * qu'aucun autre onglet n'a repris la partie et qu'aucune version plus récente du jeu
+ * n'a sauvegardé entre-temps : dans ces cas, on n'écrit rien.
+ */
+export function saveGame(store: Storage, state: GameState, nowMs: number, owner = 'inconnu', guard = false): SaveOutcome {
+  try {
+    if (guard) {
+      const raw = store.getItem(SAVE_KEY)
+      if (raw !== null) {
+        let stored: { version?: unknown; owner?: unknown } | null = null
+        try { stored = JSON.parse(raw) } catch { stored = null }
+        if (stored && typeof stored.version === 'number' && stored.version > CURRENT_VERSION) return 'trop-recente'
+        if (stored && typeof stored.owner === 'string' && stored.owner !== owner) return 'pris-ailleurs'
+      }
+    }
+    store.setItem(SAVE_KEY, JSON.stringify({ version: CURRENT_VERSION, savedAt: nowMs, owner, state }))
+    return 'ok'
+  } catch {
+    return 'erreur' // mémoire pleine, stockage bloqué…
+  }
 }
 
 /** Charge la partie, en appliquant les migrations. Une sauvegarde abîmée est mise de côté, jamais perdue. */
-export function loadGame(store: Storage, migrations: Record<number, Migration> = MIGRATIONS): LoadResult {
+export function loadGame(store: Storage, migrations: Record<number, Migration> = MIGRATIONS, nowMs = Date.now()): LoadResult {
   const raw = store.getItem(SAVE_KEY)
   if (raw === null) return { kind: 'aucune' }
   const broken = (): LoadResult => {
-    if (store.getItem(BROKEN_KEY) === null) store.setItem(BROKEN_KEY, raw)
+    // La première copie va sous BROKEN_KEY ; les suivantes sous BROKEN_KEY:<date>, sans rien écraser.
+    const key = store.getItem(BROKEN_KEY) === null ? BROKEN_KEY : `${BROKEN_KEY}:${nowMs}`
+    try { store.setItem(key, raw) } catch { /* stockage plein : la sauvegarde d'origine reste en place */ }
     return { kind: 'illisible' }
   }
+  let data: { version?: unknown; state?: unknown }
+  try { data = JSON.parse(raw) } catch { return broken() }
+  let version = data?.version
+  if (typeof version !== 'number') return broken()
+  if (version > CURRENT_VERSION) return { kind: 'trop-recente', version }
+  const from = version
+  let state: unknown = data.state
   try {
-    const data = JSON.parse(raw)
-    let version = data?.version
-    if (typeof version !== 'number') return broken()
-    if (version > CURRENT_VERSION) return { kind: 'trop-recente', version }
-    let state: unknown = data.state
     while (version < CURRENT_VERSION) {
       const m = migrations[version]
-      if (!m) return broken()
+      if (!m) return { kind: 'migration-impossible', version: from }
       state = m(state)
       version++
     }
-    return looksLikeGame(state) ? { kind: 'ok', state } : broken()
   } catch {
-    return broken()
+    return { kind: 'migration-impossible', version: from }
   }
+  return looksLikeGame(state) ? { kind: 'ok', state } : broken()
 }
 
+const finite = (x: unknown) => typeof x === 'number' && Number.isFinite(x)
+
+/** Vérifie qu'une partie chargée est cohérente avant de la faire tourner. */
 function looksLikeGame(s: unknown): s is GameState {
   const g = s as GameState
-  return !!g && typeof g.time === 'number' && typeof g.coins === 'number' && Array.isArray(g.animals)
-    && Array.isArray(g.enclosures) && typeof g.pantry === 'object' && g.pantry !== null
+  if (!g || !finite(g.time) || !finite(g.coins) || !finite(g.rng) || !finite(g.nextId)) return false
+  const p = g.pantry
+  if (!p || !finite(p.fourrage) || !finite(p.viande) || !finite(p.capacity)) return false
+  if (!Array.isArray(g.enclosures) || !Array.isArray(g.animals)) return false
+  for (const e of g.enclosures) {
+    if (!e || !finite(e.id) || !finite(e.cleanedAt) || !e.rect) return false
+    if (e.species !== null && !(e.species in SPECIES)) return false
+  }
+  for (const a of g.animals) {
+    if (!a || !(a.species in SPECIES) || !finite(a.bornAt) || !finite(a.lastFedAt) || !a.health) return false
+  }
+  return true
 }

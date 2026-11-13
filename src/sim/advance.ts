@@ -20,6 +20,13 @@ export function step(state: GameState): GameEvent[] {
  * le parc reprend comme au 30ᵉ jour (toutes ses dates sont décalées d'autant).
  */
 export function advanceTo(state: GameState, nowMs: number): { state: GameState; events: GameEvent[]; skippedMs: number } {
+  if (state.time - nowMs >= TUNING.STEP_MS) {
+    // L'horloge de l'appareil a reculé d'au moins un pas : on recale le parc sur « maintenant »
+    // sans le faire rajeunir (toutes ses dates reculent d'autant), pour qu'il continue de vivre.
+    const s = structuredClone(state)
+    shiftDates(s, Math.floor(nowMs / TUNING.STEP_MS) * TUNING.STEP_MS - s.time)
+    return { state: s, events: [], skippedMs: 0 }
+  }
   const steps = Math.floor((nowMs - state.time) / TUNING.STEP_MS)
   if (steps <= 0) return { state, events: [], skippedMs: 0 }
   const s = structuredClone(state)
