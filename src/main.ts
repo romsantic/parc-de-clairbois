@@ -6,6 +6,8 @@ import { createWorld } from './scene/world'
 import { showError, showLoading } from './ui/errorScreen'
 import { createCameraRig } from './scene/cameraRig'
 import { mountCameraButtons } from './ui/cameraButtons'
+import { buildTestScene } from './scene/testScene'
+import { createRng } from './core/rng'
 
 async function start(): Promise<void> {
   const canvas = document.querySelector<HTMLCanvasElement>('#monde')
@@ -18,6 +20,7 @@ async function start(): Promise<void> {
   try {
     const models = await loadModels(Object.keys(MODELS) as ModelKey[])
     const world = createWorld(canvas, models)
+    const testScene = buildTestScene(world, createRng(2026))
     const rig = createCameraRig(world, canvas)
     mountCameraButtons(rig)
     window.addEventListener('resize', () => world.resize())
@@ -28,6 +31,7 @@ async function start(): Promise<void> {
       last = now
       rig.update(dt)
       world.update(dt)
+      testScene.update(dt)
       world.renderer.render(world.scene, world.camera)
       requestAnimationFrame(frame)
     }
