@@ -15,6 +15,8 @@ export function buildTestScene(world: World, rng: () => number): { update(dt: nu
   const actors: AnimalActor[] = []
   const occupied: { x: number; z: number; r: number }[] = []
 
+  const converted = new Map<THREE.Material, THREE.MeshStandardMaterial>()
+
   /** Matériaux mats et ombres pour les objets OBJ (exportés très brillants). */
   function prepare(obj: THREE.Object3D) {
     obj.traverse((o) => {
@@ -24,10 +26,16 @@ export function buildTestScene(world: World, rng: () => number): { update(dt: nu
       mesh.receiveShadow = true
       const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
       const conv = mats.map((m) => {
+        // Un seul matériau converti par matériau d'origine, partagé par tous les exemplaires.
+        let done = converted.get(m)
+        if (done) return done
         // Les .mtl de Blender 2.79 contiennent des couleurs déjà linéaires ; MTLLoader les
         // ré-assombrit en les croyant sRGB. On annule cette conversion.
         const c = ((m as THREE.MeshPhongMaterial).color ?? new THREE.Color('#ffffff')).clone().convertLinearToSRGB()
-        return new THREE.MeshStandardMaterial({ color: c, roughness: 0.92, metalness: 0, flatShading: true })
+        done = new THREE.MeshStandardMaterial({ color: c, roughness: 0.92, metalness: 0, flatShading: true })
+        converted.set(m, done)
+        converted.set(done, done) // un objet déjà préparé garde son matériau
+        return done
       })
       mesh.material = Array.isArray(mesh.material) ? conv : conv[0]
     })
@@ -58,6 +66,11 @@ export function buildTestScene(world: World, rng: () => number): { update(dt: nu
     return Math.max(s.x, s.z)
   })()
 
+  const padMat = new THREE.MeshStandardMaterial({
+    color: '#8cc265', roughness: 1, transparent: true, opacity: 0.55,
+    polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1, depthWrite: false,
+  })
+
   function enclosure(b: Bounds) {
     occupied.push({ x: (b.minX + b.maxX) / 2, z: (b.minZ + b.maxZ) / 2, r: Math.max(b.maxX - b.minX, b.maxZ - b.minZ) / 2 + 1 })
     const side = (x0: number, z0: number, x1: number, z1: number) => {
@@ -79,13 +92,15 @@ export function buildTestScene(world: World, rng: () => number): { update(dt: nu
     side(b.maxX, b.minZ, b.maxX, b.maxZ)
     side(b.maxX, b.maxZ, b.minX, b.maxZ)
     side(b.minX, b.maxZ, b.minX, b.minZ)
-    // Herbe plus tendre à l'intérieur
-    const pad = new THREE.Mesh(
-      new THREE.PlaneGeometry(b.maxX - b.minX - 0.4, b.maxZ - b.minZ - 0.4),
-      new THREE.MeshStandardMaterial({ color: '#8cc265', roughness: 1, transparent: true, opacity: 0.55 }),
-    )
-    pad.rotation.x = -Math.PI / 2
-    pad.position.set((b.minX + b.maxX) / 2, 0.06 + groundHeight((b.minX + b.maxX) / 2, (b.minZ + b.maxZ) / 2), (b.minZ + b.maxZ) / 2)
+    // Herbe plus tendre à l'intérieur, posée sur le relief (subdivisée tous les ~0,5 m)
+    const w = b.maxX - b.minX - 0.4, d = b.maxZ - b.minZ - 0.4
+    const padGeo = new THREE.PlaneGeometry(w, d, Math.ceil(w * 2), Math.ceil(d * 2))
+    padGeo.rotateX(-Math.PI / 2)
+    padGeo.translate((b.minX + b.maxX) / 2, 0, (b.minZ + b.maxZ) / 2)
+    const pp = padGeo.attributes.position as THREE.BufferAttribute
+    for (let i = 0; i < pp.count; i++) pp.setY(i, groundHeight(pp.getX(i), pp.getZ(i)) + 0.04)
+    padGeo.computeVertexNormals()
+    const pad = new THREE.Mesh(padGeo, padMat)
     pad.receiveShadow = true
     scene.add(pad)
   }
@@ -147,12 +162,12 @@ export function buildTestScene(world: World, rng: () => number): { update(dt: nu
   }
   for (const side of [-1, 1]) {
     const rail = new THREE.Mesh(new THREE.BoxGeometry(7.5, 0.12, 0.12), wood)
-    rail.position.set(bx, 0.95, 10.8 + side * 1.2)
+    rail.position.set(bx, 0.95, BZ + side * 1.2)
     rail.castShadow = true
     scene.add(rail)
     for (const px of [-3.4, 0, 3.4]) {
       const post = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.8, 0.15), wood)
-      post.position.set(bx + px, 0.6, 10.8 + side * 1.2)
+      post.position.set(bx + px, 0.6, BZ + side * 1.2)
       post.castShadow = true
       scene.add(post)
     }

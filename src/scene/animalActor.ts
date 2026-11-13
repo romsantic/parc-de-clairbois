@@ -41,7 +41,8 @@ export class AnimalActor {
   }
 
   private play(name: string): void {
-    const next = this.actions.get(name) ?? this.actions.get('Idle')
+    const clip = resolveClip(name, [...this.actions.keys()])
+    const next = clip ? this.actions.get(clip) : undefined
     if (!next || next === this.current) return
     next.reset().play()
     if (this.current) next.crossFadeFrom(this.current, 0.35, false)
@@ -69,10 +70,28 @@ export class AnimalActor {
   }
 }
 
-/** Met un objet à la hauteur voulue (en mètres) et pose sa base au sol (y = 0). */
+/** Les modèles du pack ne nomment pas tous leurs animations pareil. */
+const CLIP_ALIASES: Record<string, string[]> = {
+  Idle_2_HeadLow: ['Idle_2_HeadLow', 'Idle_Headlow', 'Idle_HeadLow'],
+}
+
+/** Nom réel de l'animation à jouer pour ce modèle ; « Idle » par défaut. */
+export function resolveClip(wanted: string, available: string[]): string | undefined {
+  for (const name of CLIP_ALIASES[wanted] ?? [wanted]) if (available.includes(name)) return name
+  return available.includes('Idle') ? 'Idle' : undefined
+}
+
+/**
+ * Met un objet à la hauteur voulue (en mètres) et pose sa base à son origine (y = 0),
+ * en décalant son contenu : sa propre position reste libre pour le placer sur la carte.
+ */
 export function fitHeight(obj: THREE.Object3D, height: number): void {
   obj.updateMatrixWorld(true)
   const box = new THREE.Box3().setFromObject(obj)
   const h = box.max.y - box.min.y
-  if (h > 0) obj.scale.multiplyScalar(height / h)
+  if (h <= 0) return
+  obj.scale.multiplyScalar(height / h)
+  obj.updateMatrixWorld(true)
+  const base = new THREE.Box3().setFromObject(obj).min.y - obj.position.y
+  if (Math.abs(base) > 1e-6) for (const child of obj.children) child.position.y -= base / obj.scale.y
 }

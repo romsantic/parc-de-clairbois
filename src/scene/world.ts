@@ -51,8 +51,12 @@ function riverDistance(x: number, z: number): number {
 
 /** Petites ondulations du terrain, creusées le long de la rivière. */
 function groundHeight(x: number, z: number): number {
+  return heightAt(x, z, riverDistance(x, z))
+}
+
+/** Même calcul, quand la distance à la rivière est déjà connue (évite de la recalculer). */
+function heightAt(x: number, z: number, d: number): number {
   const hills = 0.35 * Math.sin(x * 0.21) * Math.cos(z * 0.17) + 0.2 * Math.sin(x * 0.53 + z * 0.41)
-  const d = riverDistance(x, z)
   const bed = d < RIVER_HALF_WIDTH + 2 ? -0.9 * (1 - d / (RIVER_HALF_WIDTH + 2)) ** 1.5 : 0
   const edgeFlatten = Math.min(1, d / (RIVER_HALF_WIDTH + 4))
   return hills * edgeFlatten + bed
@@ -67,10 +71,10 @@ function makeGround(): THREE.Mesh {
   const sand = new THREE.Color('#d9c38d'), c = new THREE.Color()
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i), z = pos.getZ(i)
-    pos.setY(i, groundHeight(x, z))
+    const d = riverDistance(x, z)
+    pos.setY(i, heightAt(x, z, d))
     const n = 0.5 + 0.5 * Math.sin(x * 1.7 + z * 2.3) * Math.cos(x * 0.9 - z * 1.3)
     c.copy(grass).lerp(grassDark, n * 0.6)
-    const d = riverDistance(x, z)
     if (d < RIVER_HALF_WIDTH + 1.4) c.lerp(sand, Math.min(1, (RIVER_HALF_WIDTH + 1.4 - d) / 1.2))
     colors.push(c.r, c.g, c.b)
   }
@@ -111,8 +115,7 @@ function makeRiver(): { mesh: THREE.Mesh; update: (t: number) => void } {
         const x = base[i * 3], z = base[i * 3 + 2]
         pos.setY(i, -0.32 + 0.05 * Math.sin(t * 1.6 + z * 0.9 + x * 0.4))
       }
-      pos.needsUpdate = true
-      geo.computeVertexNormals()
+      pos.needsUpdate = true // les normales sont inutiles : le matériau est en flatShading
     },
   }
 }
