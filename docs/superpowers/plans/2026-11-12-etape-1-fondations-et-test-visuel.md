@@ -18,7 +18,7 @@ Chaque étape est jouable ou visible en ligne, et reçoit son propre plan détai
 |---|---|---|
 | **1. Fondations et test visuel** (ce plan) | Outillage, publication, packs 3D, scène de test, caméra | §7, §8, §9 |
 | 2. Cœur de la simulation | Données, état, horloge, faim, garde-manger, santé, naissances, rattrapage d'absence, sauvegarde et migrations | §3, §4, §9, §10 |
-| 3. Carte jouable | Emplacements sur la carte, sélection, barres du haut et du bas, actions sur les enclos, scène pilotée par l'état | §3, §7 |
+| 3. Carte jouable | Zones de biome, pose et redimensionnement des enclos (poignées, clôture fantôme, prix en direct), emplacements du village, sélection, barres du haut et du bas, actions sur les enclos, scène pilotée par l'état | §3, §7 |
 | 4. Économie et village | Visiteurs, attrait, billet, bâtiments, niveaux du village, marchand | §3, §5, §6 |
 | 5. Missions | Premiers pas avec Margaux, missions d'histoire, quotidiennes, résumé d'absence | §4, §6 |
 | 6. Finition V1 | Équilibrage, téléphone, jour/nuit, visiteurs sur les chemins, brume des zones verrouillées | §7, §8 |

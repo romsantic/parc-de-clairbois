@@ -12,14 +12,14 @@
 
 ## 2. Concept
 
-Le joueur reprend un terrain en friche à l'orée de **Clairbois**, un village endormi. Il démarre avec un peu d'argent, quelques emplacements et un couple de moutons.
+Le joueur reprend un terrain en friche à l'orée de **Clairbois**, un village endormi. Il démarre avec un peu d'argent, une zone de prairie, un premier enclos et un couple de moutons.
 
 **Boucle principale**
 1. Des animaux bien soignés attirent des visiteurs, qui paient un billet.
 2. L'argent sert à acheter de la nourriture, construire des enclos, acheter des espèces.
 3. Plus d'espèces et des animaux plus heureux donnent plus d'attrait, donc plus de visiteurs.
 4. Les touristes dépensent aussi au village (café, boutique, auberge) : revenus et habitants supplémentaires.
-5. Un village plus grand débloque de nouveaux emplacements, de nouveaux biomes et des espèces plus rares.
+5. Un village plus grand débloque de nouvelles zones, de nouveaux biomes et des espèces plus rares.
 
 **Temps.** Le jeu tourne en temps réel, que le joueur soit là ou non. Au retour, le temps écoulé est rejoué et un résumé s'affiche.
 
@@ -27,10 +27,13 @@ Le joueur reprend un terrain en friche à l'orée de **Clairbois**, un village e
 
 ## 3. Le zoo
 
-### Enclos
-- Un emplacement de zoo accueille un enclos d'un biome, pour une seule espèce.
-- Biomes V1 : **prairie** (départ), **forêt** (niveau 2), **montagne** (niveau 3).
-- Trois tailles : petit (4 animaux), moyen (8), grand (12). Agrandir coûte de l'argent. L'agrandissement moyen est débloqué par une mission.
+### Enclos : zones et redimensionnement
+- Le côté zoo de la carte est découpé en **zones de biome** : **prairie** (départ), **forêt** (niveau 2), **montagne** (niveau 3). Une zone verrouillée reste dans la brume.
+- Dans une zone débloquée, le joueur **pose un enclos rectangulaire** puis **tire sur ses coins** pour choisir sa taille et ses proportions. Un enclos accueille une seule espèce, du biome de sa zone.
+- Contraintes de pose : l'enclos reste entièrement dans sa zone, ne chevauche ni un autre enclos ni un chemin ; côté minimal 6 m. Pendant le réglage, la clôture fantôme est verte si la pose est possible, rouge sinon, avec la raison.
+- **Prix** = clôture (par mètre de périmètre) + aménagement (par m²), affiché en direct pendant le réglage.
+- **Capacité** = surface ÷ espace nécessaire par animal de l'espèce : mouton 20 m², cochon 15, âne 30, alpaga 25, renard 12, cerf 40, cheval sauvage 50, lama 25, taureau 50, loup 30.
+- Un enclos existant peut être **agrandi ou rétréci** plus tard (on paie la différence ; pas de remboursement). Rétrécir est refusé si la nouvelle capacité est inférieure au nombre d'animaux présents.
 - Un enclos plein bloque les naissances ; un enclos surpeuplé fait baisser le bonheur.
 
 ### Espèces V1
@@ -115,11 +118,11 @@ Passage de niveau : population atteinte **et** mission d'histoire du palier term
 
 | Niveau | Condition | Débloque |
 |---|---|---|
-| 1. Hameau | départ | 4 emplacements zoo, 2 village, prairie, ferme, café |
-| 2. Village | 50 habitants + mission | +3 zoo, +2 village, forêt, boutique, auberge, catalogue marchand élargi |
-| 3. Bourg | 150 habitants + mission | +3 zoo, +2 village, montagne, grand garde-manger, dernières espèces |
+| 1. Hameau | départ | zone **prairie**, 2 emplacements village, ferme, café |
+| 2. Village | 50 habitants + mission | zone **forêt**, +2 emplacements village, boutique, auberge, catalogue marchand élargi |
+| 3. Bourg | 150 habitants + mission | zone **montagne**, +2 emplacements village, grand garde-manger, dernières espèces |
 
-Fin de V1 : 10 emplacements de zoo, 6 de village.
+Fin de V1 : 3 zones de zoo (enclos libres à l'intérieur), 6 emplacements de village (fixes).
 
 ### Les chemins grandissent avec le village
 L'allure des chemins change à chaque montée de niveau, pour que la croissance du village se voie sur la carte :
@@ -155,7 +158,7 @@ Guidés par **Margaux**, la maire de Clairbois. Une mission à la fois, le bouto
 3. Nettoyer l'enclos — propreté
 4. Régler le prix du billet — prix juste
 5. Construire le café — bâtiments du village
-6. Construire un deuxième enclos de prairie — emplacements et biomes
+6. Poser un deuxième enclos dans la prairie et régler sa taille — zones, redimensionnement, capacité
 7. Acheter un couple de cochons — marchand, stock, sexes
 8. Attendre la première gestation — conditions de reproduction
 9. Vérifier l'autonomie — absence et conséquences
@@ -165,7 +168,7 @@ Une seule à la fois, présentée par un habitant, avec récompense : pièces, r
 
 | Palier | Missions |
 |---|---|
-| Hameau | Construire le café · Première naissance · Posséder 3 espèces (débloque l'agrandissement moyen) · 20 visiteurs/h |
+| Hameau | Construire le café · Première naissance · Posséder 3 espèces (débloque le redimensionnement des enclos existants) · 20 visiteurs/h |
 | Village | Construire l'auberge · 2 espèces de forêt · 2 jours d'autonomie · 50 habitants |
 | Bourg | Faire naître un loup ou un taureau · Posséder les 10 espèces · 150 habitants → fin de la V1 |
 
@@ -180,12 +183,12 @@ Missions extraordinaires (animaux rares) liées aux expéditions. Le système de
 ## 7. Écran et contrôles
 
 - **Carte 3D plein écran** montrant tout le domaine : zoo d'un côté de la rivière, village de l'autre, route jusqu'à l'entrée. Zones non débloquées dans la brume (« Bois sombre », « Falaises »…), révélées aux montées de niveau.
-- **Emplacements fixes** placés sur la carte ; clic sur un enclos ou bâtiment pour le sélectionner.
+- **Zoo** : zones de biome où l'on pose et redimensionne ses enclos (poignées aux coins, clôture fantôme verte ou rouge, prix en direct). **Village** : emplacements fixes pour les bâtiments. Clic sur un enclos ou un bâtiment pour le sélectionner.
 - **Caméra** : rotation libre (glisser), inclinaison bornée, zoom (molette / pincement), boutons de quart de tour. Sur téléphone : glisser pour déplacer, pincer pour zoomer.
 - **Barre de ressources** en haut : argent, visiteurs/h, prix du billet (ouvre le curseur), autonomie, population, niveau du village.
 - **Barre de commande** en bas, façon jeu de stratégie, **repliable** :
   - gauche : la sélection (état, animaux, gestations) ;
-  - milieu : grille d'actions contextuelle (nettoyer, agrandir, soigner, vendre, renommer ; améliorer pour un bâtiment ; construire pour un emplacement libre) ;
+  - milieu : grille d'actions contextuelle (nettoyer, redimensionner, soigner, vendre, renommer ; améliorer pour un bâtiment ; construire un enclos dans une zone, ou un bâtiment sur un emplacement libre) ;
   - droite : suivi des missions, accès au marchand, aux missions et à la Gazette.
 - **Missions** : marqueur « ! » au-dessus de la mairie quand Margaux a une mission ; bannière « Nouvelle mission » qui apparaît puis se range dans la barre du bas.
 - **Fenêtres** (marchand, missions, Gazette/résumé, fiche détaillée d'un animal) en HTML par-dessus la carte.
