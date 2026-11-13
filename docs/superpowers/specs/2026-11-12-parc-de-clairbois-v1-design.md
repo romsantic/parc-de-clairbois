@@ -210,7 +210,7 @@ Missions extraordinaires (animaux rares) liées aux expéditions. Le système de
 
 | Version | Contenu |
 |---|---|
-| V2 — Le village s'éveille | Personnel (soigneurs, vétérinaire, entretien), maladies et centre vétérinaire, ferme et production de nourriture, décoration et confort visiteurs, niveaux 4–5, ~20 espèces, marchand itinérant, trophées |
+| V2 — Le village s'éveille | Personnel (soigneurs, vétérinaire, entretien), maladies et centre vétérinaire, ferme et production de nourriture, décoration et confort visiteurs, **construction de routes et chemins contre de l'argent** (les visiteurs les empruntent ; le composant de chemin existe depuis l'étape 1), niveaux 4–5, ~20 espèces, marchand itinérant, trophées |
 | V3 — Les grandes découvertes | Expéditions en temps réel, missions extraordinaires et animaux rares, musée et collections |
 | V4 — La science | Laboratoire et arbre de recherches, variantes rares à la naissance, conservation (relâcher des animaux) |
 | V5 — Le fil des saisons | Saisons réelles, événements (fête du village), Gazette complète avec avis et nouvelles |

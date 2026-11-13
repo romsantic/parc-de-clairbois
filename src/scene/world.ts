@@ -20,16 +20,26 @@ export interface World {
   resize(): void
 }
 
-/** Tracé de la rivière : du nord au sud, entre le zoo (ouest) et le village (est). */
+/** Le terrain dépasse largement le domaine jouable : ses bords se perdent dans la brume. */
+const GROUND = { halfX: 120, halfZ: 100 }
+
+/**
+ * Tracé de la rivière : du nord au sud, entre le zoo (ouest) et le village (est).
+ * Elle part et sort au-delà des bords du terrain, pour ne jamais s'arrêter à l'écran.
+ */
 const RIVER = new THREE.CatmullRomCurve3([
-  new THREE.Vector3(4, 0, -MAP.halfZ - 6),
+  new THREE.Vector3(-6, 0, -GROUND.halfZ - 10),
+  new THREE.Vector3(2, 0, -60),
+  new THREE.Vector3(-2, 0, -35),
   new THREE.Vector3(1, 0, -12),
   new THREE.Vector3(5, 0, -3),
   new THREE.Vector3(2, 0, 7),
   new THREE.Vector3(6, 0, 16),
-  new THREE.Vector3(3, 0, MAP.halfZ + 6),
+  new THREE.Vector3(2, 0, 38),
+  new THREE.Vector3(9, 0, 65),
+  new THREE.Vector3(4, 0, GROUND.halfZ + 10),
 ])
-const RIVER_POINTS = RIVER.getSpacedPoints(200)
+const RIVER_POINTS = RIVER.getSpacedPoints(500)
 const RIVER_HALF_WIDTH = 2.2
 
 function riverDistance(x: number, z: number): number {
@@ -48,7 +58,7 @@ function groundHeight(x: number, z: number): number {
 }
 
 function makeGround(): THREE.Mesh {
-  const geo = new THREE.PlaneGeometry(MAP.halfX * 2 + 30, MAP.halfZ * 2 + 30, 90, 66)
+  const geo = new THREE.PlaneGeometry(GROUND.halfX * 2, GROUND.halfZ * 2, 180, 150)
   geo.rotateX(-Math.PI / 2)
   const pos = geo.attributes.position as THREE.BufferAttribute
   const colors: number[] = []
@@ -135,7 +145,7 @@ export function createWorld(canvas: HTMLCanvasElement, models: Map<ModelKey, Loa
 
   const sky = makeSky()
   scene.add(sky.mesh)
-  scene.fog = new THREE.Fog('#d6ecf8', 70, 160)
+  scene.fog = new THREE.Fog('#d6ecf8', 60, 140)
 
   const hemi = new THREE.HemisphereLight('#dcefff', '#5d7a3c', 1)
   scene.add(hemi)

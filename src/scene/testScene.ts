@@ -4,6 +4,7 @@ import type { World } from './world'
 import { MAP } from './world'
 import { AnimalActor, fitHeight } from './animalActor'
 import type { Bounds } from './wander'
+import { createPath } from './path'
 
 /**
  * Scène de test de l'étape 1 : le zoo à l'ouest de la rivière, le village à l'est.
@@ -127,28 +128,23 @@ export function buildTestScene(world: World, rng: () => number): { update(dt: nu
   place('charrette', 10, 4, { height: 1.8, rot: 0.8, r: 1.5 })
   place('banc', 15, 3.5, { height: 0.9, rot: Math.PI, r: 0.8 })
 
-  // Chemin : de l'entrée du zoo au village, avec un petit pont de bois
-  const pathMat = new THREE.MeshStandardMaterial({ color: '#cdb58a', roughness: 1 })
-  const pathPts = [[-14, 10], [-6, 10.5], [0, 11], [6, 10.5], [10, 6], [13, 2]]
-  for (let i = 0; i < pathPts.length - 1; i++) {
-    const [x0, z0] = pathPts[i], [x1, z1] = pathPts[i + 1]
-    const len = Math.hypot(x1 - x0, z1 - z0)
-    const seg = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.08, len + 0.6), pathMat)
-    const mx = (x0 + x1) / 2, mz = (z0 + z1) / 2
-    seg.position.set(mx, Math.max(groundHeight(mx, mz), -0.1) + 0.05, mz)
-    seg.rotation.y = Math.atan2(x1 - x0, z1 - z0)
-    seg.receiveShadow = true
-    scene.add(seg)
-    for (let k = 0; k <= 4; k++) occupied.push({ x: x0 + ((x1 - x0) * k) / 4, z: z0 + ((z1 - z0) * k) / 4, r: 1.6 })
-  }
-  // Pont : là où le chemin croise la rivière
+  // Pont de bois là où le chemin croise la rivière
+  const BZ = 10.8
   let bx = 0, best = Infinity
-  for (let x = -2; x <= 10; x += 0.1) { const d = riverDistance(x, 10.8); if (d < best) { best = d; bx = x } }
-  const wood = new THREE.MeshStandardMaterial({ color: '#8a5a3a', roughness: 0.9 })
-  const deck = new THREE.Mesh(new THREE.BoxGeometry(7.5, 0.25, 2.6), wood)
-  deck.position.set(bx, 0.25, 10.8)
-  deck.castShadow = deck.receiveShadow = true
-  scene.add(deck)
+  for (let x = -2; x <= 10; x += 0.1) { const d = riverDistance(x, BZ); if (d < best) { best = d; bx = x } }
+  const wood = new THREE.MeshStandardMaterial({ color: '#8a5a3a', roughness: 0.9, flatShading: true })
+  const woodLight = new THREE.MeshStandardMaterial({ color: '#9c6a45', roughness: 0.9, flatShading: true })
+  for (let i = 0; i < 13; i++) {
+    const plank = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.16, 2.6), i % 2 ? wood : woodLight)
+    plank.position.set(bx - 3.3 + i * 0.55, 0.28 + (i % 3) * 0.015, BZ)
+    plank.castShadow = plank.receiveShadow = true
+    scene.add(plank)
+  }
+  for (const side of [-1, 1]) {
+    const beam = new THREE.Mesh(new THREE.BoxGeometry(7.6, 0.22, 0.22), wood)
+    beam.position.set(bx, 0.12, BZ + side * 1.05)
+    scene.add(beam)
+  }
   for (const side of [-1, 1]) {
     const rail = new THREE.Mesh(new THREE.BoxGeometry(7.5, 0.12, 0.12), wood)
     rail.position.set(bx, 0.95, 10.8 + side * 1.2)
@@ -161,7 +157,21 @@ export function buildTestScene(world: World, rng: () => number): { update(dt: nu
       scene.add(post)
     }
   }
-  occupied.push({ x: bx, z: 10.8, r: 4 })
+  occupied.push({ x: bx, z: BZ, r: 4 })
+
+  // Chemins de terre : l'allée du zoo, puis jusqu'au pont et au cœur du village
+  const paths = [
+    [{ x: -13.6, z: -18 }, { x: -13.6, z: -5 }, { x: -13.8, z: 4 }, { x: -12.5, z: 10 }],
+    [{ x: -22, z: 11 }, { x: -12.5, z: 10 }, { x: -6, z: 10.6 }, { x: bx - 3.5, z: BZ }],
+    [{ x: bx + 3.5, z: BZ }, { x: bx + 7, z: 10 }, { x: 11, z: 6 }, { x: 14, z: 2 }, { x: 17, z: 0.5 }],
+    [{ x: 14, z: 2 }, { x: 19, z: 7.5 }, { x: 21, z: 9.5 }],
+  ]
+  for (const p of paths) {
+    scene.add(createPath(p, { ground: (x, z) => Math.max(groundHeight(x, z), -0.05), rng }))
+    for (let i = 0; i < p.length - 1; i++)
+      for (let k = 0; k <= 4; k++)
+        occupied.push({ x: p[i].x + ((p[i + 1].x - p[i].x) * k) / 4, z: p[i].z + ((p[i + 1].z - p[i].z) * k) / 4, r: 1.8 })
+  }
 
   // Marqueur de mission « ! » au-dessus de la mairie
   const marker = new THREE.Group()
