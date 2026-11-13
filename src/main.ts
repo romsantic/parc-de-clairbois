@@ -8,7 +8,11 @@ import { runGame } from './game/runGame'
 import type { Storage } from './save/save'
 import { createCameraRig } from './scene/cameraRig'
 import { mountCameraButtons } from './ui/cameraButtons'
-import { buildTestScene } from './scene/testScene'
+import { buildDecor } from './scene/decor'
+import { drawZones } from './scene/zonesView'
+import { createParkView } from './scene/parkView'
+import { SPECIES_MODELS } from './data/speciesModels'
+import { TUNING } from './data/tuning'
 import { createRng } from './core/rng'
 
 /** Le stockage du navigateur, ou une mémoire temporaire s'il est bloqué. */
@@ -32,13 +36,16 @@ async function start(): Promise<void> {
   // La partie tourne même si la 3D n'est pas disponible : rien n'est perdu.
   // Si le stockage du navigateur est bloqué (navigation privée stricte), on joue sans sauvegarde.
   const { store, ok } = openStorage()
+  let game: ReturnType<typeof runGame>
   try {
-    runGame(store, ok)
+    game = runGame(store, ok)
   } catch (e) {
     console.error(e)
     showError("La partie n'a pas pu démarrer. Ta sauvegarde n'a pas été modifiée ; recharge la page.")
     return
   }
+  if (!game) return // un message a déjà expliqué pourquoi
+  const getState = game.get
   if (!WebGL.isWebGL2Available()) {
     showError(NO_3D)
     return
@@ -46,7 +53,14 @@ async function start(): Promise<void> {
   const loading = showLoading('Chargement du parc…')
   const hideLoading = () => loading.hide()
   try {
-    const models = await loadModels(Object.keys(MODELS) as ModelKey[], undefined, (done, total) =>
+    // Au démarrage : le décor et les espèces déjà présentes. Les autres animaux à la demande.
+    const animalKeys = new Set<ModelKey>(Object.values(SPECIES_MODELS).flatMap((m) => [m.female, m.male]))
+    const needed = new Set<ModelKey>((Object.keys(MODELS) as ModelKey[]).filter((k) => !animalKeys.has(k)))
+    for (const a of getState().animals) {
+      const m = SPECIES_MODELS[a.species]
+      needed.add(a.sex === 'F' ? m.female : m.male)
+    }
+    const models = await loadModels([...needed], undefined, (done, total) =>
       loading.update(`Chargement du parc… ${Math.round((done / total) * 100)} %`),
     )
     let world: ReturnType<typeof createWorld>
@@ -64,7 +78,9 @@ async function start(): Promise<void> {
       ev.preventDefault()
       showError("L'affichage 3D a été interrompu par l'appareil. Recharge la page pour retrouver ton parc.")
     })
-    const testScene = buildTestScene(world, createRng(2026))
+    const decor = buildDecor(world, createRng(2026))
+    drawZones(world, TUNING.VILLAGE_LEVEL_V1)
+    const park = createParkView(world, getState, createRng(Date.now() >>> 0))
     const rig = createCameraRig(world, canvas)
     mountCameraButtons(rig)
     window.addEventListener('resize', () => world.resize())
@@ -76,7 +92,8 @@ async function start(): Promise<void> {
       try {
         rig.update(dt)
         world.update(dt)
-        testScene.update(dt)
+        decor.update(dt)
+        park.update(dt)
         world.renderer.render(world.scene, world.camera)
       } catch (e) {
         // Plutôt qu'une scène figée sans explication : on s'arrête et on le dit.

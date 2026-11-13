@@ -1,0 +1,150 @@
+import * as THREE from 'three'
+import type { ModelKey } from '../assets/manifest'
+import { ZONES, PATHS } from '../data/zones'
+import type { World } from './world'
+import { fitHeight } from './animalActor'
+import { prepareStatic } from './materials'
+import { createPath } from './path'
+
+/** Pont et allée du zoo : à la hauteur du couloir de chemin des données (z = 10). */
+export const BRIDGE_Z = 10
+
+/**
+ * Décor fixe : village, pont, chemins, marqueur de mission, arbres et rochers.
+ * Les zones du zoo restent libres de toute décoration (on y pose les enclos).
+ */
+export function buildDecor(world: World, rng: () => number): { update(dt: number): void } {
+  const { scene, models, groundHeight, riverDistance } = world
+  const occupied: { x: number; z: number; r: number }[] = []
+
+  function place(key: ModelKey, x: number, z: number, opts: { height?: number; rot?: number; r?: number } = {}) {
+    const src = models.get(key)
+    if (!src) return undefined
+    const obj = src.scene.clone(true)
+    prepareStatic(obj)
+    if (opts.height) fitHeight(obj, opts.height)
+    obj.rotation.y = opts.rot ?? 0
+    obj.position.set(x, groundHeight(x, z), z)
+    scene.add(obj)
+    occupied.push({ x, z, r: opts.r ?? 1.5 })
+    return obj
+  }
+
+  const inRect = (x: number, z: number, r: { x: number; z: number; w: number; d: number }, m: number) =>
+    x > r.x - m && x < r.x + r.w + m && z > r.z - m && z < r.z + r.d + m
+  const free = (x: number, z: number, r: number) =>
+    riverDistance(x, z) > 4 + r &&
+    !ZONES.some((zn) => inRect(x, z, zn.rect, r + 0.5)) &&
+    !PATHS.some((p) => inRect(x, z, p, r)) &&
+    occupied.every((o) => Math.hypot(o.x - x, o.z - z) > o.r + r)
+
+  // ---------- Le village, de l'autre côté de la rivière ----------
+  const mairie = place('mairie', 17, -3, { height: 7, rot: -Math.PI / 2, r: 3.5 })
+  place('maison1', 12, -12, { height: 3.6, rot: 0.2, r: 3 })
+  place('maison2', 21, -12, { height: 3.8, rot: -0.3, r: 3 })
+  place('maison3', 25, 2, { height: 3.6, rot: -Math.PI / 2, r: 3 })
+  place('maison2', 11, 16, { height: 3.6, rot: Math.PI + 0.4, r: 3 })
+  place('auberge', 22, 12, { height: 4.6, rot: Math.PI + 0.3, r: 4 })
+  place('moulin', 29, -14, { height: 7, rot: -0.6, r: 3.5 })
+  place('ecurie', 28, 16, { height: 3.2, rot: Math.PI, r: 3 })
+  place('puits', 13, 0, { height: 2.2, r: 1.2 })
+  place('etal', 18, 5, { height: 2.6, rot: Math.PI, r: 1.5 })
+  place('tonneau', 19.8, 5.5, { height: 1, r: 0.5 })
+  place('charrette', 10, 4, { height: 1.8, rot: 0.8, r: 1.5 })
+  place('banc', 15, 3.5, { height: 0.9, rot: Math.PI, r: 0.8 })
+
+  // ---------- Pont de bois là où l'allée croise la rivière ----------
+  const BZ = BRIDGE_Z
+  let bx = 0, best = Infinity
+  for (let x = -2; x <= 10; x += 0.1) { const d = riverDistance(x, BZ); if (d < best) { best = d; bx = x } }
+  const wood = new THREE.MeshStandardMaterial({ color: '#8a5a3a', roughness: 0.9, flatShading: true })
+  const woodLight = new THREE.MeshStandardMaterial({ color: '#9c6a45', roughness: 0.9, flatShading: true })
+  for (let i = 0; i < 13; i++) {
+    const plank = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.16, 2.6), i % 2 ? wood : woodLight)
+    plank.position.set(bx - 3.3 + i * 0.55, 0.28 + (i % 3) * 0.015, BZ)
+    plank.castShadow = plank.receiveShadow = true
+    scene.add(plank)
+  }
+  for (const side of [-1, 1]) {
+    const beam = new THREE.Mesh(new THREE.BoxGeometry(7.6, 0.22, 0.22), wood)
+    beam.position.set(bx, 0.12, BZ + side * 1.05)
+    scene.add(beam)
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(7.5, 0.12, 0.12), wood)
+    rail.position.set(bx, 0.95, BZ + side * 1.2)
+    rail.castShadow = true
+    scene.add(rail)
+    for (const px of [-3.4, 0, 3.4]) {
+      const post = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.8, 0.15), wood)
+      post.position.set(bx + px, 0.6, BZ + side * 1.2)
+      post.castShadow = true
+      scene.add(post)
+    }
+  }
+  occupied.push({ x: bx, z: BZ, r: 4 })
+
+  // ---------- Chemins de terre : allée du zoo, pont, village ----------
+  const paths = [
+    [{ x: -36, z: BZ }, { x: -20, z: BZ }, { x: -8, z: BZ }, { x: bx - 3.5, z: BZ }],
+    [{ x: bx + 3.5, z: BZ }, { x: bx + 7, z: 9.5 }, { x: 11, z: 6 }, { x: 14, z: 2 }, { x: 17, z: 0.5 }],
+    [{ x: 14, z: 2 }, { x: 19, z: 7.5 }, { x: 21, z: 10 }],
+  ]
+  for (const p of paths) {
+    scene.add(createPath(p, { ground: (x, z) => Math.max(groundHeight(x, z), -0.05), rng }))
+    for (let i = 0; i < p.length - 1; i++)
+      for (let k = 0; k <= 4; k++)
+        occupied.push({ x: p[i].x + ((p[i + 1].x - p[i].x) * k) / 4, z: p[i].z + ((p[i + 1].z - p[i].z) * k) / 4, r: 1.8 })
+  }
+
+  // ---------- Marqueur de mission « ! » au-dessus de la mairie ----------
+  const marker = new THREE.Group()
+  const gold = new THREE.MeshStandardMaterial({ color: '#f2b13a', emissive: '#a8660a', emissiveIntensity: 0.6, roughness: 0.4 })
+  const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.16, 1.3, 8), gold)
+  bar.position.y = 0.95
+  marker.add(bar, new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 8), gold))
+  const markerBase = (mairie ? new THREE.Box3().setFromObject(mairie).max.y : 9) + 1.4
+  marker.position.set(17, markerBase, -3)
+  scene.add(marker)
+
+  // ---------- Nature, hors des zones du zoo ----------
+  const trees: ModelKey[] = ['arbre1', 'arbre2', 'arbre3', 'bouleau', 'saule']
+  const pick = <T,>(a: T[]) => a[Math.floor(rng() * a.length)]
+  type Area = { minX: number; maxX: number; minZ: number; maxZ: number }
+  const scatter = (keys: ModelKey[], count: number, area: Area, h: [number, number], r: number) => {
+    for (let i = 0, tries = 0; i < count && tries < count * 40; tries++) {
+      const x = area.minX + rng() * (area.maxX - area.minX), z = area.minZ + rng() * (area.maxZ - area.minZ)
+      if (!free(x, z, r)) continue
+      place(pick(keys), x, z, { height: h[0] + rng() * (h[1] - h[0]), rot: rng() * Math.PI * 2, r })
+      i++
+    }
+  }
+  const all: Area = { minX: -46, maxX: 36, minZ: -34, maxZ: 32 }
+  scatter(['sapin1', 'sapin2'], 26, { minX: -46, maxX: -2, minZ: -36, maxZ: -24 }, [5, 7.5], 1.6) // lisière au nord
+  scatter(['sapin1', 'sapin2'], 10, { minX: -48, maxX: -35, minZ: -24, maxZ: 24 }, [5, 7.5], 1.6) // à l'ouest
+  scatter(trees, 26, all, [3.8, 6], 1.8)
+  scatter(['buisson', 'buissonBaies'], 34, all, [0.9, 1.5], 0.8)
+  scatter(['rocher', 'rocherMousse'], 16, all, [0.6, 1.4], 0.8)
+  scatter(['fleurs', 'plante'], 40, all, [0.4, 0.7], 0.4)
+  scatter(['herbe', 'herbe2'], 80, all, [0.35, 0.6], 0.2)
+  scatter(['souche'], 4, all, [0.5, 0.7], 0.6)
+  for (let i = 0; i < 8; i++) {
+    const z = -18 + rng() * 34
+    let x = 0, bestD = Infinity
+    for (let t = -4; t <= 10; t += 0.2) { const d = riverDistance(t, z); if (d < bestD) { bestD = d; x = t } }
+    const n = models.get('nenuphar')?.scene.clone(true)
+    if (!n) continue
+    prepareStatic(n)
+    fitHeight(n, 0.12)
+    n.position.set(x + (rng() - 0.5) * 2.4, -0.27, z)
+    n.rotation.y = rng() * 6.28
+    scene.add(n)
+  }
+
+  let t = 0
+  return {
+    update(dt) {
+      t += dt
+      marker.position.y = markerBase + Math.sin(t * 2.2) * 0.25
+      marker.rotation.y = t * 1.2
+    },
+  }
+}

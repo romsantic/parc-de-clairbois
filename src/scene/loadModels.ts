@@ -57,3 +57,21 @@ export async function loadModels(
   )
   return new Map(entries)
 }
+
+const inFlight = new Map<ModelKey, Promise<LoadedModel>>()
+
+/**
+ * Charge un modèle à la demande (les animaux d'une espèce qu'on n'a pas encore) et le range
+ * dans `models`. Plusieurs demandes simultanées du même modèle n'en font qu'un téléchargement.
+ */
+export function requestModel(models: Map<ModelKey, LoadedModel>, key: ModelKey, load = loadByExtension): Promise<LoadedModel> {
+  const have = models.get(key)
+  if (have) return Promise.resolve(have)
+  let p = inFlight.get(key)
+  if (!p) {
+    p = loadModels([key], load).then((m) => { const v = m.get(key)!; models.set(key, v); inFlight.delete(key); return v })
+    p.catch(() => inFlight.delete(key))
+    inFlight.set(key, p)
+  }
+  return p
+}

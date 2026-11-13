@@ -12,6 +12,10 @@ export class AnimalActor {
   private target: Point
   private pause = 0
   private speed: number
+  private baseScale: THREE.Vector3
+  private ageScale = 1
+  private canWalk: boolean
+  private t = 0
 
   constructor(
     model: LoadedModel,
@@ -22,9 +26,11 @@ export class AnimalActor {
   ) {
     this.object = cloneSkinned(model.scene)
     fitHeight(this.object, height)
+    this.baseScale = this.object.scale.clone()
     this.object.traverse((o) => { if ((o as THREE.Mesh).isMesh) { o.castShadow = true; o.receiveShadow = true } })
     this.mixer = new THREE.AnimationMixer(this.object)
     for (const clip of model.animations) this.actions.set(clip.name, this.mixer.clipAction(clip))
+    this.canWalk = hasWalk(model.animations.map((c) => c.name))
     this.speed = 0.7 + rng() * 0.5
     const start = pickWanderTarget(bounds, rng, 1)
     this.object.position.set(start.x, ground(start.x, start.z), start.z)
@@ -33,6 +39,29 @@ export class AnimalActor {
     this.pause = rng() * 3
     this.play(this.restClip())
     this.mixer.update(rng() * 3) // désynchronise les animaux
+  }
+
+  /** Taille selon l'âge (bébé, jeune, adulte). */
+  setScale(k: number): void {
+    if (k === this.ageScale) return
+    this.ageScale = k
+    this.object.scale.copy(this.baseScale).multiplyScalar(k)
+  }
+
+  /** Nouvel enclos ou enclos redimensionné : l'animal reste (ou revient) à l'intérieur. */
+  setBounds(b: Bounds): void {
+    this.bounds = b
+    const p = this.object.position
+    if (p.x < b.minX || p.x > b.maxX || p.z < b.minZ || p.z > b.maxZ) {
+      const q = pickWanderTarget(b, this.rng, 1)
+      p.set(q.x, this.ground(q.x, q.z), q.z)
+    }
+    this.target = pickWanderTarget(b, this.rng, 1)
+  }
+
+  dispose(): void {
+    this.mixer.stopAllAction()
+    this.object.removeFromParent()
   }
 
   private restClip(): string {
@@ -51,6 +80,7 @@ export class AnimalActor {
 
   update(dt: number): void {
     this.mixer.update(dt)
+    this.t += dt
     if (this.pause > 0) {
       this.pause -= dt
       if (this.pause <= 0) { this.target = pickWanderTarget(this.bounds, this.rng, 1); this.play('Walk') }
@@ -65,7 +95,9 @@ export class AnimalActor {
       diff = Math.atan2(Math.sin(diff), Math.cos(diff))
       this.object.rotation.y += diff * Math.min(1, dt * 5)
     }
-    p.set(step.x, this.ground(step.x, step.z), step.z)
+    // Modèles sans animation de marche : petit balancement pour ne pas « glisser ».
+    const bob = this.canWalk ? 0 : Math.abs(Math.sin(this.t * 9)) * 0.07 * this.ageScale
+    p.set(step.x, this.ground(step.x, step.z) + bob, step.z)
     if (step.arrived) { this.pause = 2 + this.rng() * 4; this.play(this.restClip()) }
   }
 }
