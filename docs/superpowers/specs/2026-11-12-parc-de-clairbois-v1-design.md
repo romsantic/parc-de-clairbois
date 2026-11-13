@@ -121,6 +121,18 @@ Passage de niveau : population atteinte **et** mission d'histoire du palier term
 
 Fin de V1 : 10 emplacements de zoo, 6 de village.
 
+### Les chemins grandissent avec le village
+L'allure des chemins change à chaque montée de niveau, pour que la croissance du village se voie sur la carte :
+
+| Niveau | Chemins |
+|---|---|
+| 1. Hameau | Terre battue, bords herbeux, cailloux |
+| 2. Village | Gravier clair avec bordures de pierres |
+| 3. Bourg | Pavés, avec quelques lanternes le long des chemins principaux |
+| 4–5 (V2) | Routes pavées larges, trottoirs, lampadaires qui s'allument la nuit |
+
+Le changement est automatique au passage de niveau, sur tous les chemins existants. En V2, les routes construites par le joueur suivent la même règle.
+
 ### Prix du billet
 - Réglable avec un curseur. Le jeu calcule un **prix juste** selon le niveau du village et l'attrait du zoo.
 - Effet sur l'affluence : moitié prix +30 % ; prix juste 100 % ; 1,5× −40 % ; 2× −75 % et baisse lente de la réputation.
