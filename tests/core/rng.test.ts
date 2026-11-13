@@ -1,5 +1,18 @@
 import { describe, it, expect } from 'vitest'
-import { createRng } from '../../src/core/rng'
+import { createRng, nextRandom } from '../../src/core/rng'
+
+describe('nextRandom', () => {
+  it('est pur et rejoue la même suite que createRng', () => {
+    const r = createRng(42)
+    let s = 42
+    for (let i = 0; i < 5; i++) {
+      const [v, n] = nextRandom(s)
+      expect(v).toBe(r())
+      s = n
+    }
+    expect(nextRandom(42)).toEqual(nextRandom(42))
+  })
+})
 
 describe('createRng', () => {
   it('donne la même suite pour la même graine', () => {
