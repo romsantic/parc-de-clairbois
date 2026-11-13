@@ -19,7 +19,7 @@ function run(s: GameState, steps: number, ev: GameEvent[] = []) {
   return ev
 }
 
-const couple = (over: Parameters<typeof animal>[3] = {}) =>
+const couple = (over: Parameters<typeof animal>[4] = {}) =>
   emptyState({ rng: 7, enclosures: [enclosure(1, 'mouton')], animals: [animal(1, 'mouton', 'F', 1), animal(2, 'mouton', 'M', 1, over)] })
 
 describe('breedingStep', () => {
