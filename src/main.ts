@@ -3,7 +3,8 @@ import WebGL from 'three/examples/jsm/capabilities/WebGL.js'
 import { MODELS, type ModelKey } from './assets/manifest'
 import { loadModels, AssetLoadError } from './scene/loadModels'
 import { createWorld } from './scene/world'
-import { showError, showLoading } from './ui/errorScreen'
+import { showError, showLoading, showNotice } from './ui/errorScreen'
+import { runGame } from './game/runGame'
 import { createCameraRig } from './scene/cameraRig'
 import { mountCameraButtons } from './ui/cameraButtons'
 import { buildTestScene } from './scene/testScene'
@@ -14,6 +15,14 @@ const NO_3D = 'Ton navigateur ne peut pas afficher la 3D. Essaie avec une versio
 async function start(): Promise<void> {
   const canvas = document.querySelector<HTMLCanvasElement>('#monde')
   if (!canvas) return
+  // La partie tourne même si la 3D n'est pas disponible : rien n'est perdu.
+  // Si le stockage du navigateur est bloqué (navigation privée stricte), on joue sans sauvegarde.
+  try {
+    runGame(window.localStorage)
+  } catch (e) {
+    console.error(e)
+    showNotice("Ton navigateur bloque la sauvegarde : la partie ne sera pas conservée après fermeture.")
+  }
   if (!WebGL.isWebGL2Available()) {
     showError(NO_3D)
     return

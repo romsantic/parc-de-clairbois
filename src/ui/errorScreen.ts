@@ -14,6 +14,16 @@ export function showError(message: string): void {
   document.body.append(box)
 }
 
+/** Message discret en bas de l'écran, qui disparaît seul. */
+export function showNotice(message: string, ms = 8000): void {
+  const box = document.createElement('div')
+  box.className = 'avis'
+  box.setAttribute('role', 'status')
+  box.textContent = message
+  document.body.append(box)
+  setTimeout(() => box.remove(), ms)
+}
+
 /** Message de chargement, retiré dès que la scène est prête. */
 export function showLoading(text: string): { update(text: string): void; hide(): void } {
   const box = document.createElement('div')
