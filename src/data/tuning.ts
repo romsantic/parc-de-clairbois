@@ -18,7 +18,7 @@ export const TUNING = {
   SOCIAL_ALONE_FACTOR: 0.6,
 
   START_COINS: 500,
-  START_ENCLOSURE: { x: -26, z: -16, w: 12, d: 10 },
+  START_ENCLOSURE: { x: -26, z: -5, w: 12, d: 10 }, // dans la prairie, hors chemin
   START_FOURRAGE: 10,
   START_PANTRY_CAPACITY: 200,
 
@@ -26,4 +26,10 @@ export const TUNING = {
   CURE_MIN_COST: 50,
   CURE_PRICE_SHARE: 0.25,
   NAME_MAX_LENGTH: 20,
+
+  FENCE_COST_PER_M: 4,
+  LAND_COST_PER_M2: 1,
+  MIN_SIDE_M: 6,
+  /** Niveau du village tant que l'étape 4 (niveaux) n'existe pas. */
+  VILLAGE_LEVEL_V1: 1,
 } as const
