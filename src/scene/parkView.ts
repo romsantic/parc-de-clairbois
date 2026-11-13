@@ -24,9 +24,10 @@ export function createParkView(world: World, getState: () => GameState, rng: () 
   const pending = new Set<number>() // animaux dont le modèle est en cours de chargement
   const highlight = new THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>(
     new THREE.BufferGeometry(),
-    new THREE.MeshBasicMaterial({ color: '#fff3b0', transparent: true, opacity: 0.35, depthWrite: false }),
+    new THREE.MeshBasicMaterial({ color: '#ffd54a', transparent: true, opacity: 0.8, depthWrite: false, depthTest: false }), // par-dessus : le sol ondule
   )
   highlight.visible = false
+  highlight.renderOrder = 3
   world.scene.add(highlight)
   let selected: number | null = null
   let ageTimer = 0
@@ -37,7 +38,7 @@ export function createParkView(world: World, getState: () => GameState, rng: () 
     // Liseré lumineux : un cadre légèrement plus grand que l'enclos, posé au sol.
     highlight.geometry.dispose()
     const shape = new THREE.Shape()
-    const m = 0.5, r = e.rect
+    const m = 0.9, r = e.rect
     shape.moveTo(-r.w / 2 - m, -r.d / 2 - m); shape.lineTo(r.w / 2 + m, -r.d / 2 - m)
     shape.lineTo(r.w / 2 + m, r.d / 2 + m); shape.lineTo(-r.w / 2 - m, r.d / 2 + m)
     const hole = new THREE.Path()

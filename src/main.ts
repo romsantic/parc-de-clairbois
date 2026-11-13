@@ -11,6 +11,7 @@ import { mountCameraButtons } from './ui/cameraButtons'
 import { buildDecor } from './scene/decor'
 import { drawZones } from './scene/zonesView'
 import { createParkView } from './scene/parkView'
+import { createPicker, type Pick } from './scene/picking'
 import { SPECIES_MODELS } from './data/speciesModels'
 import { TUNING } from './data/tuning'
 import { createRng } from './core/rng'
@@ -81,6 +82,10 @@ async function start(): Promise<void> {
     const decor = buildDecor(world, createRng(2026))
     drawZones(world, TUNING.VILLAGE_LEVEL_V1)
     const park = createParkView(world, getState, createRng(Date.now() >>> 0))
+    const picker = createPicker(world, canvas, () => park.enclosureMeshes())
+    let selection: Pick = { kind: 'rien' }
+    picker.onPick((p) => { selection = p; park.setSelected(p.kind === 'enclos' ? p.id : null) })
+    void selection // lue par la barre du bas (tâche 7)
     const rig = createCameraRig(world, canvas)
     mountCameraButtons(rig)
     window.addEventListener('resize', () => world.resize())
