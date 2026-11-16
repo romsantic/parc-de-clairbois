@@ -4,7 +4,7 @@ import { farmLevel } from './village'
 import { SPECIES } from '../data/species'
 import type { SpeciesId } from '../data/species'
 import { happiness } from './happiness'
-import type { GameEvent, GameState } from './types'
+import type { BuildingType, GameEvent, GameState } from './types'
 
 /** Attrait : par espèce présente, base × (1 + 0,5 × √(n − 1)), n = nombre d'animaux de l'espèce. */
 export function appeal(state: GameState): number {
@@ -53,6 +53,24 @@ export function visitorsPerHour(state: GameState, price: number = state.ticketPr
     * reputation * auberge * ECONOMY.VISITORS_PER_APPEAL
 }
 
+/** Clients et recettes par heure d'un bâtiment, pour un nombre de visiteurs et d'espèces donnés. */
+function buildingFlow(b: { type: BuildingType; level: 1 | 2 | 3 }, visiteurs: number, especes: number): { clients: number; pieces: number } {
+  const data = BUILDINGS[b.type]
+  const i = b.level - 1
+  const clients = Math.min(visiteurs * data.share, data.maxClientsPerH[i])
+  const depense = b.type === 'boutique'
+    ? (ECONOMY.BOUTIQUE_BASE + ECONOMY.BOUTIQUE_PER_SPECIES * especes) * data.spend[i]
+    : data.spend[i]
+  return { clients, pieces: clients * depense }
+}
+
+/** Estimation d'un bâtiment (clients/h et pièces/h) ; zéro si l'emplacement est libre. */
+export function buildingIncomePerHour(state: GameState, slot: number): { clients: number; pieces: number } {
+  const b = state.buildings.find((x) => x.slot === slot)
+  if (!b) return { clients: 0, pieces: 0 }
+  return buildingFlow(b, visitorsPerHour(state), new Set(state.animals.map((a) => a.species)).size)
+}
+
 /** Revenus par heure : billets, commerces du village, et nombre de clients servis. */
 export function incomePerHour(state: GameState, price: number = state.ticketPrice):
   { visiteurs: number; billets: number; village: number; clients: number } {
@@ -61,14 +79,9 @@ export function incomePerHour(state: GameState, price: number = state.ticketPric
   let village = 0
   let clients = 0
   for (const b of state.buildings) {
-    const data = BUILDINGS[b.type]
-    const i = b.level - 1
-    const c = Math.min(visiteurs * data.share, data.maxClientsPerH[i])
-    const depense = b.type === 'boutique'
-      ? (ECONOMY.BOUTIQUE_BASE + ECONOMY.BOUTIQUE_PER_SPECIES * especes) * data.spend[i]
-      : data.spend[i]
-    clients += c
-    village += c * depense
+    const f = buildingFlow(b, visiteurs, especes)
+    clients += f.clients
+    village += f.pieces
   }
   return { visiteurs, billets: visiteurs * price, village, clients }
 }

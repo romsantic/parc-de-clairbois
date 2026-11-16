@@ -11,7 +11,9 @@ import { happiness } from '../sim/happiness'
 import { ICONS, iconButton } from './icons'
 import { closeDrawer, isDrawerOpen, openDrawer, refreshDrawer } from './drawer'
 import { toast } from './feedback'
-import { BUILDINGS, SLOTS } from '../data/economy'
+import { buildBuildingBar, slotKey } from './buildingBar'
+import { toggleMerchantPanel } from './merchantPanel'
+import { sellPrice } from '../sim/merchant'
 
 export interface BottomBarContext {
   get(): GameState
@@ -44,9 +46,10 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
   mission.append(text('span', 'Les missions arrivent bientôt'))
   mission.addEventListener('click', () => toast('Les missions de Margaux arrivent bientôt', true))
 
-  const marchand = iconButton(ICONS.marchand, 'Marchand (bientôt)', { disabled: true })
+  const marchand = iconButton(ICONS.marchand, 'Marchand d’animaux')
+  marchand.addEventListener('click', () => toggleMerchantPanel({ get: ctx.get, selection: ctx.selection, dispatch: ctx.dispatch }))
   const gazette = iconButton(ICONS.gazette, 'Gazette (bientôt)', { disabled: true })
-  for (const b of [marchand, gazette]) b.addEventListener('click', () => toast('Bientôt disponible', true))
+  gazette.addEventListener('click', () => toast('Bientôt disponible', true))
   const fold = iconButton(ICONS.replier, 'Replier la barre')
   fold.addEventListener('click', () => { bar.hidden = true; tab.hidden = false; closeDrawer() })
   tab.addEventListener('click', () => { bar.hidden = false; tab.hidden = true })
@@ -54,6 +57,10 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
 
   let builtFor = ''
   let drawerSeen = ''
+  let slotUpdate: (() => void) | null = null
+  /** Animal dont la vente attend sa confirmation (annulée au bout de 3 s). */
+  let sellArmed: number | null = null
+  let sellTimer = 0
 
   function enclosureDetails(encId: number) {
     openDrawer(`enclos:${encId}`, 'Animaux de l’enclos', (body) => {
@@ -86,6 +93,27 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
           cure.addEventListener('click', () => { if (ctx.dispatch({ type: 'soigner', animalId: a.id }, cure)) refreshDrawer() })
           act.append(cure)
         }
+        const price = sellPrice(s, a)
+        if (price !== null) {
+          const armed = sellArmed === a.id
+          const sell = document.createElement('button')
+          sell.type = 'button'
+          sell.className = armed ? 'vendre confirmer' : 'vendre'
+          sell.textContent = armed ? 'Vendre ?' : `Vendre (${price})`
+          sell.addEventListener('click', () => {
+            clearTimeout(sellTimer)
+            if (sellArmed !== a.id) {
+              sellArmed = a.id
+              sellTimer = window.setTimeout(() => { sellArmed = null; refreshDrawer() }, 3000)
+              refreshDrawer()
+              return
+            }
+            sellArmed = null
+            ctx.dispatch({ type: 'vendre', animalId: a.id }, sell)
+            refreshDrawer()
+          })
+          act.append(sell)
+        }
         tr.append(act)
         table.append(tr)
       }
@@ -94,7 +122,7 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
   }
 
   function build(p: Pick) {
-    left.replaceChildren(); actions.replaceChildren()
+    left.replaceChildren(); actions.replaceChildren(); slotUpdate = null
     const s = ctx.get()
     if (p.kind === 'enclos') {
       const enc = s.enclosures.find((e) => e.id === p.id)
@@ -123,11 +151,7 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
         actions.append(add)
       }
     } else if (p.kind === 'emplacement') {
-      const def = SLOTS.find((x) => x.id === p.slot)
-      const b = s.buildings.find((x) => x.slot === p.slot)
-      if (b) left.append(text('b', `${BUILDINGS[b.type].name} · niveau ${b.level}`, 'nom'))
-      else if (def && def.unlockLevel > s.village.level) left.append(text('span', `Se débloque au niveau ${def.unlockLevel}`, 'discret'))
-      else left.append(text('b', 'Emplacement libre', 'nom'))
+      slotUpdate = buildBuildingBar(ctx, p.slot, left, actions)
     } else {
       left.append(text('span', 'Clique un enclos ou une zone', 'discret'))
     }
@@ -135,8 +159,9 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
 
   function update() {
     const p = ctx.selection()
-    const key = p.kind === 'enclos' ? `e${p.id}` : p.kind === 'zone' ? `z${p.zone.id}` : p.kind === 'emplacement' ? `s${p.slot}:${ctx.get().buildings.find((x) => x.slot === p.slot)?.level ?? 0}:${ctx.get().village.level}` : 'rien'
+    const key = p.kind === 'enclos' ? `e${p.id}` : p.kind === 'zone' ? `z${p.zone.id}` : p.kind === 'emplacement' ? slotKey(ctx.get(), p.slot) : 'rien'
     if (key !== builtFor) { builtFor = key; build(p); if (!key.startsWith('e')) closeDrawer() }
+    if (p.kind === 'emplacement') slotUpdate?.()
     if (p.kind === 'enclos') {
       const s = ctx.get()
       const enc = s.enclosures.find((e) => e.id === p.id)
@@ -159,7 +184,7 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
     if (p.kind === 'enclos') {
       const s = ctx.get()
       const k = JSON.stringify([s.time, animalsIn(s, p.id)])
-      if (k !== drawerSeen && refreshDrawer()) drawerSeen = k // sinon on réessaiera au prochain passage
+      if (k !== drawerSeen && isDrawerOpen(`enclos:${p.id}`) && refreshDrawer()) drawerSeen = k // sinon on réessaiera au prochain passage
     }
   }
 

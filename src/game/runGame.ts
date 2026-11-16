@@ -6,6 +6,8 @@ import { startSession } from './session'
 import { mountDebugPanel } from '../ui/debugPanel'
 import { showError, showNotice } from '../ui/errorScreen'
 import { mountTopBar } from '../ui/topBar'
+import { toggleTicketPanel } from '../ui/ticketPanel'
+import { toggleVillagePanel } from '../ui/villagePanel'
 import { flash, toast } from '../ui/feedback'
 import { applyAction, type Action } from '../sim/actions'
 import { BUILDINGS } from '../data/economy'
@@ -40,7 +42,11 @@ export function runGame(store: Storage, storageOk = true): Game | null {
   if (!storageOk) showNotice('Ton navigateur bloque la sauvegarde : la partie ne sera pas conservée après fermeture.')
 
   let state = session.state
-  const topBar = mountTopBar(() => state)
+  const panelCtx = { get: () => state, dispatch: (a: Action, from?: HTMLElement | null) => dispatch(a, from) }
+  const topBar = mountTopBar(() => state, {
+    onTicket: () => toggleTicketPanel(panelCtx),
+    onVillage: () => toggleVillagePanel(panelCtx),
+  })
   let canSave = session.canSave
   let warnedError = false
   /** Avance de l'horloge du jeu sur l'heure réelle (boutons du panneau de test). */
@@ -100,6 +106,7 @@ export function runGame(store: Storage, storageOk = true): Game | null {
     if (df) topBar.pulse('fourrage', df)
     const dv = state.pantry.viande - before.pantry.viande
     if (dv) topBar.pulse('viande', dv)
+    if (state.village.level !== before.village.level) topBar.pulse('village', 1)
     toast(successMessage(action, state, before), true)
     return true
   }

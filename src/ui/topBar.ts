@@ -1,9 +1,12 @@
 import type { GameState } from '../sim/types'
 import { autonomyHours } from '../sim/feeding'
+import { incomePerHour } from '../sim/economy'
+import { canLevelUp, population } from '../sim/village'
+import { ECONOMY } from '../data/economy'
 import { formatAutonomy, formatGameTime } from './format'
 import { flash, floatDelta } from './feedback'
 
-export type Resource = 'coins' | 'fourrage' | 'viande'
+export type Resource = 'coins' | 'fourrage' | 'viande' | 'village'
 
 /** Icônes en SVG fixe (aucun contenu venu du joueur). */
 const ICON = {
@@ -12,6 +15,7 @@ const ICON = {
   viande: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4a6 6 0 0 1 6 6c0 4-5 6-8 6l-4 4-2-2 4-4c0-3 1-10 4-10z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
   horloge: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 8v4l3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
   visiteurs: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5M16 5a3 3 0 0 1 0 6M18 14c2 .7 3 2.5 3 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  billet: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8a2 2 0 0 0 0 4v0a2 2 0 0 1 0 4h0v2h16v-2a2 2 0 0 1 0-4 2 2 0 0 0 0-4V6H4zM14 6v12" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
   village: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-6 8 6v8H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M10 19v-5h4v5" fill="none" stroke="currentColor" stroke-width="2"/></svg>',
 }
 
@@ -27,7 +31,9 @@ function cell(cls: string, icon: string, label: string): { root: HTMLSpanElement
 }
 
 /** Barre des ressources en haut de l'écran (spec §7). */
-export function mountTopBar(get: () => GameState): { pulse(r: Resource, delta: number): void } {
+export interface TopBarHandlers { onTicket(): void; onVillage(): void }
+
+export function mountTopBar(get: () => GameState, handlers: TopBarHandlers): { pulse(r: Resource, delta: number): void } {
   const bar = document.createElement('header')
   bar.className = 'barre-haut'
   const cells = {
@@ -35,15 +41,21 @@ export function mountTopBar(get: () => GameState): { pulse(r: Resource, delta: n
     fourrage: cell('fourrage', ICON.fourrage, 'Fourrage'),
     viande: cell('viande', ICON.viande, 'Viande'),
     auto: cell('autonomie', ICON.horloge, 'Autonomie du garde-manger'),
-    visiteurs: cell('visiteurs inactif', ICON.visiteurs, 'Visiteurs par heure (bientôt)'),
-    village: cell('village', ICON.village, 'Niveau du village'),
+    visiteurs: cell('visiteurs', ICON.visiteurs, 'Visiteurs par heure'),
+    billet: cell('billet', ICON.billet, 'Prix du billet : touche pour le régler'),
+    village: cell('village', ICON.village, 'Village : touche pour voir les habitants'),
   }
   const time = document.createElement('span')
   time.className = 'heure'
   bar.append(...Object.values(cells).map((c) => c.root), time)
   document.body.append(bar)
-  cells.visiteurs.value.textContent = '—/h'
-  cells.village.value.textContent = 'Hameau'
+  for (const [c, fn] of [[cells.billet, handlers.onTicket], [cells.village, handlers.onVillage]] as const) {
+    c.root.setAttribute('role', 'button')
+    c.root.tabIndex = 0
+    c.root.classList.add('cliquable')
+    c.root.addEventListener('click', fn)
+    c.root.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fn() } })
+  }
 
   const render = () => {
     const s = get()
@@ -53,6 +65,10 @@ export function mountTopBar(get: () => GameState): { pulse(r: Resource, delta: n
     const a = formatAutonomy(autonomyHours(s))
     cells.auto.value.textContent = a.text
     cells.auto.root.dataset.niveau = a.level
+    cells.visiteurs.value.textContent = `${Math.round(incomePerHour(s).visiteurs)}/h`
+    cells.billet.value.textContent = String(s.ticketPrice)
+    cells.village.value.textContent = `${ECONOMY.LEVEL_NAMES[s.village.level - 1]} · ${population(s)} hab.`
+    cells.village.root.dataset.pret = canLevelUp(s).ok ? 'oui' : 'non'
     time.textContent = formatGameTime(s.time)
   }
   render()

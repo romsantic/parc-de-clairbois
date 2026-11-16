@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { emptyState } from './helpers'
 import {
-  applyAction, buildBuilding, buyRations, levelUp, setTicketPrice, upgradeBuilding, upgradePantry,
+  applyAction, buildBuilding, buyRations, rationCost, levelUp, setTicketPrice, upgradeBuilding, upgradePantry,
 } from '../../src/sim/actions'
 import type { ActionResult } from '../../src/sim/actions'
 import type { GameState } from '../../src/sim/types'
@@ -131,5 +131,14 @@ describe('applyAction (village)', () => {
     expect(applyAction(small(), { type: 'agrandirGardeManger' }).ok).toBe(true)
     expect(applyAction(emptyState(), { type: 'billet', price: 3 }).ok).toBe(true)
     expect(applyAction(emptyState({ village: { level: 1, clientsServed: 1200 } }), { type: 'monterNiveau' }).ok).toBe(true)
+  })
+})
+
+describe('rationCost', () => {
+  const farm = (level: 1 | 2 | 3) => emptyState({ buildings: [{ slot: 0, type: 'ferme', level }] })
+  it('prix affiché = prix payé, remise selon la ferme', () => {
+    expect(rationCost(farm(1), 'fourrage', 10)).toBe(20)
+    expect(rationCost(farm(2), 'fourrage', 10)).toBe(16)
+    expect(rationCost(farm(3), 'viande', 50)).toBe(130)
   })
 })

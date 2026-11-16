@@ -10,7 +10,7 @@ import { ageStage } from './animal'
 import { animalsIn, area } from './enclosure'
 import { random } from './random'
 
-const BIOME_NAMES: Record<Biome, string> = { prairie: 'prairie', foret: 'forêt', montagne: 'montagne' }
+export const BIOME_NAMES: Record<Biome, string> = { prairie: 'prairie', foret: 'forêt', montagne: 'montagne' }
 
 /** Espèces vendues au niveau donné : celles dont la zone est débloquée. */
 export function catalogue(level: number): SpeciesId[] {

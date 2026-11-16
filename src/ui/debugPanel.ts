@@ -3,6 +3,7 @@ import type { Summary } from '../sim/summary'
 import type { ActionResult } from '../sim/actions'
 import { cleanEnclosure, cureAnimal, addRations, cureCost } from '../sim/actions'
 import { SPECIES } from '../data/species'
+import { ECONOMY } from '../data/economy'
 import { DAY_MS, HOUR_MS } from '../data/tuning'
 import { ageStage, satiety } from '../sim/animal'
 import { animalsIn, capacity, cleanliness } from '../sim/enclosure'
@@ -77,6 +78,8 @@ export function mountDebugPanel(ctl: DebugController): void {
       button('+3 jours', () => { ctl.advanceBy(3 * DAY_MS); render() }),
       button('+20 fourrage', () => act(addRations(ctl.get(), 'fourrage', 20))),
       button('+20 viande', () => act(addRations(ctl.get(), 'viande', 20))),
+      button('+20 habitants', () => { const n = structuredClone(ctl.get()); n.village.clientsServed += 20 * ECONOMY.CLIENTS_PER_NEWCOMER; ctl.set(n); render() }),
+      button('Niveau suivant', () => { const n = structuredClone(ctl.get()); n.village.level = Math.min(3, n.village.level + 1) as 1 | 2 | 3; ctl.set(n); render() }),
     )
     panel.append(bar)
 

@@ -159,6 +159,14 @@ export function upgradeBuilding(state: GameState, slot: number): ActionResult {
   return { ok: true, state: s }
 }
 
+/** Prix de n rations (remise selon le niveau de la ferme, arrondi au-dessus). */
+export function rationCost(state: GameState, food: Food, n: number): number {
+  const niveau = farmLevel(state)
+  const remise = niveau > 0 ? FARM.discount[niveau - 1] : 0
+  // Petite tolérance : 20 × 0,65 donne 13,000000000000002 en flottants.
+  return Math.ceil(n * FARM.foodPrice[food] * (1 - remise) - 1e-9)
+}
+
 /** Achète des rations à la ferme (remise selon son niveau) ; jamais d'achat partiel. */
 export function buyRations(state: GameState, food: Food, n: number): ActionResult {
   if (!Number.isInteger(n) || n <= 0) return { ok: false, reason: 'Quantité invalide.' }
@@ -168,8 +176,7 @@ export function buyRations(state: GameState, food: Food, n: number): ActionResul
   const place = p.capacity - p.fourrage - p.viande
   if (place <= 0) return { ok: false, reason: 'Le garde-manger est plein.' }
   if (n > place) return { ok: false, reason: `Il n'y a de la place que pour ${Math.floor(place)} rations.` }
-  // Petite tolérance : 20 × 0,65 donne 13,000000000000002 en flottants.
-  const cost = Math.ceil(n * FARM.foodPrice[food] * (1 - FARM.discount[niveau - 1]) - 1e-9)
+  const cost = rationCost(state, food, n)
   if (state.coins < cost) return noMoney(cost)
   const s = structuredClone(state)
   s.coins -= cost

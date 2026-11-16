@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { animal, emptyState, enclosure } from './helpers'
-import { appeal, fairPrice, incomePerHour, priceMultiplier, visitorsPerHour } from '../../src/sim/economy'
+import { appeal, buildingIncomePerHour, fairPrice, incomePerHour, priceMultiplier, visitorsPerHour } from '../../src/sim/economy'
 import type { SpeciesId } from '../../src/data/species'
 import type { GameState } from '../../src/sim/types'
 
@@ -95,5 +95,19 @@ describe('revenus', () => {
     const r = incomePerHour(s, 5)
     expect(r.clients).toBeGreaterThan(0)
     expect(r.village / r.clients).toBeCloseTo(2.5)
+  })
+})
+
+describe('buildingIncomePerHour', () => {
+  it('café niveau 1 avec 2 moutons : 2,4 clients/h et 7,2 pièces/h', () => {
+    const s = moutons(2)
+    s.ticketPrice = 5
+    s.buildings.push({ slot: 1, type: 'cafe', level: 1 })
+    const r = buildingIncomePerHour(s, 1)
+    expect(r.clients).toBeCloseTo(2.4)
+    expect(r.pieces).toBeCloseTo(7.2)
+  })
+  it('emplacement libre : zéro', () => {
+    expect(buildingIncomePerHour(moutons(2), 3)).toEqual({ clients: 0, pieces: 0 })
   })
 })
