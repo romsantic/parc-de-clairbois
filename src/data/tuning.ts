@@ -21,6 +21,12 @@ export const TUNING = {
   START_ENCLOSURE: { x: -26, z: -5, w: 12, d: 10 }, // dans la prairie, hors chemin
   START_FOURRAGE: 10,
   START_PANTRY_CAPACITY: 200,
+  /** Garde-manger : capacité, prix et niveau du village requis pour y accéder. */
+  PANTRY_SIZES: [
+    { capacity: 200 },
+    { capacity: 400, cost: 600, level: 1 },
+    { capacity: 800, cost: 2000, level: 3 },
+  ] as { capacity: number; cost?: number; level?: number }[],
 
   CLEAN_COST: 5,
   CURE_MIN_COST: 50,
