@@ -43,8 +43,8 @@
 | 5 | Marchand d'animaux | Sonnet | faite (3e7a477) |
 | 6 | Rééquilibrer la reproduction | Sonnet | faite (4ffcfeb) |
 | 7 | Modèles des bâtiments | Haiku | faite (342b273) |
-| 8 | Bâtiments et emplacements sur la carte | Sonnet | en cours |
-| 9 | Chemins qui suivent le niveau du village | Sonnet | à faire |
+| 8 | Bâtiments et emplacements sur la carte | Sonnet | faite (ffa1f6e) |
+| 9 | Chemins qui suivent le niveau du village | Sonnet | en cours |
 | 10 | Interface : billet, village, marchand | Sonnet | à faire |
 | 11 | Vérification d'ensemble, relecture et publication | chef + relecture Opus | à faire |
 
