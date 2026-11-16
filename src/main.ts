@@ -16,7 +16,6 @@ import { mountBottomBar } from './ui/bottomBar'
 import { closeDrawer } from './ui/drawer'
 import { createEnclosureEditor } from './scene/enclosureEditor'
 import { SPECIES_MODELS } from './data/speciesModels'
-import { TUNING } from './data/tuning'
 import { createRng } from './core/rng'
 
 /** Le stockage du navigateur, ou une mémoire temporaire s'il est bloqué. */
@@ -83,7 +82,7 @@ async function start(): Promise<void> {
       showError("L'affichage 3D a été interrompu par l'appareil. Recharge la page pour retrouver ton parc.")
     })
     const decor = buildDecor(world, createRng(2026))
-    drawZones(world, TUNING.VILLAGE_LEVEL_V1)
+    drawZones(world, getState().village.level)
     const park = createParkView(world, getState, createRng(Date.now() >>> 0))
     const rig = createCameraRig(world, canvas)
     let selection: Pick = { kind: 'rien' }

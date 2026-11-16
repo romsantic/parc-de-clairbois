@@ -41,11 +41,13 @@ export function advanceTo(state: GameState, nowMs: number): { state: GameState; 
 /** Décale toutes les dates de la partie (temps non rejoué après le plafond). */
 function shiftDates(s: GameState, ms: number): void {
   s.time += ms
+  s.merchant.restockAt += ms
   for (const e of s.enclosures) e.cleanedAt += ms
   for (const a of s.animals) {
     a.bornAt += ms
     a.lastFedAt += ms
     if (a.pregnantSince !== null) a.pregnantSince += ms
+    if (a.lastBirthAt !== null) a.lastBirthAt += ms
     if (a.health.status === 'malade') a.health.since += ms
   }
 }

@@ -17,7 +17,7 @@ describe('sauvegarde : ne jamais perdre la partie', () => {
     expect(JSON.parse(m.data[SAVE_KEY]).state.coins).toBe(1)
   })
   it("un vieil onglet n'écrase pas une sauvegarde d'une version plus récente", () => {
-    const raw = JSON.stringify({ version: 2, savedAt: 1, owner: 'onglet-B', state: {} })
+    const raw = JSON.stringify({ version: 3, savedAt: 1, owner: 'onglet-B', state: {} })
     const m = memory({ [SAVE_KEY]: raw })
     expect(saveGame(m, g, 3, 'onglet-A', true)).toBe('trop-recente')
     expect(m.data[SAVE_KEY]).toBe(raw)

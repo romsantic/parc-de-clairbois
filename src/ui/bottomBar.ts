@@ -114,7 +114,7 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
       actions.append(clean, cure, resize, details)
     } else if (p.kind === 'zone') {
       left.append(text('b', p.zone.name, 'nom'))
-      if (p.zone.unlockLevel > TUNING.VILLAGE_LEVEL_V1) {
+      if (p.zone.unlockLevel > s.village.level) {
         left.append(text('span', `Se débloque au niveau ${p.zone.unlockLevel} du village`, 'discret'))
       } else {
         const add = iconButton(ICONS.plus, 'Nouvel enclos')

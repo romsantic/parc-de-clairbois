@@ -28,6 +28,16 @@ describe('newGame', () => {
   it('remplit un peu le garde-manger', () => {
     expect(g.pantry).toEqual({ fourrage: 10, viande: 0, capacity: 200 })
   })
+  it("crée directement l'état version 2", () => {
+    expect(g.version).toBe(2)
+    expect(g.ticketPrice).toBe(5)
+    expect(g.reputation).toBe(1)
+    expect(g.village).toEqual({ level: 1, clientsServed: 0 })
+    expect(g.buildings).toEqual([{ slot: 0, type: 'ferme', level: 1 }])
+    expect(g.merchant).toEqual({ restockAt: g.time, restocks: 0, offers: [] })
+    expect(g.totalVisitors).toBe(0)
+    for (const a of g.animals) expect(a.lastBirthAt).toBeNull()
+  })
   it('est déterministe', () => {
     expect(newGame(7, 1_000_000_000_123)).toEqual(g)
   })

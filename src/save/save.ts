@@ -88,6 +88,14 @@ function looksLikeGame(s: unknown): s is GameState {
   }
   for (const a of g.animals) {
     if (!a || !(a.species in SPECIES) || !finite(a.bornAt) || !finite(a.lastFedAt) || !a.health) return false
+    if (a.lastBirthAt !== null && !finite(a.lastBirthAt)) return false
   }
+  const v = g.village
+  if (!v || ![1, 2, 3].includes(v.level) || !finite(v.clientsServed)) return false
+  if (!finite(g.ticketPrice) || !finite(g.reputation) || !finite(g.totalVisitors)) return false
+  if (!Array.isArray(g.buildings)) return false
+  for (const b of g.buildings) if (!b || !finite(b.slot) || !finite(b.level)) return false
+  const m = g.merchant
+  if (!m || !finite(m.restockAt) || !finite(m.restocks) || !Array.isArray(m.offers)) return false
   return true
 }

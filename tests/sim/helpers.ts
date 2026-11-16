@@ -8,9 +8,15 @@ export const T0 = 1_800_000_000_000 - (1_800_000_000_000 % 600_000) // aligné s
 
 export function emptyState(over: Partial<GameState> = {}): GameState {
   return {
-    version: 1, time: T0, rng: 12345, coins: 1000, nextId: 100,
+    version: 2, time: T0, rng: 12345, coins: 1000, nextId: 100,
     pantry: { fourrage: 0, viande: 0, capacity: 1000 },
-    enclosures: [], animals: [], ...over,
+    enclosures: [], animals: [],
+    ticketPrice: 5, reputation: 1,
+    village: { level: 1, clientsServed: 0 },
+    buildings: [{ slot: 0, type: 'ferme', level: 1 }],
+    merchant: { restockAt: T0, restocks: 0, offers: [] },
+    totalVisitors: 0,
+    ...over,
   }
 }
 
@@ -22,6 +28,6 @@ export function animal(id: number, species: SpeciesId, sex: 'F' | 'M', encId: nu
   return {
     id, species, sex, name: `Bête${id}`, enclosureId: encId,
     bornAt: T0 - 3 * SPECIES[species].gestationH * HOUR_MS, // adulte
-    lastFedAt: T0, health: { status: 'ok' }, pregnantSince: null, ...over,
+    lastFedAt: T0, health: { status: 'ok' }, pregnantSince: null, lastBirthAt: null, ...over,
   }
 }

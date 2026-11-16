@@ -23,7 +23,7 @@ export function breedingStep(state: GameState, events: GameEvent[]): void {
         id: state.nextId++, species: mother.species, sex: random(state) < 0.5 ? 'F' : 'M',
         name: ANIMAL_NAMES[Math.floor(random(state) * ANIMAL_NAMES.length)],
         bornAt: now, enclosureId: mother.enclosureId, lastFedAt: now,
-        health: { status: 'ok' }, pregnantSince: null,
+        health: { status: 'ok' }, pregnantSince: null, lastBirthAt: null,
       }
       state.animals.push(baby)
       events.push({ kind: 'naissance', at: now, animalId: baby.id, motherId: mother.id })

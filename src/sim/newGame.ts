@@ -8,9 +8,14 @@ import { random } from './random'
 export function newGame(seed: number, nowMs: number): GameState {
   const time = Math.floor(nowMs / TUNING.STEP_MS) * TUNING.STEP_MS
   const state: GameState = {
-    version: 1, time, rng: seed >>> 0, coins: TUNING.START_COINS, nextId: 1,
+    version: 2, time, rng: seed >>> 0, coins: TUNING.START_COINS, nextId: 1,
     pantry: { fourrage: TUNING.START_FOURRAGE, viande: 0, capacity: TUNING.START_PANTRY_CAPACITY },
     enclosures: [], animals: [],
+    ticketPrice: 5, reputation: 1,
+    village: { level: 1, clientsServed: 0 },
+    buildings: [{ slot: 0, type: 'ferme', level: 1 }],
+    merchant: { restockAt: time, restocks: 0, offers: [] }, // le stock se remplit au pas suivant
+    totalVisitors: 0,
   }
   const encId = state.nextId++
   state.enclosures.push({ id: encId, biome: 'prairie', species: 'mouton', rect: { ...TUNING.START_ENCLOSURE }, cleanedAt: time })
@@ -19,7 +24,7 @@ export function newGame(seed: number, nowMs: number): GameState {
     const name = ANIMAL_NAMES[Math.floor(random(state) * ANIMAL_NAMES.length)]
     state.animals.push({
       id: state.nextId++, species: 'mouton', sex, name, bornAt: adultBorn, enclosureId: encId,
-      lastFedAt: time, health: { status: 'ok' }, pregnantSince: null,
+      lastFedAt: time, health: { status: 'ok' }, pregnantSince: null, lastBirthAt: null,
     })
   }
   return state

@@ -64,6 +64,16 @@ describe('zoneAtPoint', () => {
   })
 })
 
+describe('checkPlacement selon le niveau du village', () => {
+  const inForest = R(-30, -20, 12, 10)
+  it("refuse la forêt au niveau 1 et l'accepte au niveau 2", () => {
+    const zone = zoneAt(inForest)
+    expect(zone?.id).toBe('foret')
+    expect(checkPlacement(emptyState(), inForest).ok).toBe(false)
+    expect(checkPlacement(emptyState({ village: { level: 2, clientsServed: 0 } }), inForest).ok).toBe(true)
+  })
+})
+
 describe('zones', () => {
   it('la prairie se débloque au niveau 1, la forêt au 2, la montagne au 3', () => {
     expect(Object.fromEntries(ZONES.map((z) => [z.id, z.unlockLevel]))).toEqual({ foret: 2, prairie: 1, montagne: 3 })

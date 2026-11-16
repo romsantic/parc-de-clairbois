@@ -30,6 +30,4 @@ export const TUNING = {
   FENCE_COST_PER_M: 4,
   LAND_COST_PER_M2: 1,
   MIN_SIDE_M: 6,
-  /** Niveau du village tant que l'étape 4 (niveaux) n'existe pas. */
-  VILLAGE_LEVEL_V1: 1,
 } as const
