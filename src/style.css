@@ -211,3 +211,16 @@ button.icone:hover::after, button.icone:focus-visible::after { opacity: 1; }
   .zone-mission span { display: none; }
   .barre-bas { gap: 6px; }
 }
+
+/* ---------- Éditeur d'enclos ---------- */
+.editeur-enclos {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(60px + env(safe-area-inset-bottom, 0px)); z-index: 6;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px; max-width: calc(100vw - 24px);
+  padding: 8px 12px; background: rgba(246, 240, 225, 0.97); color: var(--encre);
+  border: 1px solid var(--bord); border-radius: 12px; box-shadow: 0 6px 18px rgba(0,0,0,.2); font-size: 14px;
+}
+.editeur-enclos .infos { font-weight: 600; font-variant-numeric: tabular-nums; }
+.editeur-enclos .raison { color: #b23a2a; }
+.editeur-enclos .raison:empty { display: none; }
+.editeur-enclos button.principal { background: #6fa84a; color: #fff; border-color: #5a8f39; }
+.editeur-enclos button:disabled { opacity: .45; cursor: not-allowed; }

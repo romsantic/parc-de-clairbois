@@ -64,8 +64,8 @@ export function createFenceBuilder(world: World) {
   return { buildFence }
 }
 
-const ghostOk = new THREE.MeshBasicMaterial({ color: '#4caf50', transparent: true, opacity: 0.55, depthWrite: false })
-const ghostBad = new THREE.MeshBasicMaterial({ color: '#e53935', transparent: true, opacity: 0.55, depthWrite: false })
+const ghostOk = new THREE.MeshBasicMaterial({ color: '#2e9e3e', transparent: true, opacity: 0.85, depthWrite: false })
+const ghostBad = new THREE.MeshBasicMaterial({ color: '#e53935', transparent: true, opacity: 0.85, depthWrite: false })
 
 /** Clôture fantôme, verte si la pose est possible, rouge sinon (éditeur d'enclos). */
 export function fenceGhost(world: World, r: Rect, valid: boolean): THREE.Group {
@@ -75,7 +75,7 @@ export function fenceGhost(world: World, r: Rect, valid: boolean): THREE.Group {
   const rail = (x0: number, z0: number, x1: number, z1: number) => {
     const len = Math.hypot(x1 - x0, z1 - z0)
     for (const y of [0.45, 0.95]) {
-      const m = new THREE.Mesh(new THREE.BoxGeometry(len, 0.08, 0.08), mat)
+      const m = new THREE.Mesh(new THREE.BoxGeometry(len, 0.14, 0.14), mat)
       m.position.set((x0 + x1) / 2, h((x0 + x1) / 2, (z0 + z1) / 2) + y, (z0 + z1) / 2)
       m.rotation.y = -Math.atan2(z1 - z0, x1 - x0)
       g.add(m)

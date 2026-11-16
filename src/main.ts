@@ -14,7 +14,7 @@ import { createParkView } from './scene/parkView'
 import { createPicker, type Pick } from './scene/picking'
 import { mountBottomBar } from './ui/bottomBar'
 import { closeDrawer } from './ui/drawer'
-import { toast } from './ui/feedback'
+import { createEnclosureEditor } from './scene/enclosureEditor'
 import { SPECIES_MODELS } from './data/speciesModels'
 import { TUNING } from './data/tuning'
 import { createRng } from './core/rng'
@@ -85,20 +85,24 @@ async function start(): Promise<void> {
     const decor = buildDecor(world, createRng(2026))
     drawZones(world, TUNING.VILLAGE_LEVEL_V1)
     const park = createParkView(world, getState, createRng(Date.now() >>> 0))
-    const picker = createPicker(world, canvas, () => park.enclosureMeshes())
+    const rig = createCameraRig(world, canvas)
     let selection: Pick = { kind: 'rien' }
-    picker.onPick((p) => { selection = p; park.setSelected(p.kind === 'enclos' ? p.id : null) })
+    const select = (p: Pick) => { selection = p; park.setSelected(p.kind === 'enclos' ? p.id : null) }
+    const dispatch = game.dispatch
+    const editor = createEnclosureEditor(world, canvas, rig, {
+      get: getState,
+      dispatch,
+      onDone: (id) => { select({ kind: 'enclos', id }); bottomBar.refresh() },
+    })
+    const picker = createPicker(world, canvas, () => park.enclosureMeshes(), () => editor.active())
     const bottomBar = mountBottomBar({
       get: getState,
       selection: () => selection,
-      dispatch: game.dispatch,
-      startBuild: () => toast("La pose d’enclos arrive à la tâche suivante", true),
-      startResize: () => toast("Le redimensionnement arrive à la tâche suivante", true),
+      dispatch,
+      startBuild: (zone, point) => { closeDrawer(); editor.startBuild(zone, point) },
+      startResize: (id) => { closeDrawer(); editor.startResize(id) },
     })
-    picker.onPick(() => bottomBar.refresh())
-    // Un clic sur la carte ferme le volet de détails.
-    picker.onPick(() => closeDrawer())
-    const rig = createCameraRig(world, canvas)
+    picker.onPick((p) => { select(p); bottomBar.refresh(); closeDrawer() }) // un clic sur la carte ferme le volet
     mountCameraButtons(rig)
     window.addEventListener('resize', () => world.resize())
     hideLoading()

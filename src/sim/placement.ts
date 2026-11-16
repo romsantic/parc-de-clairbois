@@ -48,3 +48,18 @@ export function checkPlacement(state: GameState, r: Rect, ignoreId?: number): Pl
   if (PATHS.some((p) => overlaps(p, r))) return { ok: false, reason: 'Il chevauche un chemin.' }
   return { ok: true, zone }
 }
+
+/**
+ * Zone sous un point cliqué : celle qui le contient, sinon la plus proche à moins de `tolerance` m
+ * (clic sur l'allée ou juste au bord). Rien si le point est loin de toute zone.
+ */
+export function zoneAtPoint(x: number, z: number, tolerance = 2): Zone | null {
+  let best: Zone | null = null, bestD = Infinity
+  for (const zn of ZONES) {
+    const r = zn.rect
+    const dx = Math.max(r.x - x, 0, x - (r.x + r.w)), dz = Math.max(r.z - z, 0, z - (r.z + r.d))
+    const d = Math.hypot(dx, dz)
+    if (d < bestD) { bestD = d; best = zn }
+  }
+  return bestD <= tolerance ? best : null
+}

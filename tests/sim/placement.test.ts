@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { checkPlacement, enclosureCost, resizeCost, snapRect, zoneAt } from '../../src/sim/placement'
+import { checkPlacement, enclosureCost, resizeCost, snapRect, zoneAt, zoneAtPoint } from '../../src/sim/placement'
 import { ZONES } from '../../src/data/zones'
 import { emptyState, enclosure } from './helpers'
 
@@ -48,6 +48,19 @@ describe('checkPlacement', () => {
   })
   it('refuse de chevaucher un chemin', () => {
     expect(checkPlacement(free, R(-20, 2, 10, 7.5))).toEqual({ ok: false, reason: 'Il chevauche un chemin.' })
+  })
+})
+
+describe('zoneAtPoint', () => {
+  it('les zones se touchent : pas de trou entre la forêt et la prairie', () => {
+    expect(zoneAtPoint(-10, -8.5)?.id).toBeDefined()
+  })
+  it("un clic sur l'allée ou juste au bord trouve la zone la plus proche", () => {
+    expect(zoneAtPoint(-20, 10.5)?.id).toBe('prairie')
+    expect(zoneAtPoint(-3, 0)?.id).toBe('prairie') // 1 m à l'est de la prairie
+  })
+  it('loin de toute zone : rien', () => {
+    expect(zoneAtPoint(10, 0)).toBeNull()
   })
 })
 

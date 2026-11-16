@@ -1,5 +1,6 @@
 import * as THREE from 'three'
-import { ZONES, type Zone } from '../data/zones'
+import type { Zone } from '../data/zones'
+import { zoneAtPoint } from '../sim/placement'
 import type { World } from './world'
 
 export type Pick =
@@ -48,7 +49,7 @@ export function createPicker(
     }
     const p = new THREE.Vector3()
     if (r.ray.intersectPlane(ground, p)) {
-      const zone = ZONES.find((z) => p.x >= z.rect.x && p.x <= z.rect.x + z.rect.w && p.z >= z.rect.z && p.z <= z.rect.z + z.rect.d)
+      const zone = zoneAtPoint(p.x, p.z)
       if (zone) return { kind: 'zone', zone, point: { x: p.x, z: p.z } }
     }
     return { kind: 'rien' }

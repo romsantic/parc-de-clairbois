@@ -37,6 +37,8 @@ export interface CameraRig {
   rotateQuarter(dir: 1 | -1): void
   zoom(step: number): void
   update(dt: number): void
+  /** Suspend la caméra (par exemple pendant qu’on tire un coin d’enclos). */
+  setEnabled(on: boolean): void
 }
 
 export function createCameraRig(world: World, canvas: HTMLCanvasElement): CameraRig {
@@ -70,6 +72,7 @@ export function createCameraRig(world: World, canvas: HTMLCanvasElement): Camera
   }
 
   return {
+    setEnabled(on) { controls.enabled = on },
     rotateQuarter(dir) {
       const from = controls.getAzimuthalAngle()
       turn = { from, to: quarterTurn(from, dir), t: 0 }
