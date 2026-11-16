@@ -45,8 +45,8 @@
 | 7 | Modèles des bâtiments | Haiku | faite (342b273) |
 | 8 | Bâtiments et emplacements sur la carte | Sonnet | faite (ffa1f6e) |
 | 9 | Chemins qui suivent le niveau du village | Sonnet | faite (319bc56) |
-| 10 | Interface : billet, village, marchand | Sonnet | en cours |
-| 11 | Vérification d'ensemble, relecture et publication | chef + relecture Opus | à faire |
+| 10 | Interface : billet, village, marchand | Sonnet | faite (24dedcd) |
+| 11 | Vérification d'ensemble, relecture et publication | chef + relecture Opus | en cours |
 
 Étapes suivantes (5 Missions, 6 Finition V1) : leurs sous-tâches seront ajoutées ici quand leur plan sera écrit.
 
