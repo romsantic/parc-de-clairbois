@@ -22,6 +22,11 @@ export function createParkView(world: World, getState: () => GameState, rng: () 
   const encs = new Map<number, { group: THREE.Group; key: string }>()
   const actors = new Map<number, AnimalActor>()
   const pending = new Set<number>() // animaux dont le modèle est en cours de chargement
+  const failedUntil = new Map<number, number>() // modèle en échec : on réessaie plus tard
+  const disposeGroup = (g: THREE.Object3D) => {
+    g.removeFromParent()
+    g.traverse((o) => { if (o.name === 'sol-enclos') (o as THREE.Mesh).geometry.dispose() })
+  }
   const highlight = new THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>(
     new THREE.BufferGeometry(),
     new THREE.MeshBasicMaterial({ color: '#ffd54a', transparent: true, opacity: 0.8, depthWrite: false, depthTest: false }), // par-dessus : le sol ondule
@@ -54,11 +59,11 @@ export function createParkView(world: World, getState: () => GameState, rng: () 
 
   function syncEnclosures(s: GameState) {
     const d = diffById(new Set(encs.keys()), s.enclosures)
-    for (const id of d.removed) { encs.get(id)!.group.removeFromParent(); encs.delete(id) }
+    for (const id of d.removed) { disposeGroup(encs.get(id)!.group); encs.delete(id) }
     for (const e of [...d.added, ...d.kept]) {
       const key = rectKey(e.rect), cur = encs.get(e.id)
       if (cur && cur.key === key) continue
-      cur?.group.removeFromParent()
+      if (cur) disposeGroup(cur.group)
       const group = fences.buildFence(e.rect)
       group.userData.enclosureId = e.id
       world.scene.add(group)
@@ -72,6 +77,7 @@ export function createParkView(world: World, getState: () => GameState, rng: () 
     const d = diffById(new Set([...actors.keys(), ...pending]), s.animals)
     for (const id of d.removed) { actors.get(id)?.dispose(); actors.delete(id); pending.delete(id) }
     for (const a of d.added) {
+      if ((failedUntil.get(a.id) ?? 0) > performance.now()) continue
       const enc = s.enclosures.find((e) => e.id === a.enclosureId)
       if (!enc) continue
       const spec = SPECIES_MODELS[a.species]
@@ -88,7 +94,11 @@ export function createParkView(world: World, getState: () => GameState, rng: () 
         actor.setScale(AGE_SCALE[ageStage(cur, now.time)])
         world.scene.add(actor.object)
         actors.set(a.id, actor)
-      }).catch((err) => console.error(err))
+      }).catch((err) => {
+        console.error(err)
+        pending.delete(a.id) // on réessaiera dans 15 s plutôt que de cacher l'animal pour toujours
+        failedUntil.set(a.id, performance.now() + 15_000)
+      })
     }
   }
 

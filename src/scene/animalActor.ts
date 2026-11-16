@@ -61,6 +61,8 @@ export class AnimalActor {
 
   dispose(): void {
     this.mixer.stopAllAction()
+    this.mixer.uncacheRoot(this.object)
+    this.object.traverse((o) => { if ((o as THREE.SkinnedMesh).isSkinnedMesh) (o as THREE.SkinnedMesh).skeleton.dispose() })
     this.object.removeFromParent()
   }
 

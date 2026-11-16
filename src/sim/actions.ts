@@ -57,33 +57,46 @@ export function renameAnimal(state: GameState, animalId: number, name: string): 
   return { ok: true, state: s }
 }
 
+/**
+ * Vérifie un enclos à poser (sans encId) ou à redimensionner (avec encId), avec son prix.
+ * L'éditeur s'en sert pour colorer la clôture fantôme ; les actions pour accepter ou refuser.
+ */
+export function previewEnclosure(state: GameState, rect: Rect, encId?: number):
+  { ok: true; cost: number } | { ok: false; reason: string; cost: number } {
+  const r = snapRect(rect)
+  const enc = encId === undefined ? undefined : state.enclosures.find((e) => e.id === encId)
+  if (encId !== undefined && !enc) return { ok: false, reason: 'Introuvable.', cost: 0 }
+  const cost = enc ? resizeCost(enc.rect, r) : enclosureCost(r)
+  const check = checkPlacement(state, r, encId)
+  if (!check.ok) return { ok: false, reason: check.reason, cost }
+  if (enc) {
+    const here = animalsIn(state, enc.id).length
+    if (capacity({ ...enc, rect: r }) < here)
+      return { ok: false, reason: `Trop d'animaux pour cette taille (il faut de la place pour ${here}).`, cost }
+  }
+  if (state.coins < cost) return { ok: false, reason: `Pas assez de pièces (il en faut ${cost}).`, cost }
+  return { ok: true, cost }
+}
+
 /** Pose un nouvel enclos (vide) dans une zone débloquée. */
 export function buildEnclosure(state: GameState, rect: Rect): ActionResult {
   const r = snapRect(rect)
-  const check = checkPlacement(state, r)
-  if (!check.ok) return check
-  const cost = enclosureCost(r)
-  if (state.coins < cost) return noMoney(cost)
+  const p = previewEnclosure(state, r)
+  if (!p.ok) return { ok: false, reason: p.reason }
+  const zone = checkPlacement(state, r)
   const s = structuredClone(state)
-  s.coins -= cost
-  s.enclosures.push({ id: s.nextId++, biome: check.zone.id, species: null, rect: r, cleanedAt: s.time })
+  s.coins -= p.cost
+  s.enclosures.push({ id: s.nextId++, biome: zone.ok ? zone.zone.id : 'prairie', species: null, rect: r, cleanedAt: s.time })
   return { ok: true, state: s }
 }
 
 /** Agrandit (on paie la différence) ou rétrécit (gratuit) un enclos. */
 export function resizeEnclosure(state: GameState, encId: number, rect: Rect): ActionResult {
-  const enc = state.enclosures.find((e) => e.id === encId)
-  if (!enc) return NOT_FOUND
   const r = snapRect(rect)
-  const check = checkPlacement(state, r, encId)
-  if (!check.ok) return check
-  const here = animalsIn(state, encId).length
-  if (capacity({ ...enc, rect: r }) < here)
-    return { ok: false, reason: `Trop d'animaux pour cette taille (il faut de la place pour ${here}).` }
-  const cost = resizeCost(enc.rect, r)
-  if (state.coins < cost) return noMoney(cost)
+  const p = previewEnclosure(state, r, encId)
+  if (!p.ok) return { ok: false, reason: p.reason }
   const s = structuredClone(state)
-  s.coins -= cost
+  s.coins -= p.cost
   s.enclosures.find((e) => e.id === encId)!.rect = r
   return { ok: true, state: s }
 }

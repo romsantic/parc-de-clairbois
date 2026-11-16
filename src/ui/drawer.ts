@@ -33,9 +33,14 @@ export function openDrawer(key: string, title: string, render: (body: HTMLElemen
   refresh()
 }
 
-export function refreshDrawer(): void {
-  // Ne pas redessiner pendant que le joueur tape (le champ perdrait sa saisie).
-  if (panel && refresh && !panel.contains(document.activeElement)) refresh()
+/** Redessine le volet ; renvoie faux s'il n'a pas pu (le joueur est en train de taper un nom). */
+export function refreshDrawer(): boolean {
+  if (!panel || !refresh) return false
+  const a = document.activeElement
+  // Un bouton cliqué prend le focus sous Chrome : seul un champ de saisie bloque le rafraîchissement.
+  if (a instanceof HTMLInputElement && panel.contains(a)) return false
+  refresh()
+  return true
 }
 
 export function closeDrawer(): void {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildEnclosure, resizeEnclosure, cureAllInEnclosure, applyAction, cleanEnclosure } from '../../src/sim/actions'
+import { buildEnclosure, resizeEnclosure, cureAllInEnclosure, applyAction, cleanEnclosure, previewEnclosure } from '../../src/sim/actions'
 import { animal, emptyState, enclosure, T0 } from './helpers'
 
 const R = (x: number, z: number, w: number, d: number) => ({ x, z, w, d })
@@ -38,6 +38,20 @@ describe('redimensionner', () => {
   it('refuse de rétrécir sous le nombre d’animaux', () => {
     expect(resizeEnclosure(base(), 1, R(-26, -5, 8, 10)))
       .toEqual({ ok: false, reason: "Trop d'animaux pour cette taille (il faut de la place pour 6)." })
+  })
+})
+
+describe("aperçu d'un enclos (éditeur)", () => {
+  it('signale déjà dans l’éditeur un enclos trop petit pour ses animaux', () => {
+    expect(previewEnclosure(base(), R(-26, -5, 8, 10), 1))
+      .toEqual({ ok: false, reason: "Trop d'animaux pour cette taille (il faut de la place pour 6).", cost: 0 })
+  })
+  it('signale déjà dans l’éditeur un manque de pièces', () => {
+    expect(previewEnclosure({ ...base(), coins: 10 }, R(-13.5, -6, 9.5, 8)))
+      .toEqual({ ok: false, reason: 'Pas assez de pièces (il en faut 216).', cost: 216 })
+  })
+  it('donne le prix quand tout va bien', () => {
+    expect(previewEnclosure(base(), R(-26, -5, 14, 10), 1)).toEqual({ ok: true, cost: 36 })
   })
 })
 

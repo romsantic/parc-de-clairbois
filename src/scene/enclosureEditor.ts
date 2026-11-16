@@ -1,9 +1,10 @@
 import * as THREE from 'three'
 import type { GameState, Rect } from '../sim/types'
 import type { Action } from '../sim/actions'
+import { previewEnclosure } from '../sim/actions'
 import type { Zone } from '../data/zones'
 import { SPECIES } from '../data/species'
-import { checkPlacement, enclosureCost, resizeCost, snapRect } from '../sim/placement'
+import { snapRect } from '../sim/placement'
 import { capacity } from '../sim/enclosure'
 import type { World } from './world'
 import type { CameraRig } from './cameraRig'
@@ -34,6 +35,8 @@ export function createEnclosureEditor(world: World, canvas: HTMLCanvasElement, r
   let rect: Rect = { x: 0, z: 0, w: START_W, d: START_D }
   let ghost: THREE.Group | null = null
   let dragging: number | null = null
+  let dragPointer = -1
+  let shownKey = ''
   let fixedCorner = { x: 0, z: 0 }
 
   // Panneau flottant : dimensions, prix, raison du refus, Valider / Annuler.
@@ -54,20 +57,24 @@ export function createEnclosureEditor(world: World, canvas: HTMLCanvasElement, r
   function refresh() {
     if (!mode) return
     const s = ctx.get()
-    const check = checkPlacement(s, rect, mode.kind === 'resize' ? mode.encId : undefined)
-    ghost?.removeFromParent()
-    ghost = fenceGhost(world, rect, check.ok)
-    world.scene.add(ghost)
+    // Une seule vérification, partagée avec l'action : place, capacité et pièces.
+    const check = previewEnclosure(s, rect, mode.kind === 'resize' ? mode.encId : undefined)
+    const key = `${rect.x},${rect.z},${rect.w},${rect.d},${check.ok}`
+    if (key !== shownKey) { // ne reconstruit la clôture fantôme que si elle a changé
+      shownKey = key
+      disposeGhost()
+      ghost = fenceGhost(world, rect, check.ok)
+      world.scene.add(ghost)
+    }
     corners(rect).forEach((c, i) => handles[i].position.set(c.x, world.groundHeight(c.x, c.z) + 0.6, c.z))
     const fr = (n: number) => String(n).replace('.', ',')
     const size = `${fr(rect.w)} × ${fr(rect.d)} m`
     if (mode.kind === 'build') {
-      info.textContent = `${size} · ${enclosureCost(rect)} pièces`
+      info.textContent = `${size} · ${check.cost} pièces`
     } else {
       const enc = s.enclosures.find((e) => e.id === (mode as { encId: number }).encId)
       const cap = enc && enc.species ? ` · ${capacity({ ...enc, rect })} ${SPECIES[enc.species].name.toLowerCase()}s max` : ''
-      const cost = resizeCost(mode.original, rect)
-      info.textContent = `${size}${cap} · ${cost ? `+${cost} pièces` : 'gratuit'}`
+      info.textContent = `${size}${cap} · ${check.cost ? `+${check.cost} pièces` : 'gratuit'}`
     }
     reason.textContent = check.ok ? '' : check.reason
     ok.disabled = !check.ok
@@ -82,10 +89,18 @@ export function createEnclosureEditor(world: World, canvas: HTMLCanvasElement, r
     refresh()
   }
 
+  function disposeGhost() {
+    if (!ghost) return
+    ghost.removeFromParent()
+    ghost.traverse((o) => (o as THREE.Mesh).geometry?.dispose())
+    ghost = null
+  }
+
   function close() {
     mode = null
     dragging = null
-    ghost?.removeFromParent(); ghost = null
+    shownKey = ''
+    disposeGhost()
     for (const h of handles) h.removeFromParent()
     panel.hidden = true
     rig.setEnabled(true)
@@ -98,7 +113,7 @@ export function createEnclosureEditor(world: World, canvas: HTMLCanvasElement, r
   }
 
   canvas.addEventListener('pointerdown', (e) => {
-    if (!mode) return
+    if (!mode || e.button !== 0 || dragging !== null) return // clic gauche ou premier doigt seulement
     const b = canvas.getBoundingClientRect()
     ray.setFromCamera(new THREE.Vector2(((e.clientX - b.left) / b.width) * 2 - 1, -((e.clientY - b.top) / b.height) * 2 + 1), world.camera)
     const hit = ray.intersectObjects(handles, false)[0]
@@ -106,13 +121,14 @@ export function createEnclosureEditor(world: World, canvas: HTMLCanvasElement, r
     dragging = handles.findIndex((h) => h === hit.object)
     const c = corners(rect)
     fixedCorner = c[(dragging + 2) % 4] // le coin opposé ne bouge pas
+    dragPointer = e.pointerId
     rig.setEnabled(false)
     canvas.setPointerCapture(e.pointerId)
     e.stopPropagation()
   }, { capture: true })
 
   canvas.addEventListener('pointermove', (e) => {
-    if (dragging === null) return
+    if (dragging === null || e.pointerId !== dragPointer) return
     const p = groundPoint(e)
     if (!p) return
     rect = snapRect({
@@ -122,7 +138,9 @@ export function createEnclosureEditor(world: World, canvas: HTMLCanvasElement, r
     refresh()
   })
 
-  const endDrag = () => { if (dragging !== null) { dragging = null; rig.setEnabled(true) } }
+  const endDrag = (e: PointerEvent) => {
+    if (dragging !== null && e.pointerId === dragPointer) { dragging = null; rig.setEnabled(true) }
+  }
   canvas.addEventListener('pointerup', endDrag)
   canvas.addEventListener('pointercancel', endDrag)
 

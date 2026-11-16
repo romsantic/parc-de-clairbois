@@ -152,7 +152,7 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
     if (p.kind === 'enclos') {
       const s = ctx.get()
       const k = JSON.stringify([s.time, animalsIn(s, p.id)])
-      if (k !== drawerSeen) { drawerSeen = k; refreshDrawer() }
+      if (k !== drawerSeen && refreshDrawer()) drawerSeen = k // sinon on réessaiera au prochain passage
     }
   }
 
