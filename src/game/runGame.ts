@@ -9,6 +9,7 @@ import { mountTopBar } from '../ui/topBar'
 import { flash, toast } from '../ui/feedback'
 import { applyAction, type Action } from '../sim/actions'
 import { BUILDINGS } from '../data/economy'
+import { SPECIES } from '../data/species'
 
 const SAVE_EVERY_MS = 30_000
 export const RESET_BACKUP_KEY = `${SAVE_KEY}-avant-nouvelle-partie`
@@ -99,15 +100,15 @@ export function runGame(store: Storage, storageOk = true): Game | null {
     if (df) topBar.pulse('fourrage', df)
     const dv = state.pantry.viande - before.pantry.viande
     if (dv) topBar.pulse('viande', dv)
-    toast(successMessage(action, state), true)
+    toast(successMessage(action, state, before), true)
     return true
   }
 
   return { get: () => state, dispatch }
 }
 
-/** Message de réussite ; `s` est l'état après l'action. */
-function successMessage(a: Action, s: GameState): string {
+/** Message de réussite ; `s` est l'état après l'action, `before` celui d'avant. */
+function successMessage(a: Action, s: GameState, before: GameState): string {
   switch (a.type) {
     case 'nettoyer': return 'Enclos nettoyé'
     case 'soignerTout': return 'Les animaux malades sont soignés'
@@ -123,6 +124,11 @@ function successMessage(a: Action, s: GameState): string {
     case 'acheterRations': return `+${a.n} ${a.food} dans le garde-manger`
     case 'agrandirGardeManger': return `Garde-manger agrandi (${s.pantry.capacity} places)`
     case 'billet': return `Billet à ${a.price} pièces`
+    case 'acheterAnimal': {
+      const offer = before.merchant.offers.find((o) => o.id === a.offerId)
+      return `${offer ? SPECIES[offer.species].name : 'Animal'} acheté`
+    }
+    case 'vendre': return `Animal vendu (+${s.coins - before.coins})`
     case 'monterNiveau': return s.village.level === 3 ? 'Clairbois devient un bourg !' : 'Clairbois devient un village !'
   }
 }

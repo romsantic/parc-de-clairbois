@@ -64,6 +64,18 @@ export const FARM = {
   freeFourragePerDay: [0, 6, 15],
 }
 
+/** Marchand d'animaux : renouvellement, composition du stock, prix de revente. */
+export const MERCHANT = {
+  RESTOCK_H: 6,
+  /** Nombre d'offres = BASE_STOCK + niveau du village. */
+  BASE_STOCK: 3,
+  ADULT_SHARE: 0.7,
+  /** Prix d'un jeune à l'achat, en part du prix de l'adulte. */
+  YOUNG_BUY_SHARE: 0.65,
+  SELL_YOUNG: 0.4,
+  SELL_ADULT: 0.6,
+}
+
 /** Emplacements de bâtiments (positions provisoires, ajustées avec la 3D). */
 export const SLOTS: { id: number; x: number; z: number; rot: number; unlockLevel: 1 | 2 | 3 }[] = [
   { id: 0, x: 28, z: 16, rot: 0, unlockLevel: 1 },

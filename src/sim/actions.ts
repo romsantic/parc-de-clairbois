@@ -5,13 +5,14 @@ import type { BuildingType, GameState, Rect } from './types'
 import { fairPrice } from './economy'
 import { canLevelUp, farmLevel } from './village'
 import { animalsIn, capacity, cleanliness } from './enclosure'
+import { buyAnimal, sellAnimal } from './merchant'
 import { checkPlacement, enclosureCost, resizeCost, snapRect } from './placement'
 
 /** Résultat d'une action : nouvel état, ou raison du refus (en français, affichable telle quelle). */
 export type ActionResult = { ok: true; state: GameState } | { ok: false; reason: string }
 
 const NOT_FOUND: ActionResult = { ok: false, reason: 'Introuvable.' }
-const noMoney = (cost: number): ActionResult => ({ ok: false, reason: `Pas assez de pièces (il en faut ${cost}).` })
+export const noMoney = (cost: number): ActionResult => ({ ok: false, reason: `Pas assez de pièces (il en faut ${cost}).` })
 
 export const cureCost = (price: number): number => Math.max(TUNING.CURE_MIN_COST, Math.round(price * TUNING.CURE_PRICE_SHARE))
 
@@ -160,6 +161,7 @@ export function upgradeBuilding(state: GameState, slot: number): ActionResult {
 
 /** Achète des rations à la ferme (remise selon son niveau) ; jamais d'achat partiel. */
 export function buyRations(state: GameState, food: Food, n: number): ActionResult {
+  if (!Number.isInteger(n) || n <= 0) return { ok: false, reason: 'Quantité invalide.' }
   const niveau = farmLevel(state)
   if (niveau === 0) return { ok: false, reason: 'Il faut une ferme pour acheter des rations.' }
   const p = state.pantry
@@ -216,6 +218,8 @@ export type Action =
   | { type: 'agrandirGardeManger' }
   | { type: 'billet'; price: number }
   | { type: 'monterNiveau' }
+  | { type: 'acheterAnimal'; offerId: number; encId: number }
+  | { type: 'vendre'; animalId: number }
 
 export function applyAction(state: GameState, a: Action): ActionResult {
   switch (a.type) {
@@ -231,5 +235,7 @@ export function applyAction(state: GameState, a: Action): ActionResult {
     case 'agrandirGardeManger': return upgradePantry(state)
     case 'billet': return setTicketPrice(state, a.price)
     case 'monterNiveau': return levelUp(state)
+    case 'acheterAnimal': return buyAnimal(state, a.offerId, a.encId)
+    case 'vendre': return sellAnimal(state, a.animalId)
   }
 }

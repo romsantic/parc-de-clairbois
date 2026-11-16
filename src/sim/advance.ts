@@ -4,8 +4,9 @@ import { feedStep } from './feeding'
 import { healthStep } from './health'
 import { breedingStep } from './breeding'
 import { economyStep } from './economy'
+import { merchantStep } from './merchant'
 
-/** Un pas de 10 minutes, en place : repas, santé, puis naissances et conceptions, puis recettes. */
+/** Un pas de 10 minutes, en place : repas, santé, puis naissances et conceptions, puis recettes et marchand. */
 export function step(state: GameState): GameEvent[] {
   const events: GameEvent[] = []
   state.time += TUNING.STEP_MS
@@ -13,6 +14,7 @@ export function step(state: GameState): GameEvent[] {
   healthStep(state, events)
   breedingStep(state, events)
   economyStep(state, events)
+  merchantStep(state, events)
   return events
 }
 

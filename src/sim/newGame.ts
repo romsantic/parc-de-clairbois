@@ -3,6 +3,7 @@ import { ANIMAL_NAMES } from '../data/names'
 import { TUNING, HOUR_MS } from '../data/tuning'
 import type { GameState } from './types'
 import { random } from './random'
+import { restock } from './merchant'
 
 /** Nouvelle partie : un enclos de prairie, un couple de moutons adultes, un peu de fourrage. */
 export function newGame(seed: number, nowMs: number): GameState {
@@ -14,7 +15,7 @@ export function newGame(seed: number, nowMs: number): GameState {
     ticketPrice: 5, reputation: 1,
     village: { level: 1, clientsServed: 0 },
     buildings: [{ slot: 0, type: 'ferme', level: 1 }],
-    merchant: { restockAt: time, restocks: 0, offers: [] }, // le stock se remplit au pas suivant
+    merchant: { restockAt: time, restocks: 0, offers: [] },
     totalVisitors: 0,
   }
   const encId = state.nextId++
@@ -27,5 +28,6 @@ export function newGame(seed: number, nowMs: number): GameState {
       lastFedAt: time, health: { status: 'ok' }, pregnantSince: null, lastBirthAt: null,
     })
   }
+  restock(state) // premier stock : le couple de cochons
   return state
 }
