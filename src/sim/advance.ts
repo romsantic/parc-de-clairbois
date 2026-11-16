@@ -3,14 +3,16 @@ import type { GameEvent, GameState } from './types'
 import { feedStep } from './feeding'
 import { healthStep } from './health'
 import { breedingStep } from './breeding'
+import { economyStep } from './economy'
 
-/** Un pas de 10 minutes, en place : repas, santé, puis naissances et conceptions. */
+/** Un pas de 10 minutes, en place : repas, santé, puis naissances et conceptions, puis recettes. */
 export function step(state: GameState): GameEvent[] {
   const events: GameEvent[] = []
   state.time += TUNING.STEP_MS
   feedStep(state, events)
   healthStep(state, events)
   breedingStep(state, events)
+  economyStep(state, events)
   return events
 }
 

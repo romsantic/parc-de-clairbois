@@ -7,16 +7,19 @@ export interface Summary {
   malades: number
   fourrage: number
   viande: number
+  pieces: number
+  visiteurs: number
 }
 
 /** Résumé de ce qui s'est passé (pendant une absence, par exemple). */
 export function summarize(events: GameEvent[]): Summary {
-  const s: Summary = { naissances: 0, morts: [], malades: 0, fourrage: 0, viande: 0 }
+  const s: Summary = { naissances: 0, morts: [], malades: 0, fourrage: 0, viande: 0, pieces: 0, visiteurs: 0 }
   for (const e of events) {
     if (e.kind === 'naissance') s.naissances++
     else if (e.kind === 'malade') s.malades++
     else if (e.kind === 'mort') s.morts.push({ name: e.name, species: e.species })
     else if (e.kind === 'repas') { s.fourrage += e.fourrage; s.viande += e.viande }
+    else if (e.kind === 'recettes') { s.pieces += e.billets + e.village; s.visiteurs += e.visiteurs }
   }
   return s
 }

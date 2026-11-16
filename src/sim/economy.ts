@@ -1,8 +1,10 @@
-import { BUILDINGS, ECONOMY } from '../data/economy'
+import { BUILDINGS, ECONOMY, FARM } from '../data/economy'
+import { DAY_MS, HOUR_MS, TUNING } from '../data/tuning'
+import { farmLevel } from './village'
 import { SPECIES } from '../data/species'
 import type { SpeciesId } from '../data/species'
 import { happiness } from './happiness'
-import type { GameState } from './types'
+import type { GameEvent, GameState } from './types'
 
 /** Attrait : par espèce présente, base × (1 + 0,5 × √(n − 1)), n = nombre d'animaux de l'espèce. */
 export function appeal(state: GameState): number {
@@ -69,4 +71,31 @@ export function incomePerHour(state: GameState, price: number = state.ticketPric
     village += c * depense
   }
   return { visiteurs, billets: visiteurs * price, village, clients }
+}
+
+/** Un pas (1/6 h) : recettes, clients, réputation et fourrage gratuit de la ferme. */
+export function economyStep(state: GameState, events: GameEvent[]): void {
+  const h = TUNING.STEP_MS / HOUR_MS
+  const inc = incomePerHour(state)
+  const billets = inc.billets * h
+  const village = inc.village * h
+  const visiteurs = inc.visiteurs * h
+  if (billets + village > 0) {
+    state.coins += billets + village
+    events.push({ kind: 'recettes', at: state.time, visiteurs, billets, village })
+  }
+  state.village.clientsServed += inc.clients * h
+  state.totalVisitors += visiteurs
+
+  // Réputation : baisse si le billet dépasse 1,5 × le prix juste, sinon remonte.
+  const cher = state.ticketPrice > ECONOMY.REPUTATION_DROP_ABOVE * fairPrice(state)
+  const delta = cher ? -ECONOMY.REPUTATION_DROP_PER_H * h : ECONOMY.REPUTATION_GAIN_PER_H * h
+  state.reputation = Math.min(1, Math.max(0, state.reputation + delta))
+
+  // Fourrage gratuit de la ferme, dans la limite du garde-manger.
+  const niveau = farmLevel(state)
+  if (niveau > 0) {
+    const libre = Math.max(0, state.pantry.capacity - state.pantry.fourrage - state.pantry.viande)
+    state.pantry.fourrage += Math.min(libre, (FARM.freeFourragePerDay[niveau - 1] * TUNING.STEP_MS) / DAY_MS)
+  }
 }
