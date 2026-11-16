@@ -13,13 +13,15 @@ export const TUNING = {
   DIRTY_AFTER_H: 24,
   DIRTY_SICK_PER_DAY: 0.15,
 
-  BREED_PER_HOUR: 0.25,
+  BREED_PER_HOUR: 0.1,
+  /** Repos d'une mère après une mise bas, en multiples de la gestation de l'espèce. */
+  BIRTH_REST_FACTOR: 2,
   BREED_MIN_HAPPINESS: 0.6,
   SOCIAL_ALONE_FACTOR: 0.6,
 
   START_COINS: 500,
   START_ENCLOSURE: { x: -26, z: -5, w: 12, d: 10 }, // dans la prairie, hors chemin
-  START_FOURRAGE: 10,
+  START_FOURRAGE: 30,
   START_PANTRY_CAPACITY: 200,
   /** Garde-manger : capacité, prix et niveau du village requis pour y accéder. */
   PANTRY_SIZES: [

@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { advanceTo } from '../../src/sim/advance'
 import { summarize } from '../../src/sim/summary'
-import { DAY_MS } from '../../src/data/tuning'
+import { newGame } from '../../src/sim/newGame'
+import { DAY_MS, HOUR_MS } from '../../src/data/tuning'
 import { animal, emptyState, enclosure, T0 } from './helpers'
 
 /** Couple de moutons dans un enclos plein (pas de naissance), propreté neutralisée. */
@@ -39,5 +40,16 @@ describe("scénarios d'absence (spec §10)", () => {
     expect(r.skippedMs).toBeGreaterThan(0)
     expect(r.state.time % 600_000).toBe(0)
     expect(r.state.time).toBeLessThanOrEqual(T0 + 365 * DAY_MS + 123_456)
+  })
+})
+
+describe('nouvelle partie laissée seule', () => {
+  it('72 h sans intervention : aucun animal ne tombe malade de faim (graines 1 à 20)', () => {
+    for (let seed = 1; seed <= 20; seed++) {
+      const g = newGame(seed, T0)
+      const { events } = advanceTo(g, g.time + 72 * HOUR_MS)
+      const faim = events.filter((e) => e.kind === 'malade' && e.cause === 'faim')
+      expect(faim, `graine ${seed}`).toHaveLength(0)
+    }
   })
 })

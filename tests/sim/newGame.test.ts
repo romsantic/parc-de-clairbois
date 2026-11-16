@@ -26,7 +26,7 @@ describe('newGame', () => {
     }
   })
   it('remplit un peu le garde-manger', () => {
-    expect(g.pantry).toEqual({ fourrage: 10, viande: 0, capacity: 200 })
+    expect(g.pantry).toEqual({ fourrage: 30, viande: 0, capacity: 200 })
   })
   it("crée directement l'état version 2", () => {
     expect(g.version).toBe(2)

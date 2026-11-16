@@ -17,6 +17,7 @@ export function breedingStep(state: GameState, events: GameEvent[]): void {
     const sp = SPECIES[mother.species]
     if (now - mother.pregnantSince < sp.gestationH * HOUR_MS) continue
     mother.pregnantSince = null
+    mother.lastBirthAt = now
     const n = randomInt(state, sp.litter[0], sp.litter[1])
     for (let i = 0; i < n; i++) {
       const baby: Animal = {
@@ -40,6 +41,8 @@ export function breedingStep(state: GameState, events: GameEvent[]): void {
     for (const f of here) {
       if (f.sex !== 'F' || f.pregnantSince !== null || f.health.status !== 'ok') continue
       if (ageStage(f, now) !== 'adulte' || isHungry(f, now)) continue
+      // Repos après une mise bas
+      if (f.lastBirthAt !== null && now - f.lastBirthAt < TUNING.BIRTH_REST_FACTOR * SPECIES[f.species].gestationH * HOUR_MS) continue
       if (happiness(state, f) <= TUNING.BREED_MIN_HAPPINESS) continue
       if (random(state) < chance) {
         f.pregnantSince = now

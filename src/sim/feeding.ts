@@ -32,7 +32,9 @@ export function autonomyHours(state: GameState): number {
   for (const a of state.animals) {
     const sp = SPECIES[a.species]
     const food = sp.diet.find((f) => state.pantry[f] > EPS) ?? sp.diet[0]
-    perHour[food] += sp.rationsPerDay / 24
+    // Une femelle gestante consomme aussi pour la portée moyenne : les petits sont comptés dès maintenant.
+    const heads = a.pregnantSince !== null ? 1 + (sp.litter[0] + sp.litter[1]) / 2 : 1
+    perHour[food] += (heads * sp.rationsPerDay) / 24
   }
   let hours = Infinity
   for (const f of ['fourrage', 'viande'] as const) {
