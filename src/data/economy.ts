@@ -76,12 +76,15 @@ export const MERCHANT = {
   SELL_ADULT: 0.6,
 }
 
-/** Emplacements de bâtiments (positions provisoires, ajustées avec la 3D). */
+/**
+ * Emplacements de bâtiments, côté village (x > 8) : à plus de 4 m de la rivière, des chemins,
+ * de la mairie et des maisons restantes. `rot` tourne la façade vers le chemin ou la mairie.
+ */
 export const SLOTS: { id: number; x: number; z: number; rot: number; unlockLevel: 1 | 2 | 3 }[] = [
-  { id: 0, x: 28, z: 16, rot: 0, unlockLevel: 1 },
-  { id: 1, x: 18, z: 6, rot: 0, unlockLevel: 1 },
-  { id: 2, x: 22, z: 12, rot: 0, unlockLevel: 2 },
-  { id: 3, x: 25, z: -6, rot: 0, unlockLevel: 2 },
-  { id: 4, x: 8, z: -7, rot: 0, unlockLevel: 3 },
-  { id: 5, x: 30, z: 6, rot: 0, unlockLevel: 3 },
+  { id: 0, x: 29, z: 17, rot: -2.28, unlockLevel: 1 },
+  { id: 1, x: 21, z: 3, rot: -1.11, unlockLevel: 1 },
+  { id: 2, x: 25, z: 9.5, rot: -1.57, unlockLevel: 2 },
+  { id: 3, x: 25, z: -6, rot: -1.21, unlockLevel: 2 },
+  { id: 4, x: 10.5, z: -7, rot: 1.02, unlockLevel: 3 },
+  { id: 5, x: 30.5, z: 6, rot: -1.57, unlockLevel: 3 },
 ]

@@ -11,6 +11,7 @@ import { happiness } from '../sim/happiness'
 import { ICONS, iconButton } from './icons'
 import { closeDrawer, isDrawerOpen, openDrawer, refreshDrawer } from './drawer'
 import { toast } from './feedback'
+import { BUILDINGS, SLOTS } from '../data/economy'
 
 export interface BottomBarContext {
   get(): GameState
@@ -121,6 +122,12 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
         add.addEventListener('click', () => ctx.startBuild(p.zone, p.point))
         actions.append(add)
       }
+    } else if (p.kind === 'emplacement') {
+      const def = SLOTS.find((x) => x.id === p.slot)
+      const b = s.buildings.find((x) => x.slot === p.slot)
+      if (b) left.append(text('b', `${BUILDINGS[b.type].name} · niveau ${b.level}`, 'nom'))
+      else if (def && def.unlockLevel > s.village.level) left.append(text('span', `Se débloque au niveau ${def.unlockLevel}`, 'discret'))
+      else left.append(text('b', 'Emplacement libre', 'nom'))
     } else {
       left.append(text('span', 'Clique un enclos ou une zone', 'discret'))
     }
@@ -128,7 +135,7 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
 
   function update() {
     const p = ctx.selection()
-    const key = p.kind === 'enclos' ? `e${p.id}` : p.kind === 'zone' ? `z${p.zone.id}` : 'rien'
+    const key = p.kind === 'enclos' ? `e${p.id}` : p.kind === 'zone' ? `z${p.zone.id}` : p.kind === 'emplacement' ? `s${p.slot}:${ctx.get().buildings.find((x) => x.slot === p.slot)?.level ?? 0}:${ctx.get().village.level}` : 'rien'
     if (key !== builtFor) { builtFor = key; build(p); if (!key.startsWith('e')) closeDrawer() }
     if (p.kind === 'enclos') {
       const s = ctx.get()

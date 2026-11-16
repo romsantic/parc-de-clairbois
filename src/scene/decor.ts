@@ -44,12 +44,8 @@ export function buildDecor(world: World, rng: () => number): { update(dt: number
   place('maison2', 21, -12, { height: 3.8, rot: -0.3, r: 3 })
   place('maison3', 25, 2, { height: 3.6, rot: -Math.PI / 2, r: 3 })
   place('maison2', 11, 16, { height: 3.6, rot: Math.PI + 0.4, r: 3 })
-  place('auberge', 22, 12, { height: 4.6, rot: Math.PI + 0.3, r: 4 })
   place('moulin', 29, -14, { height: 7, rot: -0.6, r: 3.5 })
-  place('ecurie', 28, 16, { height: 3.2, rot: Math.PI, r: 3 })
   place('puits', 13, 0, { height: 2.2, r: 1.2 })
-  place('etal', 18, 5, { height: 2.6, rot: Math.PI, r: 1.5 })
-  place('tonneau', 19.8, 5.5, { height: 1, r: 0.5 })
   place('charrette', 10, 4, { height: 1.8, rot: 0.8, r: 1.5 })
   place('banc', 15, 3.5, { height: 0.9, rot: Math.PI, r: 0.8 })
 
