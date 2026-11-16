@@ -36,8 +36,8 @@
 
 | # | Sous-tâche | Modèle | État |
 |---|---|---|---|
-| 1 | État version 2, migration, vrai niveau du village | Sonnet | en cours |
-| 2 | Attrait, visiteurs et billet (règles pures) | Sonnet | à faire |
+| 1 | État version 2, migration, vrai niveau du village | Sonnet | faite (f0e0489) |
+| 2 | Attrait, visiteurs et billet (règles pures) | Sonnet | en cours |
 | 3 | Le parc gagne de l'argent à chaque pas | Sonnet | à faire |
 | 4 | Actions du village et de la ferme | Sonnet | à faire |
 | 5 | Marchand d'animaux | Sonnet | à faire |
