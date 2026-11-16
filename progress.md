@@ -39,8 +39,8 @@
 | 1 | État version 2, migration, vrai niveau du village | Sonnet | faite (f0e0489) |
 | 2 | Attrait, visiteurs et billet (règles pures) | Sonnet | faite (9565d62) |
 | 3 | Le parc gagne de l'argent à chaque pas | Sonnet | faite (580b614) |
-| 4 | Actions du village et de la ferme | Sonnet | en cours |
-| 5 | Marchand d'animaux | Sonnet | à faire |
+| 4 | Actions du village et de la ferme | Sonnet | faite (9899db9) |
+| 5 | Marchand d'animaux | Sonnet | en cours |
 | 6 | Rééquilibrer la reproduction | Sonnet | à faire |
 | 7 | Modèles des bâtiments | Haiku | à faire |
 | 8 | Bâtiments et emplacements sur la carte | Sonnet | à faire |
