@@ -2,7 +2,7 @@
 
 > **Pour les agents :** sous-skill requis : superpowers:subagent-driven-development (recommandé) ou superpowers:executing-plans pour exécuter ce plan tâche par tâche. Les étapes utilisent des cases à cocher (`- [ ]`).
 
-**Objectif :** le parc gagne enfin de l'argent. Des visiteurs viennent selon l'attrait et le bonheur, paient un billet réglable (avec prix juste et estimation en direct) et dépensent au village. On construit et améliore la ferme, le café, la boutique et l'auberge sur des emplacements fixes ; la population grandit, le village passe Hameau → Village → Bourg, ce qui débloque la forêt, la montagne et le reste du catalogue du marchand. On achète et revend des animaux au marchand. Les chemins changent d'allure à chaque niveau. La reproduction des moutons est rééquilibrée.
+**Objectif :** le parc gagne enfin de l'argent. Des visiteurs viennent selon l'attrait et le bonheur, paient un billet réglable (avec prix juste et estimation en direct) et dépensent au village. On construit et améliore la ferme, le café, la boutique et l'auberge sur des emplacements fixes ; la population grandit et, d'un clic, le village passe Hameau → Village → Bourg, ce qui débloque la forêt, la montagne et le reste du catalogue du marchand. On achète et revend des animaux au marchand. Les chemins changent d'allure à chaque niveau. La reproduction des moutons est rééquilibrée.
 
 **Architecture :** comme aux étapes 2 et 3. Les chiffres vont dans `src/data/economy.ts` ; les règles pures et testées dans `src/sim/` (`economy.ts` pour attrait/visiteurs/billet/revenus, `village.ts` pour bâtiments/population/niveaux, `merchant.ts` pour le marchand). Un nouveau pas `economyStep` s'ajoute à `step()` dans `advance.ts` : le jeu en direct et le rattrapage d'absence gagnent l'argent de la même façon. Le format de sauvegarde passe en **version 2** avec une migration. La 3D (`villageView.ts`, chemins) et l'interface (barre du haut, volets billet/marchand, actions des bâtiments) lisent l'état et envoient des actions par `dispatch`.
 
@@ -26,9 +26,9 @@ La spec ne fixe pas ces chiffres ; ce sont des **propositions** (tous dans `src/
 | **Effet du prix** | rapport r = prix / prix juste : multiplicateur 1,3 jusqu'à r = 0,5, puis droites entre (0,5 ; 1,3), (1 ; 1), (1,5 ; 0,6), (2 ; 0,25), (3 ; 0). Meilleur revenu immédiat à r ≈ 1,1 (un peu au-dessus du prix juste, comme la spec). Curseur de 0 à 3 × prix juste. |
 | **Réputation** | de 0 à 1 (départ 1). Au-dessus de 1,5 × le prix juste elle baisse de 2 %/h ; sinon elle remonte de 1 %/h. Les visiteurs sont × (0,5 + 0,5 × réputation). Affichée « bonne / moyenne / mauvaise » dans le volet du billet. |
 | **Bâtiments** | voir le tableau ci-dessous. La **ferme est déjà construite** au départ (le tutoriel achète des rations avant de construire le café). |
-| **6 emplacements, 4 bâtiments** | La ferme est unique ; café, boutique et auberge peuvent être construits **plusieurs fois** (les 2 emplacements du Bourg servent à un 2ᵉ café, une 2ᵉ auberge…). Chaque commerce a une capacité de clients par heure : un prix bas qui amène du monde finit par les remplir, d'où l'intérêt d'en avoir deux. |
+| **6 emplacements, 4 bâtiments** | *Choix de Romain :* chaque bâtiment est **unique**. Les 2 emplacements du Bourg existent déjà sur la carte mais affichent « Bientôt » : de nouveaux bâtiments y viendront dans une évolution du jeu. Chaque commerce a une capacité de clients par heure : on l'améliore quand il est plein. |
 | **Population** | 10 habitants de base + 5 par niveau de chaque bâtiment construit + 1 nouvel habitant pour **30 clients** servis au café, à la boutique ou à l'auberge (cumulé depuis le début). Elle ne baisse jamais. |
-| **Passage de niveau** | **Automatique** dès que la population est atteinte (50 puis 150) et que la mission du palier est faite — à l'étape 4 la condition de mission est toujours vraie (`missionGateOk`), l'étape 5 la branchera. Message « Clairbois devient un village ! » et chemins qui changent. |
+| **Passage de niveau** | *Choix de Romain :* **par un bouton**. Quand la population est atteinte (50 puis 150) et la mission du palier faite — à l'étape 4 la condition de mission est toujours vraie (`missionGateOk`), l'étape 5 la branchera — la case du village s'allume dans la barre du haut ; son volet montre « Passer au niveau Village ». Message « Clairbois devient un village ! », zones et chemins qui changent. |
 | **Rations à la ferme** | Fourrage 2 pièces, viande 4. Ferme niveau 2 : −20 % et 6 fourrage gratuits par jour ; niveau 3 : −35 % et 15 fourrage par jour. Achat par 10 ou 50. |
 | **Garde-manger** | 200 places au départ ; « moyen » 400 places pour 600 pièces dès le Hameau ; « grand » 800 places pour 2 000 pièces au Bourg. Bouton sur la ferme. |
 | **Marchand** | Stock de 3 + niveau du village animaux, renouvelé toutes les 6 h. Espèces des zones débloquées ; sexe au hasard ; 70 % d'adultes, 30 % de jeunes. Prix d'achat : adulte = prix de la spec, jeune = 65 %. Revente : jeune 40 %, adulte 60 % (spec) ; bébé et animal malade refusés. **Premier stock** d'une partie : toujours un couple de cochons (pour le tutoriel de l'étape 5). |
@@ -49,7 +49,7 @@ La spec ne fixe pas ces chiffres ; ce sont des **propositions** (tous dans `src/
 - La simulation reste pure (aucun DOM, aucune horloge) ; l'argent est gagné **dans `step()`**, donc pareil en direct et pendant l'absence.
 - Les pièces peuvent devenir décimales (revenus par pas de 10 min) ; l'affichage arrondit vers le bas ; les prix restent entiers.
 - Format de sauvegarde **version 2** ; une partie v1 se charge sans rien perdre (migration testée).
-- Niveaux du village : 1 Hameau, 2 Village, 3 Bourg. Seuils 50 et 150 habitants. Emplacements : 2 / 4 / 6. Zones : prairie / + forêt / + montagne.
+- Niveaux du village : 1 Hameau, 2 Village, 3 Bourg. Seuils 50 et 150 habitants ; passage **par un bouton** (jamais automatique). Emplacements : 2 / 4 / 6. Zones : prairie / + forêt / + montagne.
 - Chemins : terre battue (1), gravier clair bordé de pierres (2), pavés avec lanternes sur l'allée du zoo et la place (3) ; changement automatique au passage de niveau.
 - Toutes les actions passent par `dispatch` ; refus = rien ne change + raison en français. Textes visibles en français ; noms d'animaux en texte seulement.
 - Barre du bas : ligne ≤ 48 px ; volets ≤ 40 % de la hauteur.
@@ -78,7 +78,7 @@ La spec ne fixe pas ces chiffres ; ce sont des **propositions** (tous dans `src/
   - `interface Village { level: 1 | 2 | 3; clientsServed: number }`
   - `Animal` gagne `lastBirthAt: number | null`.
   - `GameState` : `version: 2` ; nouveaux champs `ticketPrice: number`, `reputation: number`, `village: Village`, `buildings: Building[]`, `merchant: Merchant`, `totalVisitors: number`.
-  - `GameEvent` gagne `{ kind: 'recettes'; at; visiteurs: number; billets: number; village: number }`, `{ kind: 'niveau'; at; level: 2 | 3 }`, `{ kind: 'stock'; at }`.
+  - `GameEvent` gagne `{ kind: 'recettes'; at; visiteurs: number; billets: number; village: number }`, `{ kind: 'stock'; at }`.
 - Produit : `CURRENT_VERSION = 2` et `MIGRATIONS[1]` : ajoute `ticketPrice: 5`, `reputation: 1`, `village: { level: 1, clientsServed: 0 }`, `buildings: [{ slot: 0, type: 'ferme', level: 1 }]`, `merchant: { restockAt: state.time, restocks: 0, offers: [] }` (le stock se remplit au pas suivant), `totalVisitors: 0`, `lastBirthAt: null` sur chaque animal, `version: 2`. La migration est écrite **en clair** (pas d'appel aux fonctions du jeu, pour qu'elle ne change jamais).
 - Produit : `newGame` crée directement l'état v2 (mêmes valeurs ; le stock du marchand est rempli en tâche 5).
 - `checkPlacement` et la barre du bas lisent `state.village.level` ; `drawZones(world, level)` est appelé avec `state.village.level`.
@@ -97,7 +97,7 @@ La spec ne fixe pas ces chiffres ; ce sont des **propositions** (tous dans `src/
 - Test : `tests/sim/economy.test.ts`
 
 **Interfaces :**
-- Produit (`data/economy.ts`) : `ECONOMY` (`VISITORS_PER_APPEAL: 4`, `APPEAL_EXTRA_FACTOR: 0.5`, `FAIR_BASE: 4`, `FAIR_PER_LEVEL: 2`, `FAIR_PER_APPEAL: 0.4`, `PRICE_CURVE: [[0.5,1.3],[1,1],[1.5,0.6],[2,0.25],[3,0]]`, `REPUTATION_DROP_ABOVE: 1.5`, `REPUTATION_DROP_PER_H: 0.02`, `REPUTATION_GAIN_PER_H: 0.01`, `CLIENTS_PER_NEWCOMER: 30`, `BASE_POPULATION: 10`, `RESIDENTS_PER_LEVEL: 5`, `LEVEL_POPULATION: { 2: 50, 3: 150 }`, `LEVEL_NAMES: ['Hameau','Village','Bourg']`) ; `BUILDINGS: Record<BuildingType, { name; unlockLevel; buildCost: number | null; upgradeCost: [number, number]; unique: boolean; share: number; spend: [number, number, number]; maxClientsPerH: [number, number, number] }>` avec les valeurs du tableau des bâtiments ; `FARM: { foodPrice: { fourrage: 2, viande: 4 }, discount: [0, 0.2, 0.35], freeFourragePerDay: [0, 6, 15] }` ; `SLOTS: { id: number; x: number; z: number; rot: number; unlockLevel: 1 | 2 | 3 }[]` (6 emplacements, positions choisies en tâche 8 — mettre des valeurs provisoires : `(28,16)`, `(18,6)`, `(22,12)`, `(25,-6)`, `(8,-7)`, `(30,6)`).
+- Produit (`data/economy.ts`) : `ECONOMY` (`VISITORS_PER_APPEAL: 4`, `APPEAL_EXTRA_FACTOR: 0.5`, `FAIR_BASE: 4`, `FAIR_PER_LEVEL: 2`, `FAIR_PER_APPEAL: 0.4`, `PRICE_CURVE: [[0.5,1.3],[1,1],[1.5,0.6],[2,0.25],[3,0]]`, `REPUTATION_DROP_ABOVE: 1.5`, `REPUTATION_DROP_PER_H: 0.02`, `REPUTATION_GAIN_PER_H: 0.01`, `CLIENTS_PER_NEWCOMER: 30`, `BASE_POPULATION: 10`, `RESIDENTS_PER_LEVEL: 5`, `LEVEL_POPULATION: { 2: 50, 3: 150 }`, `LEVEL_NAMES: ['Hameau','Village','Bourg']`) ; `BUILDINGS: Record<BuildingType, { name; withArticle: string /* « un café » */; unlockLevel; buildCost: number | null; upgradeCost: [number, number]; share: number; spend: [number, number, number]; maxClientsPerH: [number, number, number] }>` avec les valeurs du tableau des bâtiments ; `FARM: { foodPrice: { fourrage: 2, viande: 4 }, discount: [0, 0.2, 0.35], freeFourragePerDay: [0, 6, 15] }` ; `SLOTS: { id: number; x: number; z: number; rot: number; unlockLevel: 1 | 2 | 3 }[]` (6 emplacements, positions choisies en tâche 8 — mettre des valeurs provisoires : `(28,16)`, `(18,6)`, `(22,12)`, `(25,-6)`, `(8,-7)`, `(30,6)`).
 - Produit (`sim/economy.ts`) :
   - `appeal(state): number`
   - `averageHappiness(state): number` (0 sans animal)
@@ -124,17 +124,17 @@ La spec ne fixe pas ces chiffres ; ce sont des **propositions** (tous dans `src/
 - Produit (`village.ts`) :
   - `population(state): number` = `BASE_POPULATION + Σ RESIDENTS_PER_LEVEL × niveau + floor(clientsServed / CLIENTS_PER_NEWCOMER)`
   - `missionGateOk(state, level: 2 | 3): boolean` — renvoie `true` à l'étape 4 (commentaire : l'étape 5 vérifiera la mission du palier)
-  - `levelStep(state, events)` — passe au niveau suivant si `population ≥ LEVEL_POPULATION[n]` et `missionGateOk` ; événement `niveau`
+  - `canLevelUp(state): { ok: true; level: 2 | 3 } | { ok: false; reason: string }` — raisons : `"Clairbois est déjà un bourg."`, `"Il faut 50 habitants (encore n)."`, `"Il faut d'abord terminer la mission du palier."`
   - `farmLevel(state): 0 | 1 | 2 | 3` (0 sans ferme)
 - Produit (`economy.ts`) : `economyStep(state, events)` — pour un pas (1/6 h) : ajoute billets + village aux pièces, `clients` à `village.clientsServed`, visiteurs à `totalVisitors`, événement `recettes` si > 0 ; réputation (baisse si prix > 1,5 × juste, sinon remonte ; bornée 0–1) ; fourrage gratuit de la ferme (dans la limite du garde-manger).
-- `step()` : `feedStep`, `healthStep`, `breedingStep`, puis `economyStep`, `merchantStep` (tâche 5 — l'ajouter quand elle existe), `levelStep`.
-- `Summary` gagne `pieces: number`, `visiteurs: number`, `niveau: number | null`.
+- `step()` : `feedStep`, `healthStep`, `breedingStep`, puis `economyStep`, `merchantStep` (tâche 5 — l'ajouter quand elle existe). Le niveau ne change **jamais** tout seul.
+- `Summary` gagne `pieces: number`, `visiteurs: number`.
 
-- [ ] **Étape 1 : écrire les tests qui échouent** — `population` d'une nouvelle partie = 15 ; avec café niveau 2 = 25 ; avec 300 clients servis = +10 ; un état à 49 habitants qui en gagne 1 → événement `niveau` 2 et `village.level === 2` ; pas de passage si `missionGateOk` renvoie faux (le remplacer par un paramètre ou une fonction injectée pour le test) ; `advanceTo` d'1 h avec 2 moutons heureux au prix juste (enclos plein et propreté neutralisée comme dans `absence.test.ts`, garde-manger rempli) → +30 pièces (6 visiteurs × 5) à 0,01 près ; prix à 2 × juste pendant 10 h → réputation 0,8 ; puis prix juste 10 h → 0,9 ; ferme niveau 3 → +15 fourrage en 24 h ; **30 jours d'absence** d'une nouvelle partie avec 200 fourrage : pièces finies, > 0, durée < 2 s ; `summarize` additionne pièces et visiteurs.
+- [ ] **Étape 1 : écrire les tests qui échouent** — `population` d'une nouvelle partie = 15 ; avec café niveau 2 = 25 ; avec 300 clients servis = +10 ; `canLevelUp` à 49 habitants → « Il faut 50 habitants (encore 1). » ; à 50 → ok niveau 2 ; au niveau 3 → « déjà un bourg » ; 30 jours d'avance à 200 habitants → toujours niveau 1 (jamais automatique) ; `advanceTo` d'1 h avec 2 moutons heureux au prix juste (enclos plein et propreté neutralisée comme dans `absence.test.ts`, garde-manger rempli) → +30 pièces (6 visiteurs × 5) à 0,01 près ; prix à 2 × juste pendant 10 h → réputation 0,8 ; puis prix juste 10 h → 0,9 ; ferme niveau 3 → +15 fourrage en 24 h ; **30 jours d'absence** d'une nouvelle partie avec 200 fourrage : pièces finies, > 0, durée < 2 s ; `summarize` additionne pièces et visiteurs.
 - [ ] **Étape 2 : `npm test`** → ÉCHEC.
 - [ ] **Étape 3 : implémenter.**
 - [ ] **Étape 4 : `npm test`** → réussi.
-- [ ] **Étape 5 : commit** — `Recettes à chaque pas, réputation, population et niveaux du village`
+- [ ] **Étape 5 : commit** — `Recettes à chaque pas, réputation, population`
 
 ### Tâche 4 : Actions du village et de la ferme — *Sonnet*
 
@@ -144,15 +144,16 @@ La spec ne fixe pas ces chiffres ; ce sont des **propositions** (tous dans `src/
 
 **Interfaces :**
 - Produit :
-  - `buildBuilding(state, slot, type): ActionResult` — refus : `"Cet emplacement se débloque au niveau n du village."`, `"Cet emplacement est déjà pris."`, `"Ce bâtiment se débloque au niveau n du village."`, `"Il n'y a qu'une ferme à Clairbois."`, pièces.
+  - `buildBuilding(state, slot, type): ActionResult` — refus : `"Cet emplacement se débloque au niveau n du village."`, `"Cet emplacement est déjà pris."`, `"Ce bâtiment se débloque au niveau n du village."`, `"Clairbois a déjà un café."` (avec `withArticle` : chaque bâtiment est unique), pièces.
+  - `levelUp(state): ActionResult` — applique `canLevelUp` (refus = sa raison) et passe `village.level` au niveau suivant.
   - `upgradeBuilding(state, slot): ActionResult` — refus `"Ce bâtiment est déjà au niveau maximum."`, pièces.
   - `buyRations(state, food, n): ActionResult` — sans ferme : `"Il faut une ferme pour acheter des rations."` ; coût = `ceil(n × prix × (1 − remise))` ; refus `"Le garde-manger est plein."` ou `"Il n'y a de la place que pour k rations."` (aucun achat partiel), pièces.
   - `upgradePantry(state): ActionResult` — 200 → 400 (600 pièces), 400 → 800 (2 000 pièces, refus `"Le grand garde-manger se débloque au niveau 3 du village."`), refus `"Le garde-manger est déjà au plus grand."`. Valeurs dans `TUNING.PANTRY_SIZES` : `[{ capacity: 200 }, { capacity: 400, cost: 600, level: 1 }, { capacity: 800, cost: 2000, level: 3 }]`.
   - `setTicketPrice(state, price): ActionResult` — entier entre 0 et `3 × fairPrice` ; refus sinon `"Le prix doit être entre 0 et N pièces."`.
-- `Action` gagne `{ type: 'batir'; slot; building }`, `{ type: 'ameliorer'; slot }`, `{ type: 'acheterRations'; food; n }`, `{ type: 'agrandirGardeManger' }`, `{ type: 'billet'; price }`. L'ancienne action gratuite `rations` **sort de `Action`** (le panneau `?debug` garde `addRations` directement).
-- Messages de réussite : « Café construit », « Café amélioré (niveau 2) », « +10 fourrage dans le garde-manger », « Garde-manger agrandi (400 places) », « Billet à 6 pièces ».
+- `Action` gagne `{ type: 'batir'; slot; building }`, `{ type: 'ameliorer'; slot }`, `{ type: 'acheterRations'; food; n }`, `{ type: 'agrandirGardeManger' }`, `{ type: 'billet'; price }`, `{ type: 'monterNiveau' }`. L'ancienne action gratuite `rations` **sort de `Action`** (le panneau `?debug` garde `addRations` directement).
+- Messages de réussite : « Café construit », « Café amélioré (niveau 2) », « +10 fourrage dans le garde-manger », « Garde-manger agrandi (400 places) », « Billet à 6 pièces », « Clairbois devient un village ! » / « … un bourg ! ».
 
-- [ ] **Étape 1 : écrire les tests qui échouent** — construire un café au slot 1 : −300 pièces, bâtiment niveau 1 ; même slot → « déjà pris » ; slot 2 au niveau 1 → « niveau 2 » ; boutique au niveau 1 → « niveau 2 » ; deuxième ferme → « qu'une ferme » ; améliorer le café → −600, niveau 2 ; au niveau 3 → « maximum » ; 10 fourrage avec ferme niveau 1 = 20 pièces, niveau 2 = 16, niveau 3 = 13 ; garde-manger presque plein → refus avec la place restante ; agrandir 200 → 400 = 600 pièces ; 400 → 800 au niveau 1 → refus ; billet à 7 avec prix juste 5 → ok ; à 16 → refus « entre 0 et 15 » ; `applyAction` aiguille chaque nouveau type.
+- [ ] **Étape 1 : écrire les tests qui échouent** — construire un café au slot 1 : −300 pièces, bâtiment niveau 1 ; même slot → « déjà pris » ; slot 2 au niveau 1 → « niveau 2 » ; boutique au niveau 1 → « niveau 2 » ; deuxième café → « Clairbois a déjà un café. » ; `monterNiveau` à 50 habitants → niveau 2, à 30 → refus avec la raison de `canLevelUp` ; améliorer le café → −600, niveau 2 ; au niveau 3 → « maximum » ; 10 fourrage avec ferme niveau 1 = 20 pièces, niveau 2 = 16, niveau 3 = 13 ; garde-manger presque plein → refus avec la place restante ; agrandir 200 → 400 = 600 pièces ; 400 → 800 au niveau 1 → refus ; billet à 7 avec prix juste 5 → ok ; à 16 → refus « entre 0 et 15 » ; `applyAction` aiguille chaque nouveau type.
 - [ ] **Étape 2 : `npm test`** → ÉCHEC.
 - [ ] **Étape 3 : implémenter.**
 - [ ] **Étape 4 : `npm test`** → réussi.
@@ -218,13 +219,13 @@ La spec ne fixe pas ces chiffres ; ce sont des **propositions** (tous dans `src/
 - Modifier : `src/scene/decor.ts` (retirer l'auberge, l'écurie et l'étal décoratifs : ils deviennent de vrais bâtiments), `src/scene/picking.ts`, `src/scene/zonesView.ts`, `src/main.ts`, `src/data/economy.ts` (positions définitives de `SLOTS`)
 
 **Interfaces :**
-- Produit : `createVillageView(world, getState): { update(): void; slotMeshes(): Map<number, THREE.Object3D>; setSelected(slot: number | null): void }` — chaque emplacement : libre et débloqué → carré de terre avec un petit panneau « + » ; verrouillé → panneau grisé « Niveau n » ; occupé → le bâtiment. Allure par niveau : ferme = écurie + foin (+ moulin au niveau 3) ; café = étal 2 + bancs (+ kiosque au niveau 3) ; boutique = maison 4 + étal + caisses (+ sacs) ; auberge = auberge + tonneaux (+ feu au niveau 3). Échelle 1 / 1,08 / 1,15 et une petite enseigne avec 1 à 3 étoiles. Reconstruit seulement l'emplacement qui a changé.
+- Produit : `createVillageView(world, getState): { update(): void; slotMeshes(): Map<number, THREE.Object3D>; setSelected(slot: number | null): void }` — chaque emplacement : libre et débloqué → carré de terre avec un petit panneau « + » ; verrouillé → panneau grisé « Niveau n » ; emplacement du Bourg débloqué mais sans bâtiment possible → panneau « Bientôt » ; occupé → le bâtiment. Allure par niveau : ferme = écurie + foin (+ moulin au niveau 3) ; café = étal 2 + bancs (+ kiosque au niveau 3) ; boutique = maison 4 + étal + caisses (+ sacs) ; auberge = auberge + tonneaux (+ feu au niveau 3). Échelle 1 / 1,08 / 1,15 et une petite enseigne avec 1 à 3 étoiles. Reconstruit seulement l'emplacement qui a changé.
 - `Pick` gagne `{ kind: 'emplacement'; slot: number }` (libre ou bâti — l'interface lit l'état).
 - `drawZones` devient `createZonesView(world): { setLevel(level): void }` : au passage de niveau, la zone débloquée perd son gris et son panneau.
 
 - [ ] **Étape 1 : implémenter** ; choisir les 6 positions dans le village (hors rivière, hors chemins, loin de la mairie) et les écrire dans `SLOTS`.
 - [ ] **Étape 2 : `npm test`** → réussi.
-- [ ] **Étape 3 : vérifier à la main (chef)** — la ferme est à sa place ; l'emplacement 2 montre « + » ; 3 à 6 grisés ; clic sur un emplacement → sélection ; `?debug` niveau 2 → forêt débloquée, emplacements 3 et 4 libres.
+- [ ] **Étape 3 : vérifier à la main (chef)** — la ferme est à sa place ; l'emplacement 2 montre « + » ; 3 à 6 grisés ; clic sur un emplacement → sélection ; `?debug` niveau 2 → forêt débloquée, emplacements 3 et 4 libres ; au niveau 3, 5 et 6 affichent « Bientôt ».
 - [ ] **Étape 4 : commit** — `Bâtiments du village et emplacements sur la carte`
 
 ### Tâche 9 : Chemins qui suivent le niveau du village — *Sonnet*
@@ -254,22 +255,23 @@ La spec ne fixe pas ces chiffres ; ce sont des **propositions** (tous dans `src/
 
 **Interfaces :**
 - Produit (`format.ts`) : `formatPerHour(visitors: number, coins: number): string` → `'≈ 42 visiteurs/h · 380 pièces/h'` (arrondis à l'unité) ; `reputationLabel(r): 'bonne' | 'moyenne' | 'mauvaise'` (≥ 0,8 / ≥ 0,5 / sinon) ; `formatCountdown(ms): string` → `'3 h 20'`, `'45 min'`.
-- Barre du haut : visiteurs/h actifs ; nouvelle case **billet** « 🎟 5 » (clic → volet du billet) ; case village « Hameau · 15 hab. » ; `pulse` accepte aussi `'village'` (passage de niveau).
+- Barre du haut : visiteurs/h actifs ; nouvelle case **billet** « 🎟 5 » (clic → volet du billet) ; case village « Hameau · 15 hab. » qui **s'allume** (pastille) quand `canLevelUp` est ok ; `pulse` accepte aussi `'village'`.
+- Volet du village (clic sur la case village) : population, « Prochain niveau : Village à 50 habitants (encore 12) », d'où viennent les habitants (bâtiments, nouveaux venus), et le bouton **Passer au niveau Village** (désactivé avec la raison tant que `canLevelUp` refuse).
 - Volet du billet (`ticketPanel.ts`) : curseur de 0 à 3 × prix juste, pas de 1 ; « Prix juste : 5 pièces » ; estimation en direct avec `incomePerHour(state, prixDuCurseur)` ; réputation ; bouton **Valider** → `dispatch({ type: 'billet', price })`.
 - Sélection d'un emplacement (`buildingBar.ts`, appelé par la barre du bas) :
-  - **libre** : une icône par bâtiment constructible avec son prix (désactivée avec la raison si verrouillée) ;
+  - **libre** : une icône par bâtiment pas encore construit, avec son prix (désactivée avec la raison si verrouillée) ; s'il n'en reste aucun : « De nouveaux bâtiments arriveront bientôt » ;
   - **ferme** : « Ferme ★ » ; Fourrage ×10, ×50, Viande ×10, ×50 (prix calculé), Améliorer (prix), Agrandir le garde-manger (prix) ;
   - **café / boutique / auberge** : nom, niveau, « ≈ n clients/h · m pièces/h » ; Améliorer.
 - Volet marchand (`merchantPanel.ts`, icône Marchand activée) : « Nouveau stock dans 3 h 20 » ; une ligne par offre (espèce, ♀/♂, jeune/adulte, prix, **Acheter**). Enclos cible : l'enclos sélectionné s'il accepte, sinon le premier qui accepte ; affiché « → Enclos 2 ». Aucun → bouton désactivé avec la raison de `acceptsSpecies` du premier enclos du bon biome, ou « Il faut un enclos de forêt. ».
 - Volet Détails : bouton **Vendre (72)** par animal, en deux clics (« Vendre ? » puis confirmation, annulé au bout de 3 s).
-- Passage de niveau (événement `niveau` vu par `runGame`) : message « Clairbois devient un village ! », `zones.setLevel`, `decor.setPathLevel`.
+- Changement de niveau (bouton ou `?debug`) : `main.ts` surveille `state.village.level` à chaque image et appelle `zones.setLevel`, `decor.setPathLevel` et `villageView.update` quand il change.
 - `?debug` : boutons « +20 habitants » (ajoute 600 clients servis) et « Niveau suivant ».
 
 - [ ] **Étape 1 : écrire les tests qui échouent** pour `formatPerHour`, `reputationLabel`, `formatCountdown`.
 - [ ] **Étape 2 : `npm test`** → ÉCHEC.
 - [ ] **Étape 3 : implémenter.**
 - [ ] **Étape 4 : `npm test`** → réussi.
-- [ ] **Étape 5 : vérifier à la main (chef)** — régler le billet : l'estimation bouge en direct, Valider → message ; construire le café (−300 qui s'envole) ; acheter 10 fourrage ; acheter le couple de cochons dans un nouvel enclos ; vendre un agneau jeune ; pièces qui montent au fil des minutes ; `?debug` +20 habitants ×2 → « Clairbois devient un village ! », forêt débloquée, chemins en gravier ; mode mobile : ligne ≤ 48 px, volets lisibles.
+- [ ] **Étape 5 : vérifier à la main (chef)** — régler le billet : l'estimation bouge en direct, Valider → message ; construire le café (−300 qui s'envole) ; acheter 10 fourrage ; acheter le couple de cochons dans un nouvel enclos ; vendre un agneau jeune ; pièces qui montent au fil des minutes ; `?debug` +20 habitants ×2 → la case village s'allume ; « Passer au niveau Village » → « Clairbois devient un village ! », forêt débloquée, chemins en gravier ; mode mobile : ligne ≤ 48 px, volets lisibles.
 - [ ] **Étape 6 : commit** — `Interface : billet, bâtiments du village, marchand, vente`
 
 ### Tâche 11 : Vérification d'ensemble, relecture et publication — *chef*
