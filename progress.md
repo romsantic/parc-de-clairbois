@@ -48,6 +48,8 @@
 | 10 | Interface : billet, village, marchand | Sonnet | faite (24dedcd) |
 | 11 | Vérification d'ensemble, relecture et publication | chef + relecture Opus | en cours |
 
+**Reprise de la sous-tâche 11 (arrêt pour limite d'utilisation, 16/11/2026)** — déjà vérifié dans le navigateur : nouvelle partie, visiteurs 6/h, construction du café (−300, « Café construit », bâtiment visible), volet du billet (prix juste 5, estimation en direct exacte, Valider → « Billet à 7 pièces »). Reste à vérifier : ferme (rations ×10/×50, améliorer, garde-manger), marchand (achat du couple de cochons dans un nouvel enclos, compte à rebours), vente en deux clics, volet du village + `?debug` « +20 habitants » ×2 puis « Passer au niveau Village » (forêt débloquée, chemins en gravier, emplacements 3-4), niveau 3 (pavés + lanternes, emplacements 5-6 « Bientôt »), nuit (`?heure=22`), mode mobile (ligne ≤ 48 px, barre du haut à 7 cases), sauvegarde v1 collée dans `localStorage`. Défauts vus : le panneau « + » d'un emplacement libre et les étoiles ★ du niveau d'un bâtiment s'affichent comme un trait / des points (police du sprite `label` dans `zonesView.ts`) ; un emplacement « Niveau 2 » touche un arbre du décor. Ensuite : relecture finale (agent Opus), corrections, accord de Romain pour fusionner, vérification en ligne.
+
 Étapes suivantes (5 Missions, 6 Finition V1) : leurs sous-tâches seront ajoutées ici quand leur plan sera écrit.
 
 ## Liens
