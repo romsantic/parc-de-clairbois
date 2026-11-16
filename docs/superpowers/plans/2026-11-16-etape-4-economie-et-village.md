@@ -64,7 +64,7 @@ La spec ne fixe pas ces chiffres ; ce sont des **propositions** (tous dans `src/
 
 ---
 
-### Tâche 1 : État version 2, migration, vrai niveau du village — *Sonnet*
+### Task 1 : État version 2, migration, vrai niveau du village — *Sonnet*
 
 **Fichiers :**
 - Modifier : `src/sim/types.ts`, `src/sim/newGame.ts`, `src/sim/advance.ts` (`shiftDates`), `src/save/migrations.ts`, `src/save/save.ts` (`looksLikeGame`), `src/data/tuning.ts` (retirer `VILLAGE_LEVEL_V1`), `src/sim/placement.ts`, `src/ui/bottomBar.ts`, `src/main.ts`, `tests/sim/helpers.ts`
@@ -90,7 +90,7 @@ La spec ne fixe pas ces chiffres ; ce sont des **propositions** (tous dans `src/
 - [ ] **Étape 4 : `npm test`** → réussi.
 - [ ] **Étape 5 : commit** — `Sauvegarde v2 : niveau du village, bâtiments, billet, marchand (migration v1 → v2)`
 
-### Tâche 2 : Attrait, visiteurs et billet (règles pures) — *Sonnet*
+### Task 2 : Attrait, visiteurs et billet (règles pures) — *Sonnet*
 
 **Fichiers :**
 - Créer : `src/data/economy.ts`, `src/sim/economy.ts`
@@ -112,7 +112,7 @@ La spec ne fixe pas ces chiffres ; ce sont des **propositions** (tous dans `src/
 - [ ] **Étape 4 : `npm test`** → réussi.
 - [ ] **Étape 5 : commit** — `Attrait, visiteurs, prix juste et revenus`
 
-### Tâche 3 : Le parc gagne de l'argent à chaque pas — *Sonnet*
+### Task 3 : Le parc gagne de l'argent à chaque pas — *Sonnet*
 
 **Fichiers :**
 - Créer : `src/sim/village.ts`
@@ -136,7 +136,7 @@ La spec ne fixe pas ces chiffres ; ce sont des **propositions** (tous dans `src/
 - [ ] **Étape 4 : `npm test`** → réussi.
 - [ ] **Étape 5 : commit** — `Recettes à chaque pas, réputation, population`
 
-### Tâche 4 : Actions du village et de la ferme — *Sonnet*
+### Task 4 : Actions du village et de la ferme — *Sonnet*
 
 **Fichiers :**
 - Modifier : `src/sim/actions.ts`, `src/game/runGame.ts` (`successMessage`)
@@ -159,7 +159,7 @@ La spec ne fixe pas ces chiffres ; ce sont des **propositions** (tous dans `src/
 - [ ] **Étape 4 : `npm test`** → réussi.
 - [ ] **Étape 5 : commit** — `Actions : bâtir, améliorer, rations à la ferme, garde-manger, billet`
 
-### Tâche 5 : Marchand d'animaux — *Sonnet*
+### Task 5 : Marchand d'animaux — *Sonnet*
 
 **Fichiers :**
 - Créer : `src/sim/merchant.ts`
@@ -185,7 +185,7 @@ La spec ne fixe pas ces chiffres ; ce sont des **propositions** (tous dans `src/
 - [ ] **Étape 4 : `npm test`** → réussi.
 - [ ] **Étape 5 : commit** — `Marchand d'animaux : stock renouvelé, achat, revente`
 
-### Tâche 6 : Rééquilibrer la reproduction — *Sonnet*
+### Task 6 : Rééquilibrer la reproduction — *Sonnet*
 
 **Fichiers :**
 - Modifier : `src/data/tuning.ts`, `src/sim/breeding.ts`, `src/sim/feeding.ts` (`autonomyHours`)
@@ -202,7 +202,7 @@ La spec ne fixe pas ces chiffres ; ce sont des **propositions** (tous dans `src/
 - [ ] **Étape 4 : `npm test`** → réussi.
 - [ ] **Étape 5 : commit** — `Équilibrage : repos après une naissance, conception plus lente, autonomie qui anticipe`
 
-### Tâche 7 : Modèles des bâtiments — *Haiku*
+### Task 7 : Modèles des bâtiments — *Haiku*
 
 **Fichiers :**
 - Créer : `public/models/village/House_4.*`, `MarketStand_2.*`, `Gazebo.*`, `Bench_2.*`, `Crate.*`, `Bags.*`, `Bonfire_Lit.*`, `Blacksmith.*` (copiés depuis `_telechargements/village/Medieval Village Pack - Dec 2020/…`, fichiers `.obj` et `.mtl`)
@@ -212,7 +212,7 @@ La spec ne fixe pas ces chiffres ; ce sont des **propositions** (tous dans `src/
 - [ ] **Étape 2 :** `npm test` → le test du manifeste vérifie que chaque fichier existe → réussi.
 - [ ] **Étape 3 : commit** — `Modèles des bâtiments du village`
 
-### Tâche 8 : Bâtiments et emplacements sur la carte — *Sonnet*
+### Task 8 : Bâtiments et emplacements sur la carte — *Sonnet*
 
 **Fichiers :**
 - Créer : `src/scene/villageView.ts`
@@ -228,7 +228,7 @@ La spec ne fixe pas ces chiffres ; ce sont des **propositions** (tous dans `src/
 - [ ] **Étape 3 : vérifier à la main (chef)** — la ferme est à sa place ; l'emplacement 2 montre « + » ; 3 à 6 grisés ; clic sur un emplacement → sélection ; `?debug` niveau 2 → forêt débloquée, emplacements 3 et 4 libres ; au niveau 3, 5 et 6 affichent « Bientôt ».
 - [ ] **Étape 4 : commit** — `Bâtiments du village et emplacements sur la carte`
 
-### Tâche 9 : Chemins qui suivent le niveau du village — *Sonnet*
+### Task 9 : Chemins qui suivent le niveau du village — *Sonnet*
 
 **Fichiers :**
 - Modifier : `src/scene/path.ts`, `src/scene/decor.ts`
@@ -246,7 +246,7 @@ La spec ne fixe pas ces chiffres ; ce sont des **propositions** (tous dans `src/
 - [ ] **Étape 5 : vérifier à la main (chef)** — `?debug` niveau 1, 2, 3 : terre, gravier, pavés avec lanternes ; de jour et de nuit (`?heure=22`).
 - [ ] **Étape 6 : commit** — `Les chemins changent d'allure avec le niveau du village`
 
-### Tâche 10 : Interface — billet, village, marchand — *Sonnet*
+### Task 10 : Interface — billet, village, marchand — *Sonnet*
 
 **Fichiers :**
 - Créer : `src/ui/ticketPanel.ts`, `src/ui/merchantPanel.ts`, `src/ui/buildingBar.ts`
@@ -274,7 +274,7 @@ La spec ne fixe pas ces chiffres ; ce sont des **propositions** (tous dans `src/
 - [ ] **Étape 5 : vérifier à la main (chef)** — régler le billet : l'estimation bouge en direct, Valider → message ; construire le café (−300 qui s'envole) ; acheter 10 fourrage ; acheter le couple de cochons dans un nouvel enclos ; vendre un agneau jeune ; pièces qui montent au fil des minutes ; `?debug` +20 habitants ×2 → la case village s'allume ; « Passer au niveau Village » → « Clairbois devient un village ! », forêt débloquée, chemins en gravier ; mode mobile : ligne ≤ 48 px, volets lisibles.
 - [ ] **Étape 6 : commit** — `Interface : billet, bâtiments du village, marchand, vente`
 
-### Tâche 11 : Vérification d'ensemble, relecture et publication — *chef*
+### Task 11 : Vérification d'ensemble, relecture et publication — *chef*
 
 - [ ] **Étape 1 :** `npm test`, `npm run build` → réussis.
 - [ ] **Étape 2 :** à la main, sans `?debug` : partie neuve de 10 minutes (billet, café, rations, marchand, nouvel enclos, vente) ; recharger → tout est conservé ; coller une sauvegarde v1 dans `localStorage` → elle se charge (ferme, billet 5, animaux) ; nuit (`?heure=22`) ; mode mobile.
