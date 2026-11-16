@@ -224,3 +224,8 @@ button.icone:hover::after, button.icone:focus-visible::after { opacity: 1; }
 .editeur-enclos .raison:empty { display: none; }
 .editeur-enclos button.principal { background: #6fa84a; color: #fff; border-color: #5a8f39; }
 .editeur-enclos button:disabled { opacity: .45; cursor: not-allowed; }
+@media (max-width: 640px) {
+  /* La barre des ressources passe sur deux lignes : les boutons de caméra descendent d'autant. */
+  .boutons-camera { top: calc(74px + env(safe-area-inset-top, 0px)); }
+  .panneau-test { top: calc(74px + env(safe-area-inset-top, 0px)); }
+}
