@@ -4,7 +4,8 @@ import { ZONES, PATHS } from '../data/zones'
 import type { World } from './world'
 import { fitHeight } from './animalActor'
 import { prepareStatic } from './materials'
-import { createPath } from './path'
+import { createPath, type PathStyle } from './path'
+import { createRng } from '../core/rng'
 
 /** Pont et allée du zoo : à la hauteur du couloir de chemin des données (z = 10). */
 export const BRIDGE_Z = 10
@@ -13,7 +14,7 @@ export const BRIDGE_Z = 10
  * Décor fixe : village, pont, chemins, marqueur de mission, arbres et rochers.
  * Les zones du zoo restent libres de toute décoration (on y pose les enclos).
  */
-export function buildDecor(world: World, rng: () => number): { update(dt: number): void } {
+export function buildDecor(world: World, rng: () => number): { update(dt: number): void; setPathLevel(level: number): void } {
   const { scene, models, groundHeight, riverDistance } = world
   const occupied: { x: number; z: number; r: number }[] = []
 
@@ -85,11 +86,37 @@ export function buildDecor(world: World, rng: () => number): { update(dt: number
     [{ x: 14, z: 2 }, { x: 19, z: 7.5 }, { x: 21, z: 10 }],
   ]
   for (const p of paths) {
-    scene.add(createPath(p, { ground: (x, z) => Math.max(groundHeight(x, z), -0.05), rng }))
     for (let i = 0; i < p.length - 1; i++)
       for (let k = 0; k <= 4; k++)
         occupied.push({ x: p[i].x + ((p[i + 1].x - p[i].x) * k) / 4, z: p[i].z + ((p[i + 1].z - p[i].z) * k) / 4, r: 1.8 })
   }
+
+  // Les chemins changent d'allure avec le niveau du village : on les reconstruit à chaque changement.
+  let pathGroups: THREE.Group[] = []
+  function setPathLevel(level: number) {
+    for (const g of pathGroups) {
+      scene.remove(g)
+      const mats = new Set<THREE.Material>()
+      g.traverse((o) => {
+        const m = o as THREE.Mesh
+        if (!m.isMesh) return
+        m.geometry.dispose()
+        for (const mat of Array.isArray(m.material) ? m.material : [m.material]) mats.add(mat)
+      })
+      mats.forEach((m) => m.dispose()) // les textures en cache restent partagées
+    }
+    const style = Math.min(3, Math.max(1, Math.round(level) || 1)) as PathStyle
+    const pRng = createRng(4242) // même rendu à chaque reconstruction
+    pathGroups = paths.map((p, i) => {
+      const g = createPath(p, {
+        ground: (x, z) => Math.max(groundHeight(x, z), -0.05), rng: pRng,
+        style, lanterns: i < 2, // allée du zoo et chemin de la place
+      })
+      scene.add(g)
+      return g
+    })
+  }
+  setPathLevel(1)
 
   // ---------- Marqueur de mission « ! » au-dessus de la mairie ----------
   const marker = new THREE.Group()
@@ -142,5 +169,6 @@ export function buildDecor(world: World, rng: () => number): { update(dt: number
       marker.position.y = markerBase + Math.sin(t * 2.2) * 0.25
       marker.rotation.y = t * 1.2
     },
+    setPathLevel,
   }
 }

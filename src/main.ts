@@ -86,6 +86,7 @@ async function start(): Promise<void> {
     const zones = createZonesView(world)
     let zonesLevel = getState().village.level
     zones.setLevel(zonesLevel)
+    decor.setPathLevel(zonesLevel)
     const villageView = createVillageView(world, getState)
     const park = createParkView(world, getState, createRng(Date.now() >>> 0))
     const rig = createCameraRig(world, canvas)
@@ -123,7 +124,7 @@ async function start(): Promise<void> {
         decor.update(dt)
         park.update(dt)
         const level = getState().village.level
-        if (level !== zonesLevel) { zonesLevel = level; zones.setLevel(level) }
+        if (level !== zonesLevel) { zonesLevel = level; zones.setLevel(level); decor.setPathLevel(level) }
         villageView.update()
         world.renderer.render(world.scene, world.camera)
       } catch (e) {

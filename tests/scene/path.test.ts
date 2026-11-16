@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { ribbonEdges } from '../../src/scene/path'
+import { ribbonEdges, lanternPositions } from '../../src/scene/path'
 
 describe('ribbonEdges', () => {
   it('écarte les bords de la demi-largeur, perpendiculairement au tracé', () => {
@@ -15,5 +15,21 @@ describe('ribbonEdges', () => {
   })
   it('refuse un tracé de moins de deux points', () => {
     expect(ribbonEdges([{ x: 0, z: 0 }], 1)).toEqual([])
+  })
+})
+
+describe('lanternPositions', () => {
+  it('place une lanterne tous les 8 m sur une ligne droite de 20 m (0, 8, 16)', () => {
+    const pts = Array.from({ length: 21 }, (_, i) => ({ x: i, z: 0 }))
+    const l = lanternPositions(pts, 8)
+    expect(l).toHaveLength(3)
+    expect(l.map((p) => Math.round(p.x))).toEqual([0, 8, 16])
+  })
+  it('donne un seul point pour un tracé de moins de 8 m', () => {
+    const pts = Array.from({ length: 6 }, (_, i) => ({ x: i, z: 0 }))
+    expect(lanternPositions(pts, 8)).toHaveLength(1)
+  })
+  it('renvoie une liste vide sans point', () => {
+    expect(lanternPositions([], 8)).toEqual([])
   })
 })
