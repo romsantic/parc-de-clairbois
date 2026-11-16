@@ -40,8 +40,8 @@
 | 2 | Attrait, visiteurs et billet (règles pures) | Sonnet | faite (9565d62) |
 | 3 | Le parc gagne de l'argent à chaque pas | Sonnet | faite (580b614) |
 | 4 | Actions du village et de la ferme | Sonnet | faite (9899db9) |
-| 5 | Marchand d'animaux | Sonnet | en cours |
-| 6 | Rééquilibrer la reproduction | Sonnet | à faire |
+| 5 | Marchand d'animaux | Sonnet | faite (3e7a477) |
+| 6 | Rééquilibrer la reproduction | Sonnet | en cours |
 | 7 | Modèles des bâtiments | Haiku | à faire |
 | 8 | Bâtiments et emplacements sur la carte | Sonnet | à faire |
 | 9 | Chemins qui suivent le niveau du village | Sonnet | à faire |
