@@ -308,3 +308,20 @@ body[data-highlight="prairie"] [data-guide="prairie"] {
   [data-guide] { animation: none !important; }
   .banniere-mission { transition: none; }
 }
+
+/* Récupérer : texte complet sur grand écran, icône cadeau seule sur téléphone. */
+button.recuperer .cadeau { display: none; }
+button.recuperer .cadeau svg { width: 18px; height: 18px; display: block; }
+@media (max-width: 640px) {
+  /* Sur téléphone la zone mission a la priorité : la sélection se rétrécit (« … »), l'invite disparaît. */
+  .zone-selection { flex: 0 1 auto; max-width: 40%; min-width: 0; }
+  .zone-selection .invite { display: none; }
+  .zone-actions { flex: 0 1 auto; min-width: 0; }
+  .zone-mission { flex: 1 1 0; min-width: 110px; }
+  .zone-droite { flex: none; }
+  button.icone { width: 30px; height: 30px; }
+  button.recuperer { padding: 3px 7px; margin-right: 3px; }
+  button.recuperer .cadeau { display: block; }
+  .zone-mission.reussie .avancee { display: none; }
+  button.recuperer .libelle, button.recuperer .recompense { display: none; }
+}

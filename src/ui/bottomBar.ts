@@ -135,7 +135,7 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
     const s = ctx.get()
     if (p.kind === 'enclos') {
       const enc = s.enclosures.find((e) => e.id === p.id)
-      if (!enc) { left.append(text('span', 'Clique un enclos ou une zone', 'discret')); return }
+      if (!enc) { left.append(text('span', 'Clique un enclos ou une zone', 'discret invite')); return }
       left.innerHTML = ICONS.patte
       left.append(text('b', enc.species ? SPECIES[enc.species].name : 'Enclos vide', 'nom'), text('span', '', 'compte'))
       const gauge = document.createElement('span'); gauge.className = 'jauge'; gauge.title = 'Propreté'
@@ -167,7 +167,7 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
     } else if (p.kind === 'emplacement') {
       slotUpdate = buildBuildingBar(ctx, p.slot, left, actions)
     } else {
-      left.append(text('span', 'Clique un enclos ou une zone', 'discret'))
+      left.append(text('span', 'Clique un enclos ou une zone', 'discret invite'))
     }
   }
 

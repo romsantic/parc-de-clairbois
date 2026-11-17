@@ -1,6 +1,7 @@
 import type { GameState } from '../sim/types'
 import type { MissionTrack } from '../sim/missions'
 import { TUTORIAL } from '../data/missions'
+import { ICONS } from './icons'
 import { closeDrawer, isDrawerOpen, openDrawer, refreshDrawer } from './drawer'
 import { currentLine, dailyLines, storyEnded, storyEndMessage, streakText, type MissionLine } from './missionModel'
 import type { PanelContext } from './ticketPanel'
@@ -32,7 +33,8 @@ export function claimButton(ctx: PanelContext, l: MissionLine, withReward: boole
   const b = document.createElement('button')
   b.type = 'button'
   b.className = 'principal recuperer'
-  b.append(document.createTextNode('Récupérer'))
+  const icon = document.createElement('span'); icon.className = 'cadeau'; icon.innerHTML = ICONS.cadeau
+  b.append(icon, text('span', 'Récupérer', 'libelle'))
   if (withReward) b.append(text('span', ` : ${l.reward}`, 'recompense'))
   b.setAttribute('aria-label', `Récupérer : ${l.reward}`)
   b.addEventListener('click', () => { if (claimReward(ctx, l.track, l.id, b)) onDone?.() })

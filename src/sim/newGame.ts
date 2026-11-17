@@ -5,6 +5,7 @@ import type { GameState } from './types'
 import { random } from './random'
 import { restock } from './merchant'
 import { emptyStats } from './stats'
+import { updateMissions } from './missions'
 
 /** Nouvelle partie : un enclos de prairie, un couple de moutons adultes, un peu de fourrage. */
 export function newGame(seed: number, nowMs: number): GameState {
@@ -38,5 +39,6 @@ export function newGame(seed: number, nowMs: number): GameState {
     })
   }
   restock(state) // premier stock : le couple de cochons
+  updateMissions(state, []) // le premier des premiers pas démarre tout de suite
   return state
 }

@@ -24,7 +24,7 @@ describe('compteurs (stats)', () => {
     expect(Object.values(g.stats.counts).every((n) => n === 0)).toBe(true)
     expect(g.stats.birthsBySpecies).toEqual({})
     expect(g.missions.story.index).toBe(0)
-    expect(g.missions.tutorial).toEqual({ step: 0, current: null, skipped: false })
+    expect(g.missions.tutorial).toEqual({ step: 0, current: { id: 'pas-fiche', base: 0, done: false, claimed: false }, skipped: false })
     expect(g.missions.unread).toBe(true)
   })
   it('nettoyer compte un nettoyage', () => {

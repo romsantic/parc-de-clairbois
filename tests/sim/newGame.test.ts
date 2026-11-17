@@ -39,6 +39,9 @@ describe('newGame', () => {
     expect(g.totalVisitors).toBe(0)
     for (const a of g.animals) expect(a.lastBirthAt).toBeNull()
   })
+  it('démarre le premier des premiers pas', () => {
+    expect(g.missions.tutorial.current).toMatchObject({ id: 'pas-fiche', done: false, claimed: false })
+  })
   it('est déterministe', () => {
     expect(newGame(7, 1_000_000_000_123)).toEqual(g)
   })
