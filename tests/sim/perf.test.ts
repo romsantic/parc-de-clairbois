@@ -39,7 +39,7 @@ describe('bigPark (parc réaliste)', () => {
     expect(a.ms).toBeLessThan(2000)
     expect(a.value.state).toEqual(b.state)
     expect(a.value.events).toEqual(b.events)
-  })
+  }, 30_000) // délai de Vitest large : la limite de 2 s porte sur le temps de calcul mesuré dans le test
 })
 
 describe('crowdedPark (150 animaux, test de charge)', () => {
@@ -68,7 +68,7 @@ describe('crowdedPark (150 animaux, test de charge)', () => {
     expect(r.value.time).toBe(T0 + 30 * DAY_MS)
     expect(r.value.animals.length).toBeGreaterThanOrEqual(140)
     expect(r.ms).toBeLessThan(2000)
-  })
+  }, 30_000)
 
   it('un parc vide reste instantané', () => {
     expect(cpuMs(() => advanceTo(emptyState(), T0 + 30 * DAY_MS)).ms).toBeLessThan(500)
