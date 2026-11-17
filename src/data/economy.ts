@@ -77,14 +77,15 @@ export const MERCHANT = {
 }
 
 /**
- * Emplacements de bâtiments, côté village (x > 8) : à plus de 4 m de la rivière, des chemins,
- * de la mairie et des maisons restantes. `rot` tourne la façade vers le chemin ou la mairie.
+ * Emplacements de bâtiments, autour de la place du village (x 8..24) : à plus de 4,5 m des chemins,
+ * à plus de 8,5 m de l'axe de la rivière, à 9 m les uns des autres. `rot` tourne la façade vers le chemin.
+ * Les deux premiers (ferme, premier choix) sont les plus proches du pont.
  */
 export const SLOTS: { id: number; x: number; z: number; rot: number; unlockLevel: 1 | 2 | 3 }[] = [
-  { id: 0, x: 29, z: 17, rot: -2.28, unlockLevel: 1 },
-  { id: 1, x: 21, z: 3, rot: -1.11, unlockLevel: 1 },
-  { id: 2, x: 25, z: 9.5, rot: -1.57, unlockLevel: 2 },
-  { id: 3, x: 25, z: -6, rot: -1.21, unlockLevel: 2 },
-  { id: 4, x: 10.5, z: -7, rot: 1.02, unlockLevel: 3 },
-  { id: 5, x: 30.5, z: 6, rot: -1.57, unlockLevel: 3 },
+  { id: 0, x: 15, z: 10, rot: 2.31, unlockLevel: 1 },
+  { id: 1, x: 21, z: 17, rot: -2.93, unlockLevel: 1 },
+  { id: 2, x: 24, z: 8, rot: -1.67, unlockLevel: 2 },
+  { id: 3, x: 24, z: -1.5, rot: -1.29, unlockLevel: 2 },
+  { id: 4, x: 12, z: -11, rot: 0.41, unlockLevel: 3 },
+  { id: 5, x: 24, z: -11, rot: -0.55, unlockLevel: 3 },
 ]

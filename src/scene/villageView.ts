@@ -5,7 +5,6 @@ import { BUILDINGS, SLOTS } from '../data/economy'
 import type { World } from './world'
 import { fitHeight } from './animalActor'
 import { prepareStatic } from './materials'
-import { label } from './zonesView'
 
 const LEVEL_SCALE = [1, 1.08, 1.15] as const
 const BUILDING_TYPES = Object.keys(BUILDINGS) as BuildingType[]
@@ -79,11 +78,76 @@ export function createVillageView(world: World, getState: () => GameState) {
     highlight.visible = true
   }
 
-  function signAt(g: THREE.Group, text: string, y: number, w: number) {
-    const sp = label(text)
-    sp.scale.set(w, w / 4, 1)
+  /** Panneau-sprite dessiné sur son propre canvas (la texture est libérée avec l'emplacement). */
+  function sprite(c: HTMLCanvasElement, w: number, y: number, g: THREE.Group) {
+    const tex = new THREE.CanvasTexture(c)
+    tex.colorSpace = THREE.SRGBColorSpace
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false }))
+    sp.scale.set(w, w * (c.height / c.width), 1)
     sp.position.y = y
+    sp.renderOrder = 5
     g.add(sp)
+  }
+
+  function canvas(w: number, h: number) {
+    const c = document.createElement('canvas')
+    c.width = w; c.height = h
+    return { c, ctx: c.getContext('2d')! }
+  }
+
+  /** Emplacement libre : médaillon de bois rond avec un gros « + » crème. */
+  function signPlus(g: THREE.Group, y: number) {
+    const { c, ctx } = canvas(256, 256)
+    ctx.fillStyle = '#5c3d22'
+    ctx.beginPath(); ctx.arc(128, 128, 120, 0, Math.PI * 2); ctx.fill()
+    ctx.fillStyle = '#b07d4a'
+    ctx.beginPath(); ctx.arc(128, 128, 104, 0, Math.PI * 2); ctx.fill()
+    ctx.fillStyle = '#fbf3df'
+    ctx.beginPath(); ctx.roundRect(104, 52, 48, 152, 10); ctx.fill()
+    ctx.beginPath(); ctx.roundRect(52, 104, 152, 48, 10); ctx.fill()
+    sprite(c, 2.2, y, g)
+  }
+
+  /** Bâtiment : petite plaque avec 3 étoiles, pleines (or) jusqu'au niveau, creuses ensuite. */
+  function signStars(g: THREE.Group, level: number, y: number) {
+    const { c, ctx } = canvas(384, 160)
+    ctx.fillStyle = 'rgba(246,240,225,0.95)'
+    ctx.beginPath(); ctx.roundRect(6, 6, 372, 148, 40); ctx.fill()
+    ctx.strokeStyle = '#8a6a3a'; ctx.lineWidth = 6
+    ctx.beginPath(); ctx.roundRect(6, 6, 372, 148, 40); ctx.stroke()
+    for (let i = 0; i < 3; i++) {
+      const cx = 72 + i * 120, cy = 82
+      ctx.beginPath()
+      for (let k = 0; k < 10; k++) {
+        const r = k % 2 ? 24 : 54, a = -Math.PI / 2 + (k * Math.PI) / 5
+        ctx[k ? 'lineTo' : 'moveTo'](cx + Math.cos(a) * r, cy + Math.sin(a) * r)
+      }
+      ctx.closePath()
+      ctx.lineJoin = 'round'
+      if (i < level) {
+        ctx.fillStyle = '#f2b822'; ctx.fill()
+        ctx.strokeStyle = '#a8740a'; ctx.lineWidth = 6; ctx.stroke()
+      } else {
+        ctx.strokeStyle = '#a89c80'; ctx.lineWidth = 7; ctx.stroke()
+      }
+    }
+    sprite(c, 2.4, y, g)
+  }
+
+  /** Emplacement verrouillé ou « Bientôt » : texte, sur un canvas taillé pour lui. */
+  function signText(g: THREE.Group, text: string, y: number) {
+    const font = '700 64px system-ui, sans-serif'
+    const probe = canvas(8, 8).ctx
+    probe.font = font
+    const tw = Math.ceil(probe.measureText(text).width)
+    const { c, ctx } = canvas(tw + 80, 120)
+    ctx.fillStyle = 'rgba(246,240,225,0.95)'
+    ctx.beginPath(); ctx.roundRect(4, 4, c.width - 8, c.height - 8, 36); ctx.fill()
+    ctx.fillStyle = '#4a4434'
+    ctx.font = font
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+    ctx.fillText(text, c.width / 2, c.height / 2 + 3)
+    sprite(c, Math.max(3, (c.width / 64) * 0.9), y, g)
   }
 
   /** Disque invisible mais touchable : le bâtiment et sa cour se choisissent d'un clic. */
@@ -137,12 +201,12 @@ export function createVillageView(world: World, getState: () => GameState) {
       }
       g.add(inner)
       pickDisc(g, st)
-      signAt(g, '★'.repeat(level) + '☆'.repeat(3 - level), look.signY * scale, 2.6)
+      signStars(g, level, look.signY * scale)
     } else {
       dirtSquare(g, st, state !== 'libre')
       pickDisc(g, st)
-      const text = state === 'libre' ? '+' : state === 'bientot' ? 'Bientôt' : `Niveau ${def.unlockLevel}`
-      signAt(g, text, 1.6, state === 'libre' ? 1.4 : 3.2)
+      if (state === 'libre') signPlus(g, 1.8)
+      else signText(g, state === 'bientot' ? 'Bientôt' : `Niveau ${def.unlockLevel}`, 1.8)
     }
     world.scene.add(g)
     return g

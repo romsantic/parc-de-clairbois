@@ -19,3 +19,15 @@ export const ZONES: Zone[] = [
 export const PATHS: Rect[] = [
   { x: -34, z: 8.5, w: 30, d: 3 }, // allée du zoo, jusqu'au pont
 ]
+
+/** Abscisse typique du pont (le décor la calcule précisément depuis la rivière). */
+export const BRIDGE_X = 3.2
+
+/** Chemins de terre du village (hors allée du zoo), à partir de la sortie du pont. */
+export function villagePaths(bx: number): { x: number; z: number }[][] {
+  return [
+    [{ x: bx + 3.5, z: 10 }, { x: bx + 7, z: 9.5 }, { x: 11, z: 6 }, { x: 14, z: 2 }, { x: 17, z: 0.5 }],
+    [{ x: 14, z: 2 }, { x: 19, z: 7.5 }],
+  ]
+}
+export const VILLAGE_PATHS = villagePaths(BRIDGE_X)
