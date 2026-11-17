@@ -62,7 +62,7 @@
 | 4 | Petits textes d'affichage (récompense, avancée, durée d'absence) | agent · Haiku | faite (ac6bd45) — 431 tests |
 | 5 | Interface des missions (barre, volet, bannière, mise en évidence, autonomie) | agent · Sonnet | faite (254aedd + 8adca8f) — vérifiée dans le navigateur (premiers pas, Passer, quotidiennes, refus du village, sauvegarde v2, téléphone) |
 | 6 | La Gazette de Clairbois (résumé d'absence) | agent · Sonnet | faite (48707f3 + a6add65) — vérifiée dans le navigateur (absence de 5 jours) — 462 tests |
-| 7 | Vérification d'ensemble, relecture et publication | chef (Opus) + relecture · Opus | relecture et corrections faites (6ceae07, 2af73bf) — 493 tests — **en attente de l'accord de fusion de Romain** |
+| 7 | Vérification d'ensemble, relecture et publication | chef (Opus) + relecture · Opus | faite — relecture et corrections (6ceae07, 2af73bf), 493 tests — **fusionnée dans `main` (b3e7bd4) avec l'accord de Romain le 17/11/2026, publiée et vérifiée en ligne** |
 
 **Sous-tâche 7 (17/11/2026)** — relecture Opus : 0 critique, 5 importants, quelques mineurs, tous corrigés en 6ceae07 (enclos de départ un peu sale pour que « Nettoie l'enclos » marche tout de suite ; Gazette aussi quand l'onglet est repris sans rechargement ; validation complète des sauvegardes v3 ; minuit qui ne recule pas ; quotidiennes versées d'office signalées « (récompense versée) » ; seuils d'autonomie dans `TUNING`). Deux nouveaux choix de Romain en 2af73bf : missions d'habitants **150** (porte du Bourg) et **250** (finale V1) ; bon −25 % **au choix** (case « Utiliser mon bon » par offre). Vérifié dans le navigateur (en lisant la page, panneau masqué) : les 9 premiers pas, Passer, quotidiennes, refus du village, sauvegarde v2, Gazette après 5 jours, bon de réduction, téléphone. Pas vu à l'œil : le « ! » doré qui se déplace sur la carte.
 
@@ -83,8 +83,8 @@
 | 2. Cœur de la simulation (faim, garde-manger, santé, naissances, absence, sauvegarde) | ✅ fusionnée |
 | 3. Carte jouable (zones, pose/redimensionnement d'enclos, sélection, barres, retour visuel) | ✅ fusionnée — vérifiée sur le téléphone de Romain |
 | 4. Économie et village (visiteurs, attrait, billet réglable, bâtiments, niveaux du village, marchand, ferme et rations, chemins qui évoluent avec le niveau) | ✅ fusionnée le 17/11/2026 |
-| **5. Missions** (Premiers pas avec Margaux, histoire, quotidiennes, résumé d'absence/Gazette) | **en cours** (branche `etape-5-missions`) |
-| 6. Finition V1 (équilibrage, téléphone, brume des zones, visiteurs sur les chemins, jour/nuit, perfs, **bouton « Recommencer à zéro »**) | à faire |
+| 5. Missions (Premiers pas avec Margaux, histoire, quotidiennes, résumé d'absence/Gazette) | ✅ fusionnée le 17/11/2026 |
+| **6. Finition V1** (équilibrage, téléphone, brume des zones, visiteurs sur les chemins, jour/nuit, perfs, **bouton « Recommencer à zéro »**) | **à faire — prochaine** |
 
 Après la V1 : V2 à V5 décrites en fin de spec (personnel et centre vétérinaire, routes à construire contre de l'argent, expéditions, musée, labo, saisons…).
 
