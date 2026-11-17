@@ -3,6 +3,7 @@ import { DAY_MS, HOUR_MS, TUNING } from '../data/tuning'
 import { farmLevel } from './village'
 import { SPECIES } from '../data/species'
 import type { SpeciesId } from '../data/species'
+import { bump } from './stats'
 import { happiness } from './happiness'
 import type { BuildingType, GameEvent, GameState } from './types'
 
@@ -95,10 +96,12 @@ export function economyStep(state: GameState, events: GameEvent[]): void {
   const visiteurs = inc.visiteurs * h
   if (billets + village > 0) {
     state.coins += billets + village
+    bump(state.stats, 'piecesGagnees', billets + village)
     events.push({ kind: 'recettes', at: state.time, visiteurs, billets, village })
   }
   state.village.clientsServed += inc.clients * h
   state.totalVisitors += visiteurs
+  bump(state.stats, 'visiteurs', visiteurs)
 
   // Réputation : baisse si le billet dépasse 1,5 × le prix juste, sinon remonte.
   const cher = state.ticketPrice > ECONOMY.REPUTATION_DROP_ABOVE * fairPrice(state)

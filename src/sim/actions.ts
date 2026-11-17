@@ -2,6 +2,7 @@ import { SPECIES, type Food } from '../data/species'
 import { BUILDINGS, FARM, SLOTS } from '../data/economy'
 import { TUNING } from '../data/tuning'
 import type { BuildingType, GameState, Rect } from './types'
+import { bump } from './stats'
 import { fairPrice } from './economy'
 import { canLevelUp, farmLevel } from './village'
 import { animalsIn, capacity, cleanliness } from './enclosure'
@@ -229,8 +230,30 @@ export type Action =
   | { type: 'monterNiveau' }
   | { type: 'acheterAnimal'; offerId: number; encId: number }
   | { type: 'vendre'; animalId: number }
+  /** Observation silencieuse : le joueur a vu la fiche d'un enclos ou le volet Autonomie. */
+  | { type: 'vu'; what: 'ficheEnclos' | 'autonomie' }
 
+/** Applique l'action ; si elle réussit, compte ce qui s'est passé (les missions s'en servent). Un refus ne change rien. */
 export function applyAction(state: GameState, a: Action): ActionResult {
+  const r = run(state, a)
+  if (!r.ok) return r
+  const s = r.state
+  switch (a.type) {
+    case 'nettoyer': bump(s.stats, 'nettoyages'); break
+    case 'acheterRations': bump(s.stats, a.food === 'fourrage' ? 'fourrageAchete' : 'viandeAchetee', a.n); break
+    case 'vendre': bump(s.stats, 'ventes'); break
+    case 'acheterAnimal': bump(s.stats, 'achatsAnimaux'); break
+    case 'soigner': bump(s.stats, 'soins'); break
+    case 'soignerTout': bump(s.stats, 'soins', state.animals.filter((x) => x.enclosureId === a.encId && x.health.status === 'malade').length); break
+    case 'billet': bump(s.stats, 'billetsRegles'); break
+    case 'ameliorer': bump(s.stats, 'ameliorations'); break
+    case 'vu': bump(s.stats, a.what === 'ficheEnclos' ? 'ficheEnclosVue' : 'autonomieVue'); break
+    default: break
+  }
+  return r
+}
+
+function run(state: GameState, a: Action): ActionResult {
   switch (a.type) {
     case 'nettoyer': return cleanEnclosure(state, a.encId)
     case 'soignerTout': return cureAllInEnclosure(state, a.encId)
@@ -246,5 +269,6 @@ export function applyAction(state: GameState, a: Action): ActionResult {
     case 'monterNiveau': return levelUp(state)
     case 'acheterAnimal': return buyAnimal(state, a.offerId, a.encId)
     case 'vendre': return sellAnimal(state, a.animalId)
+    case 'vu': return { ok: true, state: structuredClone(state) }
   }
 }

@@ -28,8 +28,8 @@ describe('newGame', () => {
   it('remplit un peu le garde-manger', () => {
     expect(g.pantry).toEqual({ fourrage: 30, viande: 0, capacity: 200 })
   })
-  it("crée directement l'état version 2", () => {
-    expect(g.version).toBe(2)
+  it("crée directement l'état version 3", () => {
+    expect(g.version).toBe(3)
     expect(g.ticketPrice).toBe(5)
     expect(g.reputation).toBe(1)
     expect(g.village).toEqual({ level: 1, clientsServed: 0 })

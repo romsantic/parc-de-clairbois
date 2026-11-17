@@ -19,23 +19,27 @@ export interface Session {
 }
 
 const newOwner = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
+const localOffset = (nowMs: number): number => -new Date(nowMs).getTimezoneOffset()
+const freshGame = (nowMs: number): GameState => ({ ...newGame(newSeed(), nowMs), utcOffsetMin: localOffset(nowMs) })
 const newSeed = () => Math.floor(Math.random() * 2 ** 32)
 
 /** Charge la partie (ou en crée une), rattrape le temps d'absence et prend la main sur la sauvegarde. */
 export function startSession(store: Storage, nowMs: number, storageOk = true): Session {
   const owner = newOwner()
   const base = { summary: null, skippedMs: 0, owner }
-  if (!storageOk) return { ...base, state: newGame(newSeed(), nowMs), problem: null, canSave: false }
+  if (!storageOk) return { ...base, state: freshGame(nowMs), problem: null, canSave: false }
   const loaded = loadGame(store, undefined, nowMs)
   if (loaded.kind === 'trop-recente' || loaded.kind === 'migration-impossible') {
-    return { ...base, state: newGame(newSeed(), nowMs), problem: loaded.kind, canSave: false }
+    return { ...base, state: freshGame(nowMs), problem: loaded.kind, canSave: false }
   }
   if (loaded.kind !== 'ok') {
-    const state = newGame(newSeed(), nowMs)
+    const state = freshGame(nowMs)
     const canSave = saveGame(store, state, nowMs, owner) === 'ok'
     return { ...base, state, problem: loaded.kind === 'illisible' ? 'illisible' : null, canSave }
   }
-  const r = advanceTo(loaded.state, nowMs)
+  const start = structuredClone(loaded.state)
+  start.utcOffsetMin = localOffset(nowMs) // l'heure locale, avant le rattrapage
+  const r = advanceTo(start, nowMs)
   if (r.state.merchant.restocks === 0 && r.state.merchant.offers.length === 0) {
     // Partie migrée de la v1 chargée avant le premier pas : le marchand a déjà son premier stock.
     r.state = structuredClone(r.state)

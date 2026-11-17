@@ -96,7 +96,8 @@ export function runGame(store: Storage, storageOk = true): Game | null {
   function dispatch(action: Action, from?: HTMLElement | null): boolean {
     const before = state
     const r = applyAction(state, action)
-    flash(from, r.ok)
+    const silent = action.type === 'vu' // observation : ni éclair, ni message
+    if (!silent) flash(from, r.ok)
     if (!r.ok) { toast(r.reason, false); return false }
     state = r.state
     save()
@@ -107,7 +108,7 @@ export function runGame(store: Storage, storageOk = true): Game | null {
     const dv = state.pantry.viande - before.pantry.viande
     if (dv) topBar.pulse('viande', dv)
     if (state.village.level !== before.village.level) topBar.pulse('village', 1)
-    toast(successMessage(action, state, before), true)
+    if (!silent) toast(successMessage(action, state, before), true)
     return true
   }
 
@@ -136,6 +137,7 @@ function successMessage(a: Action, s: GameState, before: GameState): string {
       return `${offer ? SPECIES[offer.species].name : 'Animal'} acheté`
     }
     case 'vendre': return `Animal vendu (+${s.coins - before.coins})`
+    case 'vu': return ''
     case 'monterNiveau': return s.village.level === 3 ? 'Clairbois devient un bourg !' : 'Clairbois devient un village !'
   }
 }

@@ -23,11 +23,11 @@ describe('migration v1 -> v2', () => {
   const m = memory({ [SAVE_KEY]: JSON.stringify({ version: 1, savedAt: 1, state: V1_STATE }) })
   const r = loadGame(m)
 
-  it('charge la partie au format 2', () => {
-    expect(CURRENT_VERSION).toBe(2)
+  it('charge la partie, migrée jusqu à la version courante', () => {
+    expect(CURRENT_VERSION).toBe(3)
     expect(r.kind).toBe('ok')
     if (r.kind !== 'ok') return
-    expect(r.state.version).toBe(2)
+    expect(r.state.version).toBe(3)
   })
   it('ajoute la ferme niveau 1, le billet à 5, la réputation à 1, le village niveau 1', () => {
     if (r.kind !== 'ok') throw new Error('illisible')
@@ -53,5 +53,77 @@ describe('migration v1 -> v2', () => {
     mm.setItem(SAVE_KEY, JSON.stringify({ version: 2, savedAt: 1, state: rest }))
     expect(loadGame(mm).kind).toBe('illisible')
     void village
+  })
+})
+
+/** Copie littérale d'une partie au format 2 (café, deux espèces, village niveau 1) : ne doit jamais changer. */
+const V2_STATE = {
+  version: 2, time: 1_800_000_000_000, rng: 4242, coins: 321, nextId: 9,
+  pantry: { fourrage: 40, viande: 3, capacity: 200 },
+  enclosures: [{ id: 1, biome: 'prairie', species: 'mouton', rect: { x: -26, z: -5, w: 12, d: 10 }, cleanedAt: 1_799_999_400_000 }],
+  animals: [
+    { id: 2, species: 'mouton', sex: 'F', name: 'Brindille', bornAt: 1_799_000_000_000, enclosureId: 1, lastFedAt: 1_800_000_000_000, health: { status: 'ok' }, pregnantSince: null, lastBirthAt: null },
+  ],
+  ticketPrice: 6, reputation: 0.8,
+  village: { level: 1, clientsServed: 12 },
+  buildings: [{ slot: 0, type: 'ferme', level: 1 }, { slot: 1, type: 'cafe', level: 1 }],
+  merchant: { restockAt: 1_800_000_000_000, restocks: 1, offers: [] },
+  totalVisitors: 77,
+}
+const ZERO_COUNTS = {
+  nettoyages: 0, fourrageAchete: 0, viandeAchetee: 0, ventes: 0, achatsAnimaux: 0, naissances: 0, gestations: 0,
+  visiteurs: 0, piecesGagnees: 0, soins: 0, billetsRegles: 0, ficheEnclosVue: 0, autonomieVue: 0, ameliorations: 0,
+}
+const loadV2 = (state: unknown) => loadGame(memory({ [SAVE_KEY]: JSON.stringify({ version: 2, savedAt: 1, state }) }))
+
+describe('migration v2 -> v3', () => {
+  it('charge la partie au format 3', () => {
+    expect(CURRENT_VERSION).toBe(3)
+    const r = loadV2(V2_STATE)
+    expect(r.kind).toBe('ok')
+    if (r.kind !== 'ok') return
+    expect(r.state.version).toBe(3)
+  })
+  it('compteurs à zéro, sauf les visiteurs (= totalVisitors)', () => {
+    const r = loadV2(V2_STATE)
+    if (r.kind !== 'ok') throw new Error('illisible')
+    expect(r.state.stats).toEqual({ counts: { ...ZERO_COUNTS, visiteurs: 77 }, birthsBySpecies: {} })
+  })
+  it('missions : premiers pas à l’étape 0, histoire à 0, quotidiennes vides, « ! » allumé', () => {
+    const r = loadV2(V2_STATE)
+    if (r.kind !== 'ok') throw new Error('illisible')
+    expect(r.state.missions).toEqual({
+      tutorial: { step: 0, current: null, skipped: false },
+      story: { index: 0, current: null },
+      daily: { dayKey: -1, list: [], streak: 0, lastFullDay: null, coupons: 0 },
+      unread: true,
+    })
+    expect(r.state.utcOffsetMin).toBe(0)
+  })
+  it('ne perd rien de la partie', () => {
+    const r = loadV2(V2_STATE)
+    if (r.kind !== 'ok') throw new Error('illisible')
+    const { version, ...rest } = V2_STATE
+    expect(r.state).toMatchObject(rest)
+    void version
+  })
+  it('village niveau 2 : l’histoire commence au palier Village (index 4) ; niveau 3 : Bourg (index 8)', () => {
+    const r2 = loadV2({ ...V2_STATE, village: { level: 2, clientsServed: 0 } })
+    const r3 = loadV2({ ...V2_STATE, village: { level: 3, clientsServed: 0 } })
+    if (r2.kind !== 'ok' || r3.kind !== 'ok') throw new Error('illisible')
+    expect(r2.state.missions.story.index).toBe(4)
+    expect(r3.state.missions.story.index).toBe(8)
+  })
+  it('une partie v3 sans missions est illisible', () => {
+    const { missions, ...rest } = newGame(1, 1_800_000_000_000)
+    const mm = memory()
+    mm.setItem(SAVE_KEY, JSON.stringify({ version: 3, savedAt: 1, state: rest }))
+    expect(loadGame(mm).kind).toBe('illisible')
+    void missions
+  })
+  it('une partie v3 sans utcOffsetMin valide est illisible', () => {
+    const g = { ...newGame(1, 1_800_000_000_000), utcOffsetMin: 'x' }
+    const mm = memory({ [SAVE_KEY]: JSON.stringify({ version: 3, savedAt: 1, state: g }) })
+    expect(loadGame(mm).kind).toBe('illisible')
   })
 })

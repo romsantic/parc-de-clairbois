@@ -1,6 +1,7 @@
 import type { Animal, Enclosure, GameState } from '../../src/sim/types'
 import type { SpeciesId } from '../../src/data/species'
 import { SPECIES } from '../../src/data/species'
+import { emptyStats } from '../../src/sim/stats'
 import { HOUR_MS } from '../../src/data/tuning'
 
 /** Petites fabriques pour les tests de la simulation. */
@@ -8,7 +9,7 @@ export const T0 = 1_800_000_000_000 - (1_800_000_000_000 % 600_000) // aligné s
 
 export function emptyState(over: Partial<GameState> = {}): GameState {
   return {
-    version: 2, time: T0, rng: 12345, coins: 1000, nextId: 100,
+    version: 3, time: T0, rng: 12345, coins: 1000, nextId: 100,
     pantry: { fourrage: 0, viande: 0, capacity: 1000 },
     enclosures: [], animals: [],
     ticketPrice: 5, reputation: 1,
@@ -16,6 +17,14 @@ export function emptyState(over: Partial<GameState> = {}): GameState {
     buildings: [{ slot: 0, type: 'ferme', level: 1 }],
     merchant: { restockAt: T0, restocks: 0, offers: [] },
     totalVisitors: 0,
+    stats: emptyStats(),
+    missions: {
+      tutorial: { step: 0, current: null, skipped: false },
+      story: { index: 0, current: null },
+      daily: { dayKey: -1, list: [], streak: 0, lastFullDay: null, coupons: 0 },
+      unread: true,
+    },
+    utcOffsetMin: 0,
     ...over,
   }
 }
