@@ -48,7 +48,7 @@
 | 10 | Interface : billet, village, marchand | Sonnet | faite (24dedcd) |
 | 11 | Vérification d'ensemble, relecture et publication | chef + relecture Opus | en cours |
 
-**Sous-tâche 11 en cours (17/11/2026)** — vérification dans le navigateur faite : café, billet (estimation en direct), marchand, vente en deux clics, volet du village et passage au niveau Village par le bouton, gravier puis pavés + lanternes de nuit, sauvegarde v1 rechargée sans perte, téléphone sans défilement horizontal. Corrigé (64fa8b9) : emplacements du village rapprochés et visibles dès l'arrivée, plus d'arbre sur un emplacement, panneaux « + » et étoiles lisibles. Reste : barre du bas à 49 px sur téléphone (≤ 48 voulu), relecture finale Opus en cours, corrections, puis accord de Romain pour fusionner et vérification en ligne.
+**Sous-tâche 11 (17/11/2026)** — vérification dans le navigateur faite (café, billet, marchand, vente, niveaux 2 et 3, chemins de jour et de nuit, sauvegarde v1, téléphone). Corrections : emplacements visibles et panneaux lisibles (64fa8b9) ; relecture finale Opus (0 critique, 1 important, 14 mineurs) corrigée en bd75fde — double-clic qui contournait la confirmation de vente/achat, copie de la sauvegarde v1 avant migration, validation renforcée des sauvegardes, marchand réapprovisionné au passage de niveau, « Remplir » le garde-manger, emplacements du Bourg réservés (« Bientôt »), case du billet en rouge quand la réputation baisse, barre du bas à 48 px. Laissé : quelques chiffres encore en dur hors de `src/data/` (M12). 338 tests verts. **Reste : accord de Romain pour fusionner dans `main`, vérification en ligne.**
 
 Étapes suivantes (5 Missions, 6 Finition V1) : leurs sous-tâches seront ajoutées ici quand leur plan sera écrit.
 
