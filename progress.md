@@ -48,7 +48,7 @@
 | 8 | Bâtiments et emplacements sur la carte | Sonnet | faite (ffa1f6e) |
 | 9 | Chemins qui suivent le niveau du village | Sonnet | faite (319bc56) |
 | 10 | Interface : billet, village, marchand | Sonnet | faite (24dedcd) |
-| 11 | Vérification d'ensemble, relecture et publication | chef + relecture Opus | faite (997226d) |
+| 11 | *(après 12 et 13)* Vérification d'ensemble, relecture et publication | chef + relecture Opus | faite (997226d) |
 
 **Sous-tâche 11 (17/11/2026)** — vérification dans le navigateur faite (café, billet, marchand, vente, niveaux 2 et 3, chemins de jour et de nuit, sauvegarde v1, téléphone). Corrections : emplacements visibles et panneaux lisibles (64fa8b9) ; relecture finale Opus (0 critique, 1 important, 14 mineurs) corrigée en bd75fde — double-clic qui contournait la confirmation de vente/achat, copie de la sauvegarde v1 avant migration, validation renforcée des sauvegardes, marchand réapprovisionné au passage de niveau, « Remplir » le garde-manger, emplacements du Bourg réservés (« Bientôt »), case du billet en rouge quand la réputation baisse, barre du bas à 48 px. Laissé : quelques chiffres encore en dur hors de `src/data/` (M12). 338 tests verts. **Fusionnée dans `main` (997226d) avec l'accord de Romain le 17/11/2026, publiée et vérifiée en ligne.**
 
@@ -80,7 +80,9 @@
 | 8 | Promeneurs sur les chemins | agent · Sonnet | à faire |
 | 9 | La nuit (lanternes, fenêtres, étoiles, animaux calmes) | agent · Sonnet | à faire |
 | 10 | Téléphone, perfs d'affichage et petits défauts gardés | agent · Sonnet | à faire |
-| 11 | Vérification d'ensemble, textes relus par Romain, relecture et publication | chef (Opus) + relecture · Opus | à faire |
+| 12 | Le « ! » doré : disparaît une fois l'endroit cliqué ; clic sur la mission → caméra jusqu'au « ! » (demande de Romain) | agent · Sonnet | à faire |
+| 13 | Informations d'un bâtiment, de la mairie ou d'une maison au clic (demande de Romain) | agent · Sonnet | à faire |
+| 11 | *(après 12 et 13)* Vérification d'ensemble, textes relus par Romain, relecture et publication | chef (Opus) + relecture · Opus | à faire |
 
 ## Liens
 

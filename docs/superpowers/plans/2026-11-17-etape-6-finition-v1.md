@@ -27,6 +27,8 @@
 | D5 | **Visiteurs la nuit (règles)** | Aujourd'hui, la simulation fait venir **autant de visiteurs la nuit que le jour**. Proposition : **garder ainsi** dans les règles (l'absence reste rentable, c'est simple), et ne réduire que les promeneurs **affichés** la nuit. Autre choix possible : moins de visiteurs la nuit, compensé par l'auberge (la spec parle de « revenu de nuit ») — plus réaliste, mais il faudra rééquilibrer. |
 | D6 | **Brume des zones fermées** | Des **nappes de brume blanche** qui dérivent lentement au-dessus de la forêt et de la montagne tant qu'elles sont fermées, avec un panneau « **Bois sombre** · s'ouvre au Village » et « **Falaises** · s'ouvre au Bourg ». Au passage de niveau, la brume **se dissipe en 3 secondes** et le vrai nom de la zone apparaît. |
 | D7 | **La nuit** | **Lanternes** (chemins pavés du Bourg) et **fenêtres des maisons** qui s'allument au crépuscule ; **étoiles et lune** dans le ciel ; les animaux **bougent moins** la nuit (ils marchent moins souvent, restent couchés plus longtemps). Passage du jour à la nuit en douceur. |
+| D9 | **Le « ! » doré** *(demande et choix de Romain, 17/11)* | Il disparaît une fois l'endroit cliqué, et un clic sur la mission emmène la caméra jusqu'à lui (tâche 12). |
+| D10 | **Informations des bâtiments** *(demande et choix de Romain, 17/11)* | Clic sur un bâtiment, la mairie ou une maison → sa fiche (tâche 13). |
 | D8 | **Petit défaut gardé** : premier pas « Ouvre la fiche de l'enclos des moutons » | N'importe quelle fiche d'enclos le valide. Proposition : **laisser ainsi** (au début, il n'y a qu'un enclos ; une ancienne partie peut ne plus avoir de moutons). |
 
 ## Contraintes globales
@@ -194,6 +196,40 @@
 - [ ] **Étape 3 : `npm test`, `npm run build`** → réussis, **sans** avertissement de taille.
 - [ ] **Étape 4 : vérifier à la main (chef)** — mode téléphone (375 × 812) : barre du bas, ferme, marchand avec un bon, Gazette par-dessus un volet ; images par seconde avec `bigPark()` collé via `?debug`.
 - [ ] **Étape 5 : commit** — `Finition téléphone, perfs d'affichage et petits défauts`
+
+### Task 12 : Le « ! » doré mène à la mission — *agent · Sonnet* (demande de Romain, 17/11 ; faite avant la tâche 11)
+
+**Choix de Romain :** « les deux ».
+- Quand le joueur a cliqué l'endroit marqué par le « ! » (enclos, ferme, emplacement…), le « ! » **disparaît** au lieu de revenir sur la mairie ; il réapparaît au-dessus de la prochaine chose à faire (ou de la mairie quand Margaux a une nouvelle mission non lue).
+- Un clic sur la mission (zone mission de la barre du bas, ou titre de la mission dans le volet Missions) **fait glisser la caméra** jusqu'au « ! » (en douceur, ~0,8 s), sans changer le zoom plus que nécessaire ; s'il n'y a pas de « ! », rien ne bouge.
+
+**Fichiers :** `src/ui/missionModel.ts` (`markerPosition` renvoie « caché » au lieu de « mairie » quand la cible est sélectionnée), `src/scene/decor.ts`, `src/scene/cameraRig.ts` (`focusOn(x, z)`), `src/ui/bottomBar.ts`, `src/ui/missionPanel.ts`, `src/main.ts`
+**Test :** `tests/ui/missionModel.test.ts`, `tests/scene/cameraRig.test.ts`
+
+- [ ] **Étape 1 : écrire les tests qui échouent** — cible sélectionnée → « ! » caché ; nouvelle mission non lue sans cible → mairie ; `focusOn` amène le point visé au centre en restant dans les bornes de la caméra.
+- [ ] **Étape 2 : `npm test`** → ÉCHEC.
+- [ ] **Étape 3 : implémenter.**
+- [ ] **Étape 4 : `npm test`, `npm run build`** → réussis.
+- [ ] **Étape 5 : vérifier à la main (chef)** — premiers pas : clic sur la mission → la caméra va au « ! » ; clic sur l'enclos → le « ! » disparaît ; ordinateur et téléphone.
+- [ ] **Étape 6 : commit** — `Le « ! » mène à la mission et disparaît une fois l'endroit trouvé`
+
+### Task 13 : Informations d'un bâtiment au clic — *agent · Sonnet* (demande de Romain, 17/11 ; faite avant la tâche 11)
+
+**Choix de Romain :** bâtiments, mairie **et** maisons.
+- **Ferme, café, boutique, auberge** : nom, niveau (n/3), à quoi il sert (une phrase), ce qu'il rapporte par heure en ce moment, clients par heure et maximum, prix de l'amélioration suivante (ou « niveau maximum »). Les actions existantes (améliorer, rations…) restent dans la barre du bas.
+- **Mairie** : « Mairie de Clairbois — Margaux, la maire », niveau du village et son nom, habitants, ce qu'il manque pour le niveau suivant (habitants et mission), bouton vers le volet du village.
+- **Maisons et décors du village** : une petite phrase (« Maison d'habitant », « Puits », « Étal du marché »…), sans action.
+- S'affiche dans le volet de la barre du bas, comme les autres fiches ; textes et chiffres dans `src/data/`.
+
+**Fichiers :** `src/scene/picking.ts` (mairie et maisons cliquables), `src/scene/decor.ts` / `src/scene/villageView.ts` (noms des objets), `src/data/` (phrases), créer `src/ui/buildingInfo.ts` (+ modèle pur testable), `src/ui/bottomBar.ts`, `src/ui/buildingBar.ts`
+**Test :** `tests/ui/buildingInfo.test.ts` (textes et chiffres de la fiche pour chaque bâtiment et la mairie)
+
+- [ ] **Étape 1 : écrire les tests qui échouent.**
+- [ ] **Étape 2 : `npm test`** → ÉCHEC.
+- [ ] **Étape 3 : implémenter.**
+- [ ] **Étape 4 : `npm test`, `npm run build`** → réussis.
+- [ ] **Étape 5 : vérifier à la main (chef)** — clic sur chaque bâtiment, la mairie et quelques maisons ; téléphone (volet ≤ 40 % de la hauteur).
+- [ ] **Étape 6 : commit** — `Informations des bâtiments au clic`
 
 ### Task 11 : Vérification d'ensemble, relecture et publication — *chef (Opus) + relecture · Opus*
 
