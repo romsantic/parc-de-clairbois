@@ -66,7 +66,7 @@
 
 **Sous-tâche 7 (17/11/2026)** — relecture Opus : 0 critique, 5 importants, quelques mineurs, tous corrigés en 6ceae07 (enclos de départ un peu sale pour que « Nettoie l'enclos » marche tout de suite ; Gazette aussi quand l'onglet est repris sans rechargement ; validation complète des sauvegardes v3 ; minuit qui ne recule pas ; quotidiennes versées d'office signalées « (récompense versée) » ; seuils d'autonomie dans `TUNING`). Deux nouveaux choix de Romain en 2af73bf : missions d'habitants **150** (porte du Bourg) et **250** (finale V1) ; bon −25 % **au choix** (case « Utiliser mon bon » par offre). Vérifié dans le navigateur (en lisant la page, panneau masqué) : les 9 premiers pas, Passer, quotidiennes, refus du village, sauvegarde v2, Gazette après 5 jours, bon de réduction, téléphone. Pas vu à l'œil : le « ! » doré qui se déplace sur la carte.
 
-**V1 — étape 6 : finition** (branche `etape-6-finition`, plan `docs/superpowers/plans/2026-11-17-etape-6-finition-v1.md`) — **plan écrit le 17/11/2026, en attente de la relecture de Romain** (8 décisions D1 à D8 à valider ; aucune ligne du jeu modifiée avant son accord)
+**V1 — étape 6 : finition** (branche `etape-6-finition`, plan `docs/superpowers/plans/2026-11-17-etape-6-finition-v1.md`) — **plan écrit et validé par Romain le 17/11/2026** (décisions D1 à D8 acceptées telles quelles, promeneurs Quaternius)
 
 | # | Sous-tâche | Agent · modèle | État |
 |---|---|---|---|
@@ -98,7 +98,7 @@
 | 3. Carte jouable (zones, pose/redimensionnement d'enclos, sélection, barres, retour visuel) | ✅ fusionnée — vérifiée sur le téléphone de Romain |
 | 4. Économie et village (visiteurs, attrait, billet réglable, bâtiments, niveaux du village, marchand, ferme et rations, chemins qui évoluent avec le niveau) | ✅ fusionnée le 17/11/2026 |
 | 5. Missions (Premiers pas avec Margaux, histoire, quotidiennes, résumé d'absence/Gazette) | ✅ fusionnée le 17/11/2026 |
-| **6. Finition V1** (équilibrage, téléphone, brume des zones, visiteurs sur les chemins, jour/nuit, perfs, **bouton « Recommencer à zéro »**) | **en cours — plan écrit, en attente de Romain** |
+| **6. Finition V1** (équilibrage, téléphone, brume des zones, visiteurs sur les chemins, jour/nuit, perfs, **bouton « Recommencer à zéro »**) | **en cours — plan validé, construction** |
 
 Après la V1 : V2 à V5 décrites en fin de spec (personnel et centre vétérinaire, routes à construire contre de l'argent, expéditions, musée, labo, saisons…).
 

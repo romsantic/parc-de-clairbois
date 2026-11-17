@@ -16,7 +16,7 @@
 
 ## Décisions à valider par Romain
 
-Ce sont des **propositions** ; tous les chiffres iront dans `src/data/`, faciles à changer après avoir joué.
+**Toutes validées par Romain le 17/11/2026, telles quelles.** Tous les chiffres iront dans `src/data/`, faciles à changer après avoir joué.
 
 | # | Sujet | Proposition |
 |---|---|---|
