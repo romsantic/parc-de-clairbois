@@ -18,7 +18,7 @@ export function toggleOptionsPanel(ctx: OptionsContext): void {
   openDrawer('options', 'Options', (body) => {
     body.replaceChildren()
     const warn = document.createElement('p')
-    warn.textContent = 'Tout ton parc sera effacé'
+    warn.textContent = 'Efface ta partie et recommence depuis le début, avec Margaux.'
     warn.className = 'discret'
     const go = document.createElement('button')
     go.type = 'button'
