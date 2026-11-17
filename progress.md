@@ -60,7 +60,7 @@
 | 2 | Données des missions et moteur (premiers pas, histoire, passage de niveau) | agent · Sonnet | faite (9c1afd5) — 390 tests |
 | 3 | Missions quotidiennes, série et bon de réduction | agent · Sonnet | faite (3fd385d) — 420 tests |
 | 4 | Petits textes d'affichage (récompense, avancée, durée d'absence) | agent · Haiku | faite (ac6bd45) — 431 tests |
-| 5 | Interface des missions (barre, volet, bannière, mise en évidence, autonomie) | agent · Sonnet | à faire |
+| 5 | Interface des missions (barre, volet, bannière, mise en évidence, autonomie) | agent · Sonnet | faite (254aedd + 8adca8f) — vérifiée dans le navigateur (premiers pas, Passer, quotidiennes, refus du village, sauvegarde v2, téléphone) |
 | 6 | La Gazette de Clairbois (résumé d'absence) | agent · Sonnet | à faire |
 | 7 | Vérification d'ensemble, relecture et publication | chef (Opus) + relecture · Opus | à faire |
 
