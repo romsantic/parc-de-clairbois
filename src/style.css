@@ -160,6 +160,7 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
 /* ---------- Barre de commande (bas) ---------- */
 .barre-bas {
+  box-sizing: border-box;
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 4;
   display: flex; align-items: center; gap: 10px; min-height: 48px; max-height: 48px;
   padding: 0 max(10px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(10px, env(safe-area-inset-left, 0px));
@@ -233,6 +234,7 @@ button.icone:hover::after, button.icone:focus-visible::after { opacity: 1; }
 /* ---------- Économie et village (étape 4) ---------- */
 .ressource.cliquable { cursor: pointer; }
 .ressource.cliquable:hover, .ressource.cliquable:focus-visible { background: rgba(0,0,0,.06); outline: none; }
+.ressource.billet[data-trop="oui"] { color: #b23a2a; }
 .ressource.village[data-pret="oui"]::after { content: ""; position: absolute; top: -1px; right: -1px; width: 9px; height: 9px; border-radius: 50%; background: #e0802a; box-shadow: 0 0 0 2px var(--papier); animation: pastille 1.4s ease-in-out infinite; }
 @keyframes pastille { 50% { transform: scale(1.35); } }
 @media (prefers-reduced-motion: reduce) { .ressource.village[data-pret="oui"]::after { animation: none; } }

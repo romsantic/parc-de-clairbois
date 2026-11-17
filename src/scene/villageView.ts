@@ -1,13 +1,13 @@
 import * as THREE from 'three'
 import type { ModelKey } from '../assets/manifest'
 import type { BuildingType, GameState } from '../sim/types'
-import { BUILDINGS, SLOTS } from '../data/economy'
+import { SLOTS } from '../data/economy'
 import type { World } from './world'
 import { fitHeight } from './animalActor'
 import { prepareStatic } from './materials'
+import { slotCanBuild } from '../sim/village'
 
 const LEVEL_SCALE = [1, 1.08, 1.15] as const
-const BUILDING_TYPES = Object.keys(BUILDINGS) as BuildingType[]
 
 /** Un élément de décor d'un bâtiment : modèle, position locale, hauteur, rotation, niveau minimal. */
 interface Part { key: ModelKey; x: number; z: number; h: number; rot?: number; minLevel?: 1 | 2 | 3 }
@@ -214,11 +214,10 @@ export function createVillageView(world: World, getState: () => GameState) {
 
   function update() {
     const s = getState()
-    const allBuilt = BUILDING_TYPES.every((t) => s.buildings.some((b) => b.type === t))
     for (const def of SLOTS) {
       const b = s.buildings.find((x) => x.slot === def.id)
       const locked = def.unlockLevel > s.village.level
-      const state: SlotState = locked ? 'verrou' : allBuilt ? 'bientot' : 'libre'
+      const state: SlotState = locked ? 'verrou' : b || slotCanBuild(s, def.id) ? 'libre' : 'bientot'
       const key = b ? `${b.type}:${b.level}` : state === 'verrou' ? `verrou:${def.unlockLevel}` : state
       const cur = slots.get(def.id)
       if (cur && cur.key === key) continue

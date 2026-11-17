@@ -1,5 +1,5 @@
-import { ECONOMY } from '../data/economy'
-import type { GameState } from './types'
+import { BUILDINGS, ECONOMY, SLOTS } from '../data/economy'
+import type { BuildingType, GameState } from './types'
 
 /** Habitants : base + RESIDENTS_PER_LEVEL par niveau de chaque bâtiment + un nouvel habitant par groupe de clients servis. */
 export function population(state: GameState): number {
@@ -11,6 +11,14 @@ export function population(state: GameState): number {
 /** Mission du palier. À l'étape 4 elle est toujours remplie ; l'étape 5 vérifiera la vraie mission. */
 export function missionGateOk(_state: GameState, _level: 2 | 3): boolean {
   return true
+}
+
+/** Un emplacement libre et débloqué peut-il encore recevoir un bâtiment ? (Pas au Bourg en V1 ; sinon s'il reste un type constructible.) */
+export function slotCanBuild(state: GameState, slotId: number): boolean {
+  const sl = SLOTS.find((x) => x.id === slotId)
+  if (!sl || sl.unlockLevel === 3) return false
+  return (Object.keys(BUILDINGS) as BuildingType[]).some((t) =>
+    BUILDINGS[t].buildCost !== null && BUILDINGS[t].unlockLevel <= state.village.level && !state.buildings.some((b) => b.type === t))
 }
 
 /** Le village peut-il passer au niveau suivant ? (Simple question : le niveau ne change que par une action.) */

@@ -2,6 +2,7 @@ import type { BuildingType, GameState } from '../sim/types'
 import type { Action } from '../sim/actions'
 import { rationCost } from '../sim/actions'
 import { buildingIncomePerHour } from '../sim/economy'
+import { slotCanBuild } from '../sim/village'
 import { BUILDINGS, SLOTS } from '../data/economy'
 import { TUNING } from '../data/tuning'
 import { ICONS, iconButton } from './icons'
@@ -18,6 +19,11 @@ const BUILD_ICON: Record<BuildingType, string> = { ferme: ICONS.garde, cafe: ICO
 export function slotKey(s: GameState, slot: number): string {
   const b = s.buildings.find((x) => x.slot === slot)
   return `s${slot}:${b?.level ?? 0}:${s.buildings.length}:${s.village.level}:${s.pantry.capacity}`
+}
+
+/** Place libre dans le garde-manger (rations, fractions comprises). */
+function pantryRoom(s: GameState): number {
+  return s.pantry.capacity - s.pantry.fourrage - s.pantry.viande
 }
 
 /** Prochain cran du garde-manger, s'il existe. */
@@ -50,7 +56,7 @@ export function buildBuildingBar(ctx: BuildingBarContext, slot: number, left: HT
     }
     left.append(text('b', 'Emplacement libre', 'nom'))
     const types = (Object.keys(BUILDINGS) as BuildingType[]).filter((t) => BUILDINGS[t].buildCost !== null && !s.buildings.some((x) => x.type === t))
-    if (types.length === 0) {
+    if (types.length === 0 || !slotCanBuild(s, slot)) {
       left.append(text('span', 'De nouveaux bâtiments arriveront bientôt', 'discret'))
       return none
     }
@@ -82,13 +88,33 @@ export function buildBuildingBar(ctx: BuildingBarContext, slot: number, left: HT
         actions.append(btn)
       }
     }
+    const fills = (['fourrage', 'viande'] as const).map((food) => {
+      const label = food === 'fourrage' ? 'Remplir de fourrage' : 'Remplir de viande'
+      const btn = withQty(iconButton(food === 'fourrage' ? ICONS.fourrage : ICONS.viande, label, { price: 0 }), 'plein')
+      btn.addEventListener('click', () => {
+        // Sans place, on demande 1 ration : le refus explique pourquoi.
+        ctx.dispatch({ type: 'acheterRations', food, n: Math.max(1, Math.floor(pantryRoom(ctx.get()))) }, btn)
+      })
+      actions.append(btn)
+      return { food, btn }
+    })
     actions.append(upgrade())
     const next = nextPantry(s)
     const label = next ? `Agrandir le garde-manger (${next.capacity} places)` : 'Garde-manger au maximum'
     const pantry = iconButton(ICONS.garde, label, { price: next?.cost, disabled: !next })
     pantry.addEventListener('click', () => ctx.dispatch({ type: 'agrandirGardeManger' }, pantry))
     actions.append(pantry)
-    return none
+    return () => {
+      const st = ctx.get()
+      const n = Math.floor(pantryRoom(st))
+      for (const { food, btn } of fills) {
+        const price = btn.querySelector('small')
+        if (price) price.textContent = n > 0 ? String(rationCost(st, food, n)) : ''
+        btn.dataset.bulle = `${food === 'fourrage' ? 'Remplir de fourrage' : 'Remplir de viande'} (${n} rations)`
+        btn.setAttribute('aria-label', btn.dataset.bulle)
+        if (n > 0) btn.removeAttribute('aria-disabled'); else btn.setAttribute('aria-disabled', 'true')
+      }
+    }
   }
 
   left.append(text('b', `${d.name} · niveau ${b.level}`, 'nom'), text('span', '', 'estim'))

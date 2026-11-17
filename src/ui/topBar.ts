@@ -1,6 +1,6 @@
 import type { GameState } from '../sim/types'
 import { autonomyHours } from '../sim/feeding'
-import { incomePerHour } from '../sim/economy'
+import { fairPrice, incomePerHour } from '../sim/economy'
 import { canLevelUp, population } from '../sim/village'
 import { ECONOMY } from '../data/economy'
 import { formatAutonomy, formatGameTime } from './format'
@@ -68,6 +68,7 @@ export function mountTopBar(get: () => GameState, handlers: TopBarHandlers): { p
     cells.visiteurs.value.textContent = `${Math.round(incomePerHour(s).visiteurs)}/h`
     cells.billet.value.textContent = String(s.ticketPrice)
     cells.village.value.textContent = `${ECONOMY.LEVEL_NAMES[s.village.level - 1]} · ${population(s)} hab.`
+    cells.billet.root.dataset.trop = s.ticketPrice > ECONOMY.REPUTATION_DROP_ABOVE * fairPrice(s) ? 'oui' : 'non'
     cells.village.root.dataset.pret = canLevelUp(s).ok ? 'oui' : 'non'
     time.textContent = formatGameTime(s.time)
   }

@@ -5,7 +5,7 @@ import type { BuildingType, GameState, Rect } from './types'
 import { fairPrice } from './economy'
 import { canLevelUp, farmLevel } from './village'
 import { animalsIn, capacity, cleanliness } from './enclosure'
-import { buyAnimal, sellAnimal } from './merchant'
+import { buyAnimal, restock, sellAnimal } from './merchant'
 import { checkPlacement, enclosureCost, resizeCost, snapRect } from './placement'
 
 /** Résultat d'une action : nouvel état, ou raison du refus (en français, affichable telle quelle). */
@@ -125,6 +125,7 @@ export function buildBuilding(state: GameState, slot: number, type: BuildingType
   const sl = SLOTS.find((x) => x.id === slot)
   if (!sl) return NOT_FOUND
   if (state.village.level < sl.unlockLevel) return { ok: false, reason: `Cet emplacement se débloque au niveau ${sl.unlockLevel} du village.` }
+  if (sl.unlockLevel === 3) return { ok: false, reason: 'De nouveaux bâtiments arriveront bientôt ici.' } // pas de bâtiment au Bourg en V1
   if (state.buildings.some((b) => b.slot === slot)) return { ok: false, reason: 'Cet emplacement est déjà pris.' }
   const data = BUILDINGS[type]
   if (state.village.level < data.unlockLevel) return { ok: false, reason: `Ce bâtiment se débloque au niveau ${data.unlockLevel} du village.` }
@@ -143,6 +144,7 @@ export function levelUp(state: GameState): ActionResult {
   if (!c.ok) return { ok: false, reason: c.reason }
   const s = structuredClone(state)
   s.village.level = c.level
+  restock(s) // le catalogue s'élargit : le marchand en profite tout de suite
   return { ok: true, state: s }
 }
 

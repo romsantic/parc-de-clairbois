@@ -168,3 +168,12 @@ describe('buyRations : quantité', () => {
     for (const n of [0, -3, 1.5, NaN]) expect(buyRations(s, 'fourrage', n)).toEqual({ ok: false, reason: 'Quantité invalide.' })
   })
 })
+
+describe('relecture : enclos vidé par la vente', () => {
+  it("l'enclos redevient sans espèce quand le dernier animal part", () => {
+    const s = emptyState({ enclosures: [enclosure(1, 'mouton')], animals: [animal(2, 'mouton', 'F', 1), animal(3, 'mouton', 'M', 1)] })
+    const un = ok(sellAnimal(s, 2))
+    expect(un.enclosures[0].species).toBe('mouton')
+    expect(ok(sellAnimal(un, 3)).enclosures[0].species).toBeNull()
+  })
+})

@@ -8,6 +8,9 @@ import type { PanelContext } from './ticketPanel'
 
 export interface MerchantContext extends PanelContext { selection(): Pick }
 
+/** Délai pendant lequel « Acheter » ignore les clics après un achat ou une reconstruction de la liste (double-clic). */
+const BUY_DELAY_MS = 400
+let buyBlockedUntil = 0
 const text = (tag: string, t: string, cls = '') => { const e = document.createElement(tag); e.textContent = t; if (cls) e.className = cls; return e }
 
 /** Enclos qui recevra l'animal : le sélectionné s'il l'accepte, sinon le premier qui l'accepte ; sinon la raison. */
@@ -20,6 +23,13 @@ export function merchantTarget(s: GameState, sel: Pick, species: Offer['species'
   const sameBiome = s.enclosures.find((e) => e.biome === biome)
   if (sameBiome) return { reason: acceptsSpecies(s, sameBiome, species) ?? '' }
   return { reason: `Il faut un enclos de ${BIOME_NAMES[biome]}.` }
+}
+
+/** Nom d'un enclos pour le joueur : son rang parmi ses enclos et son espèce (jamais l'identifiant interne). */
+export function enclosureLabel(s: GameState, encId: number): string {
+  const i = s.enclosures.findIndex((e) => e.id === encId)
+  const enc = s.enclosures[i]
+  return `Enclos ${i + 1} (${enc?.species ? SPECIES[enc.species].name.toLowerCase() : 'vide'})`
 }
 
 /** Volet du marchand d'animaux : stock, prix, enclos cible. */
@@ -36,6 +46,7 @@ export function toggleMerchantPanel(ctx: MerchantContext): void {
     function rows() {
       const s = ctx.get()
       list.replaceChildren()
+      buyBlockedUntil = performance.now() + BUY_DELAY_MS
       if (s.merchant.offers.length === 0) list.append(text('p', 'Plus rien en stock pour le moment.', 'discret'))
       for (const o of s.merchant.offers) {
         const row = document.createElement('div')
@@ -46,8 +57,14 @@ export function toggleMerchantPanel(ctx: MerchantContext): void {
         const buy = document.createElement('button')
         buy.type = 'button'; buy.textContent = 'Acheter'
         if ('encId' in t) {
-          row.append(text('span', `→ Enclos ${t.encId}`, 'cible'))
-          buy.addEventListener('click', () => { if (ctx.dispatch({ type: 'acheterAnimal', offerId: o.id, encId: t.encId }, buy)) refreshDrawer() })
+          row.append(text('span', `→ ${enclosureLabel(s, t.encId)}`, 'cible'))
+          buy.addEventListener('click', () => {
+            if (performance.now() < buyBlockedUntil) return
+            if (ctx.dispatch({ type: 'acheterAnimal', offerId: o.id, encId: t.encId }, buy)) {
+              buyBlockedUntil = performance.now() + BUY_DELAY_MS
+              refreshDrawer()
+            }
+          })
         } else {
           buy.disabled = true; buy.title = t.reason
           row.append(text('span', t.reason, 'rouge'))

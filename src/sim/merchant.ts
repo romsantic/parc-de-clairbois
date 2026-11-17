@@ -98,5 +98,7 @@ export function sellAnimal(state: GameState, animalId: number): ActionResult {
   const s = structuredClone(state)
   s.coins += price
   s.animals = s.animals.filter((x) => x.id !== animalId)
+  const enc = s.enclosures.find((e) => e.id === a.enclosureId)
+  if (enc && !s.animals.some((x) => x.enclosureId === enc.id)) enc.species = null // enclos vidé : il accepte de nouveau toute espèce
   return { ok: true, state: s }
 }

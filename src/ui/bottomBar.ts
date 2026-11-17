@@ -25,6 +25,7 @@ export interface BottomBarContext {
 
 const AGE = { bebe: 'bébé', jeune: 'jeune', adulte: 'adulte' } as const
 const pct = (x: number) => `${Math.round(x * 100)} %`
+const SELL_CONFIRM_DELAY_MS = 400
 const text = (tag: string, t: string, cls = '') => { const e = document.createElement(tag); e.textContent = t; if (cls) e.className = cls; return e }
 
 /** Barre de commande compacte en bas de l'écran, qui s'agrandit en volet à la demande (spec §7). */
@@ -56,10 +57,12 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
   right.append(marchand, gazette, fold)
 
   let builtFor = ''
+  let builtKind = ''
   let drawerSeen = ''
   let slotUpdate: (() => void) | null = null
-  /** Animal dont la vente attend sa confirmation (annulée au bout de 3 s). */
+  /** Animal dont la vente attend sa confirmation (annulée au bout de 3 s) et moment où elle a été armée. */
   let sellArmed: number | null = null
+  let sellArmedAt = 0
   let sellTimer = 0
 
   function enclosureDetails(encId: number) {
@@ -101,10 +104,13 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
           sell.className = armed ? 'vendre confirmer' : 'vendre'
           sell.textContent = armed ? 'Vendre ?' : `Vendre (${price})`
           sell.addEventListener('click', () => {
+            // Un double-clic ne doit pas valider la vente : la confirmation demande un 2e clic distinct.
+            if (sellArmed === a.id && performance.now() - sellArmedAt < SELL_CONFIRM_DELAY_MS) return
             clearTimeout(sellTimer)
             if (sellArmed !== a.id) {
               sellArmed = a.id
-              sellTimer = window.setTimeout(() => { sellArmed = null; refreshDrawer() }, 3000)
+              sellArmedAt = performance.now()
+              sellTimer = window.setTimeout(() => { sellArmed = null; if (isDrawerOpen(`enclos:${encId}`)) refreshDrawer() }, 3000)
               refreshDrawer()
               return
             }
@@ -159,8 +165,14 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
 
   function update() {
     const p = ctx.selection()
-    const key = p.kind === 'enclos' ? `e${p.id}` : p.kind === 'zone' ? `z${p.zone.id}` : p.kind === 'emplacement' ? slotKey(ctx.get(), p.slot) : 'rien'
-    if (key !== builtFor) { builtFor = key; build(p); if (!key.startsWith('e')) closeDrawer() }
+    const kind = p.kind === 'enclos' ? `e${p.id}` : p.kind === 'zone' ? `z${p.zone.id}` : p.kind === 'emplacement' ? `s${p.slot}` : 'rien'
+    const key = p.kind === 'emplacement' ? slotKey(ctx.get(), p.slot) : kind
+    if (key !== builtFor) {
+      builtFor = key; build(p)
+      // Le volet ne se ferme que si la sélection change, pas quand le même emplacement évolue (niveau, garde-manger).
+      if (kind !== builtKind && !kind.startsWith('e')) closeDrawer()
+      builtKind = kind
+    }
     if (p.kind === 'emplacement') slotUpdate?.()
     if (p.kind === 'enclos') {
       const s = ctx.get()

@@ -117,7 +117,6 @@ export function buildDecor(world: World, rng: () => number): { update(dt: number
       return g
     })
   }
-  setPathLevel(1)
 
   // ---------- Marqueur de mission « ! » au-dessus de la mairie ----------
   const marker = new THREE.Group()

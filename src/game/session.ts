@@ -1,6 +1,7 @@
 import type { GameState } from '../sim/types'
 import { newGame } from '../sim/newGame'
 import { advanceTo } from '../sim/advance'
+import { restock } from '../sim/merchant'
 import { summarize, type Summary } from '../sim/summary'
 import { loadGame, saveGame, type Storage } from '../save/save'
 
@@ -35,6 +36,11 @@ export function startSession(store: Storage, nowMs: number, storageOk = true): S
     return { ...base, state, problem: loaded.kind === 'illisible' ? 'illisible' : null, canSave }
   }
   const r = advanceTo(loaded.state, nowMs)
+  if (r.state.merchant.restocks === 0 && r.state.merchant.offers.length === 0) {
+    // Partie migrée de la v1 chargée avant le premier pas : le marchand a déjà son premier stock.
+    r.state = structuredClone(r.state)
+    restock(r.state)
+  }
   const canSave = saveGame(store, r.state, nowMs, owner) === 'ok'
   return { ...base, state: r.state, summary: summarize(r.events), skippedMs: r.skippedMs, problem: null, canSave }
 }

@@ -142,3 +142,21 @@ describe('rationCost', () => {
     expect(rationCost(farm(3), 'viande', 50)).toBe(130)
   })
 })
+
+describe('relecture : Bourg et marchand', () => {
+  it('refuse tout bâtiment sur un emplacement du Bourg (V1)', () => {
+    const s = emptyState({ coins: 9999, village: { level: 3, clientsServed: 0 } })
+    for (const slot of [4, 5]) {
+      const r = buildBuilding(s, slot, 'cafe')
+      expect(r).toEqual({ ok: false, reason: 'De nouveaux bâtiments arriveront bientôt ici.' })
+    }
+  })
+  it('le passage de niveau renouvelle aussitôt le stock du marchand', () => {
+    const before = levelUp(emptyState({ village: { level: 1, clientsServed: 30 * 40 } }))
+    expect(before.ok).toBe(true)
+    if (!before.ok) return
+    expect(before.state.merchant.restocks).toBe(1)
+    expect(before.state.merchant.offers).toHaveLength(3 + 2)
+    expect(before.state.merchant.restockAt).toBeGreaterThan(before.state.time)
+  })
+})

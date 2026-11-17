@@ -42,13 +42,17 @@ export function toggleTicketPanel(ctx: PanelContext): void {
       const inc = incomePerHour(s, price())
       estimate.textContent = formatPerHour(inc.visiteurs, inc.billets + inc.village)
       repu.textContent = `Réputation : ${reputationLabel(s.reputation)}`
-      warn.textContent = price() > ECONOMY.REPUTATION_DROP_ABOVE * f ? 'Trop cher : ta réputation baissera.' : ''
+      const max = 3 * f
+      warn.textContent = price() > max ? `Au-dessus du maximum actuel (${max} pièces) : choisis moins.`
+        : price() > ECONOMY.REPUTATION_DROP_ABOVE * f ? 'Trop cher : ta réputation baissera.' : ''
     }
     slider.addEventListener('input', numbers)
     numbers()
     return () => {
       // Le curseur n'est jamais touché pendant que le joueur le tient ; le reste suit la partie.
-      if (document.activeElement !== slider) slider.max = String(3 * fairPrice(ctx.get()))
+      // Le maximum ne baisse jamais sous le prix que le joueur a choisi : il verra l'avertissement au lieu d'un curseur qui saute.
+      const max = 3 * fairPrice(ctx.get())
+      if (document.activeElement !== slider && Number(slider.value) <= max) slider.max = String(max)
       numbers()
     }
   })
