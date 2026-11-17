@@ -1,6 +1,6 @@
 # Le Parc de Clairbois — où on en est
 
-*Mis à jour le 16/11/2026. Ce fichier sert de point de départ à chaque nouvelle session de travail : le lire en premier.*
+*Mis à jour le 17/11/2026. Ce fichier sert de point de départ à chaque nouvelle session de travail : le lire en premier.*
 
 ## Le joueur et la façon de travailler
 
@@ -66,7 +66,21 @@
 
 **Sous-tâche 7 (17/11/2026)** — relecture Opus : 0 critique, 5 importants, quelques mineurs, tous corrigés en 6ceae07 (enclos de départ un peu sale pour que « Nettoie l'enclos » marche tout de suite ; Gazette aussi quand l'onglet est repris sans rechargement ; validation complète des sauvegardes v3 ; minuit qui ne recule pas ; quotidiennes versées d'office signalées « (récompense versée) » ; seuils d'autonomie dans `TUNING`). Deux nouveaux choix de Romain en 2af73bf : missions d'habitants **150** (porte du Bourg) et **250** (finale V1) ; bon −25 % **au choix** (case « Utiliser mon bon » par offre). Vérifié dans le navigateur (en lisant la page, panneau masqué) : les 9 premiers pas, Passer, quotidiennes, refus du village, sauvegarde v2, Gazette après 5 jours, bon de réduction, téléphone. Pas vu à l'œil : le « ! » doré qui se déplace sur la carte.
 
-Étape suivante (6 Finition V1) : ses sous-tâches seront ajoutées ici quand son plan sera écrit.
+**V1 — étape 6 : finition** (branche `etape-6-finition`, plan `docs/superpowers/plans/2026-11-17-etape-6-finition-v1.md`) — **plan écrit le 17/11/2026, en attente de la relecture de Romain** (8 décisions D1 à D8 à valider ; aucune ligne du jeu modifiée avant son accord)
+
+| # | Sous-tâche | Agent · modèle | État |
+|---|---|---|---|
+| 1 | Bouton « Recommencer à zéro » (volet Options ⚙) | agent · Sonnet | à faire |
+| 2 | Perfs de la simulation (grand parc, 30 jours < 2 s) et compteur d'images | agent · Sonnet | à faire |
+| 3 | Joueur automatique et rapport d'équilibrage | agent · Sonnet | à faire |
+| 4 | Missions du jour qui grandissent avec le parc | agent · Sonnet | à faire |
+| 5 | Réglage de l'équilibre (chiffres choisis avec Romain) | chef (Opus) + agent · Sonnet | à faire |
+| 6 | Brume des zones fermées | agent · Sonnet | à faire |
+| 7 | Modèles des promeneurs (si Quaternius choisi) | agent · Haiku | à faire |
+| 8 | Promeneurs sur les chemins | agent · Sonnet | à faire |
+| 9 | La nuit (lanternes, fenêtres, étoiles, animaux calmes) | agent · Sonnet | à faire |
+| 10 | Téléphone, perfs d'affichage et petits défauts gardés | agent · Sonnet | à faire |
+| 11 | Vérification d'ensemble, textes relus par Romain, relecture et publication | chef (Opus) + relecture · Opus | à faire |
 
 ## Liens
 
@@ -84,7 +98,7 @@
 | 3. Carte jouable (zones, pose/redimensionnement d'enclos, sélection, barres, retour visuel) | ✅ fusionnée — vérifiée sur le téléphone de Romain |
 | 4. Économie et village (visiteurs, attrait, billet réglable, bâtiments, niveaux du village, marchand, ferme et rations, chemins qui évoluent avec le niveau) | ✅ fusionnée le 17/11/2026 |
 | 5. Missions (Premiers pas avec Margaux, histoire, quotidiennes, résumé d'absence/Gazette) | ✅ fusionnée le 17/11/2026 |
-| **6. Finition V1** (équilibrage, téléphone, brume des zones, visiteurs sur les chemins, jour/nuit, perfs, **bouton « Recommencer à zéro »**) | **à faire — prochaine** |
+| **6. Finition V1** (équilibrage, téléphone, brume des zones, visiteurs sur les chemins, jour/nuit, perfs, **bouton « Recommencer à zéro »**) | **en cours — plan écrit, en attente de Romain** |
 
 Après la V1 : V2 à V5 décrites en fin de spec (personnel et centre vétérinaire, routes à construire contre de l'argent, expéditions, musée, labo, saisons…).
 
