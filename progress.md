@@ -70,7 +70,7 @@
 
 | # | Sous-tâche | Agent · modèle | État |
 |---|---|---|---|
-| 1 | Bouton « Recommencer à zéro » (volet Options ⚙) | agent · Sonnet | à faire |
+| 1 | Bouton « Recommencer à zéro » (volet Options ⚙) | agent · Sonnet | faite (a95b961 → d07ba25) — relue, vérifiée dans le navigateur (ordinateur et téléphone, double-clic rapide ignoré) — 502 tests |
 | 2 | Perfs de la simulation (grand parc, 30 jours < 2 s) et compteur d'images | agent · Sonnet | à faire |
 | 3 | Joueur automatique et rapport d'équilibrage | agent · Sonnet | à faire |
 | 4 | Missions du jour qui grandissent avec le parc | agent · Sonnet | à faire |
