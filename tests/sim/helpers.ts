@@ -50,3 +50,36 @@ export function animal(id: number, species: SpeciesId, sex: 'F' | 'M', encId: nu
     lastFedAt: T0, health: { status: 'ok' }, pregnantSince: null, lastBirthAt: null, ...over,
   }
 }
+
+/**
+ * Grand parc réaliste de niveau 3 : village niveau 3, 15 enclos rangés par colonnes de 6 m dans leur zone
+ * (prairie, forêt, montagne), ≈ 150 animaux des 10 espèces (mâles et femelles adultes, en bonne santé),
+ * garde-manger plein (grande capacité) et bâtiments construits.
+ */
+export function bigPark(): GameState {
+  const columns: { zone: 'foret' | 'prairie' | 'montagne'; z: number; d: number; species: SpeciesId[] }[] = [
+    { zone: 'prairie', z: -8, d: 16.5, species: ['mouton', 'mouton', 'cochon', 'ane', 'alpaga'] },
+    { zone: 'foret', z: -24, d: 16, species: ['renard', 'renard', 'cerf', 'cheval', 'cerf'] },
+    { zone: 'montagne', z: 11.5, d: 12.5, species: ['lama', 'lama', 'taureau', 'loup', 'loup'] },
+  ]
+  const enclosures: Enclosure[] = []
+  const animals: Animal[] = []
+  let encId = 1, animalId = 1
+  for (const col of columns) {
+    col.species.forEach((sp, i) => {
+      enclosures.push(enclosure(encId, sp, 6, col.d, { rect: { x: -34 + 6 * i, z: col.z, w: 6, d: col.d } }))
+      for (let k = 0; k < 10; k++) animals.push(animal(animalId++, sp, k % 2 === 0 ? 'F' : 'M', encId))
+      encId++
+    })
+  }
+  return emptyState({
+    coins: 5000, nextId: animalId,
+    pantry: { fourrage: 400, viande: 400, capacity: 800 },
+    village: { level: 3, clientsServed: 0 },
+    buildings: [
+      { slot: 0, type: 'ferme', level: 2 }, { slot: 1, type: 'cafe', level: 2 },
+      { slot: 2, type: 'boutique', level: 1 }, { slot: 3, type: 'auberge', level: 1 },
+    ],
+    enclosures, animals, missions: storyAt(8),
+  })
+}

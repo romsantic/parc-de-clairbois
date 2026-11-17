@@ -3,7 +3,7 @@ import { ANIMAL_NAMES } from '../data/names'
 import { TUNING, HOUR_MS } from '../data/tuning'
 import type { Animal, GameEvent, GameState } from './types'
 import { ageStage, isHungry } from './animal'
-import { animalsIn, capacity } from './enclosure'
+import { buildRoster, capacity } from './enclosure'
 import { happiness } from './happiness'
 import { bump } from './stats'
 import { chanceOver, random, randomInt } from './random'
@@ -36,8 +36,9 @@ export function breedingStep(state: GameState, events: GameEvent[]): void {
 
   // 2. Conceptions
   const chance = chanceOver(TUNING.BREED_PER_HOUR, TUNING.STEP_MS / HOUR_MS)
+  const roster = buildRoster(state) // après les naissances : une seule passe pour tous les enclos
   for (const enc of state.enclosures) {
-    const here = animalsIn(state, enc.id)
+    const here = roster.byEnclosure.get(enc.id) ?? []
     if (here.length >= capacity(enc)) continue
     const hasMale = here.some((a) => a.sex === 'M' && ageStage(a, now) === 'adulte' && a.health.status === 'ok')
     if (!hasMale) continue
@@ -46,7 +47,7 @@ export function breedingStep(state: GameState, events: GameEvent[]): void {
       if (ageStage(f, now) !== 'adulte' || isHungry(f, now)) continue
       // Repos après une mise bas
       if (f.lastBirthAt !== null && now - f.lastBirthAt < TUNING.BIRTH_REST_FACTOR * SPECIES[f.species].gestationH * HOUR_MS) continue
-      if (happiness(state, f) <= TUNING.BREED_MIN_HAPPINESS) continue
+      if (happiness(state, f, roster) <= TUNING.BREED_MIN_HAPPINESS) continue
       if (random(state) < chance) {
         f.pregnantSince = now
         events.push({ kind: 'gestation', at: now, animalId: f.id })

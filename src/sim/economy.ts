@@ -5,6 +5,7 @@ import { SPECIES } from '../data/species'
 import type { SpeciesId } from '../data/species'
 import { bump } from './stats'
 import { happiness } from './happiness'
+import { buildRoster } from './enclosure'
 import type { BuildingType, GameEvent, GameState } from './types'
 
 /** Attrait : par espèce présente, base × (1 + 0,5 × √(n − 1)), n = nombre d'animaux de l'espèce. */
@@ -21,7 +22,8 @@ export function appeal(state: GameState): number {
 /** Bonheur moyen de tous les animaux (0 sans animal). */
 export function averageHappiness(state: GameState): number {
   if (state.animals.length === 0) return 0
-  return state.animals.reduce((s, a) => s + happiness(state, a), 0) / state.animals.length
+  const roster = buildRoster(state)
+  return state.animals.reduce((s, a) => s + happiness(state, a, roster), 0) / state.animals.length
 }
 
 /** Prix juste du billet : entier, au moins 1. */
