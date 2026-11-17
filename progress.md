@@ -80,7 +80,7 @@
 | 8 | Promeneurs sur les chemins | agent · Sonnet | à faire |
 | 9 | La nuit (lanternes, fenêtres, étoiles, animaux calmes) | agent · Sonnet | à faire |
 | 10 | Téléphone, perfs d'affichage et petits défauts gardés | agent · Sonnet | à faire |
-| 12 | Le « ! » doré : disparaît une fois l'endroit cliqué ; clic sur la mission → caméra jusqu'au « ! » (demande de Romain) | agent · Sonnet | à faire |
+| 12 | Le « ! » doré reste sur l'endroit de la mission tant qu'elle n'est pas faite (aujourd'hui il revient sur la mairie quand on clique) ; clic sur la mission → caméra jusqu'au « ! » (demande de Romain) | agent · Sonnet | à faire |
 | 13 | Informations d'un bâtiment, de la mairie ou d'une maison au clic (demande de Romain) | agent · Sonnet | à faire |
 | 11 | *(après 12 et 13)* Vérification d'ensemble, textes relus par Romain, relecture et publication | chef (Opus) + relecture · Opus | à faire |
 
