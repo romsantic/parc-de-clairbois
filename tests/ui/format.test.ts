@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatAutonomy, formatCountdown, formatGameTime, formatPerHour, reputationLabel } from '../../src/ui/format'
+import { formatAbsence, formatAutonomy, formatCountdown, formatGameTime, formatPerHour, formatProgress, formatReward, reputationLabel } from '../../src/ui/format'
 
 describe('formatAutonomy', () => {
   it('infini quand personne ne mange', () => {
@@ -52,5 +52,64 @@ describe('formatCountdown', () => {
     expect(formatCountdown(45 * M)).toBe('45 min')
     expect(formatCountdown(30_000)).toBe('1 min')
     expect(formatCountdown(-5)).toBe('0 min')
+  })
+})
+
+describe('formatReward', () => {
+  it('pièces, fourrage, viande, séparés par « + »', () => {
+    expect(formatReward({ coins: 150, fourrage: 30 })).toBe('150 pièces + 30 fourrages')
+    expect(formatReward({ fourrage: 100, viande: 50 })).toBe('100 fourrages + 50 viandes')
+    expect(formatReward({ viande: 50, coins: 150, fourrage: 30 })).toBe('150 pièces + 30 fourrages + 50 viandes')
+  })
+  it('saute les éléments absents ou à 0', () => {
+    expect(formatReward({ fourrage: 20 })).toBe('20 fourrages')
+    expect(formatReward({ coins: 0, fourrage: 0, viande: 0 })).toBe('')
+  })
+  it('singulier pour 1', () => {
+    expect(formatReward({ coins: 1 })).toBe('1 pièce')
+    expect(formatReward({ fourrage: 1 })).toBe('1 fourrage')
+    expect(formatReward({ viande: 1 })).toBe('1 viande')
+  })
+  it('milliers séparés par une espace insécable fine', () => {
+    expect(formatReward({ coins: 1000 })).toBe('1 000 pièces')
+    expect(formatReward({ coins: 5000 })).toBe('5 000 pièces')
+    expect(formatReward({ coins: 150 })).toBe('150 pièces')
+  })
+  it('récompense vide', () => {
+    expect(formatReward({})).toBe('')
+  })
+})
+
+describe('formatProgress', () => {
+  it('valeur sur cible', () => {
+    expect(formatProgress(12, 20)).toBe('12/20')
+  })
+  it('arrondi vers le bas', () => {
+    expect(formatProgress(12.7, 20)).toBe('12/20')
+  })
+  it('borné entre 0 et la cible', () => {
+    expect(formatProgress(25, 20)).toBe('20/20')
+    expect(formatProgress(-3, 5)).toBe('0/5')
+    expect(formatProgress(Infinity, 48)).toBe('48/48')
+  })
+})
+
+describe('formatAbsence', () => {
+  const H = 3_600_000, M = 60_000, D = 24 * H
+  it('minutes sous une heure, arrondies vers le bas', () => {
+    expect(formatAbsence(45 * M)).toBe('45 min')
+    expect(formatAbsence(45 * M + 59_000)).toBe('45 min')
+    expect(formatAbsence(0)).toBe('0 min')
+  })
+  it('heures et minutes sous un jour', () => {
+    expect(formatAbsence(3 * H + 20 * M)).toBe('3 h 20')
+    expect(formatAbsence(3 * H + 5 * M)).toBe('3 h 05')
+    expect(formatAbsence(3 * H)).toBe('3 h')
+  })
+  it('jours, minutes ignorées au-delà d’un jour', () => {
+    expect(formatAbsence(D)).toBe('1 jour')
+    expect(formatAbsence(2 * D)).toBe('2 jours')
+    expect(formatAbsence(D + 5 * H)).toBe('1 jour et 5 h')
+    expect(formatAbsence(2 * D + 5 * H + 40 * M)).toBe('2 jours et 5 h')
   })
 })
