@@ -8,6 +8,10 @@ const SHOW_MS = 4000
  * Bannière « Nouvelle mission — titre » / « Mission réussie ! » au-dessus de la barre du bas (4 s).
  * Elle compare la mission courante d'un passage à l'autre ; au tout premier passage elle ne parle que d'une mission non lue.
  */
+let hideBanner: (() => void) | null = null
+/** Cache la bannière et oublie la mission vue (nouvelle partie). */
+export function resetMissionBanner(): void { hideBanner?.() }
+
 export function mountMissionBanner(get: () => GameState, onOpen: () => void): void {
   const el = document.createElement('button')
   el.type = 'button'
@@ -29,6 +33,7 @@ export function mountMissionBanner(get: () => GameState, onOpen: () => void): vo
     clearTimeout(timer)
     timer = window.setTimeout(() => { el.hidden = true; el.classList.remove('visible') }, SHOW_MS)
   }
+  hideBanner = () => { clearTimeout(timer); el.hidden = true; el.classList.remove('visible'); prev = undefined }
   const check = () => {
     const s = get()
     const c = currentMission(s)

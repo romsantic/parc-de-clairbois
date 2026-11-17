@@ -99,6 +99,7 @@ async function start(): Promise<void> {
       villageView.setSelected(p.kind === 'emplacement' ? p.slot : null)
     }
     const dispatch = game.dispatch
+    game.onRestart(() => { select({ kind: 'rien' }); bottomBar.refresh() })
     const editor = createEnclosureEditor(world, canvas, rig, {
       get: getState,
       dispatch,

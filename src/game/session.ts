@@ -5,7 +5,10 @@ import { restock } from '../sim/merchant'
 import { summarize, type Summary } from '../sim/summary'
 import { MISSIONS_TUNING } from '../data/missions'
 import { HOUR_MS } from '../data/tuning'
-import { loadGame, saveGame, type Storage } from '../save/save'
+import { loadGame, saveGame, SAVE_KEY, type Storage } from '../save/save'
+
+/** Copie de la partie effacée par « Recommencer à zéro ». */
+export const RESET_BACKUP_KEY = `${SAVE_KEY}-avant-nouvelle-partie`
 
 export interface Session {
   state: GameState
@@ -25,6 +28,12 @@ export interface Session {
 const newOwner = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
 const localOffset = (nowMs: number): number => -new Date(nowMs).getTimezoneOffset()
 const freshGame = (nowMs: number): GameState => ({ ...newGame(newSeed(), nowMs), utcOffsetMin: localOffset(nowMs) })
+/** Recommencer à zéro : garde une copie de la partie actuelle puis rend une partie neuve (à sauvegarder par l'appelant). */
+export function restartState(store: Storage, nowMs: number): GameState {
+  const previous = store.getItem(SAVE_KEY)
+  if (previous !== null) { try { store.setItem(RESET_BACKUP_KEY, previous) } catch { /* rien */ } }
+  return freshGame(nowMs)
+}
 const newSeed = () => Math.floor(Math.random() * 2 ** 32)
 
 /** Charge la partie (ou en crée une), rattrape le temps d'absence et prend la main sur la sauvegarde. */

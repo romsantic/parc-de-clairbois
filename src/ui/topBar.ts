@@ -32,7 +32,7 @@ function cell(cls: string, icon: string, label: string): { root: HTMLSpanElement
 }
 
 /** Barre des ressources en haut de l'écran (spec §7). */
-export interface TopBarHandlers { onTicket(): void; onVillage(): void; onAutonomy(): void }
+export interface TopBarHandlers { onTicket(): void; onVillage(): void; onAutonomy(): void; onOptions(): void }
 
 export function mountTopBar(get: () => GameState, handlers: TopBarHandlers): { pulse(r: Resource, delta: number): void } {
   const bar = document.createElement('header')
@@ -48,7 +48,14 @@ export function mountTopBar(get: () => GameState, handlers: TopBarHandlers): { p
   }
   const time = document.createElement('span')
   time.className = 'heure'
-  bar.append(...Object.values(cells).map((c) => c.root), time)
+  const gear = document.createElement('button')
+  gear.type = 'button'
+  gear.className = 'roue-options'
+  gear.textContent = '⚙'
+  gear.title = 'Options'
+  gear.setAttribute('aria-label', 'Options')
+  gear.addEventListener('click', () => handlers.onOptions())
+  bar.append(...Object.values(cells).map((c) => c.root), time, gear)
   document.body.append(bar)
   guide(cells.billet.root, 'billet')
   guide(cells.auto.root, 'autonomie')

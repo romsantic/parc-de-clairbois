@@ -347,3 +347,7 @@ button.recuperer .cadeau svg { width: 18px; height: 18px; display: block; }
   .gazette-titre { font-size: 26px; }
   .gazette-une { font-size: 19px; }
 }
+
+/* ---------- Options ---------- */
+.roue-options { flex: none; margin-left: 6px; padding: 2px 8px; font-size: 16px; line-height: 1.2; background: none; border: 1px solid transparent; color: #6f6852; cursor: pointer; }
+.roue-options:hover { border-color: var(--bord); }

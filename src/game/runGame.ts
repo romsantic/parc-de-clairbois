@@ -1,8 +1,7 @@
 import type { GameState } from '../sim/types'
 import { advanceTo } from '../sim/advance'
-import { newGame } from '../sim/newGame'
 import { saveGame, SAVE_KEY, type Storage } from '../save/save'
-import { startSession, resume } from './session'
+import { startSession, resume, restartState, RESET_BACKUP_KEY } from './session'
 import { mountDebugPanel } from '../ui/debugPanel'
 import { showError, showNotice } from '../ui/errorScreen'
 import { mountTopBar } from '../ui/topBar'
@@ -10,7 +9,10 @@ import { toggleTicketPanel } from '../ui/ticketPanel'
 import { toggleVillagePanel } from '../ui/villagePanel'
 import { toggleAutonomyPanel } from '../ui/autonomyPanel'
 import { formatReward } from '../ui/format'
-import { openGazette } from '../ui/gazette'
+import { openGazette, closeGazette } from '../ui/gazette'
+import { closeDrawer } from '../ui/drawer'
+import { toggleOptionsPanel } from '../ui/optionsPanel'
+import { resetMissionBanner } from '../ui/missionBanner'
 import { gazetteEdition, type GazetteEdition } from '../ui/gazetteModel'
 import { MISSIONS_TUNING } from '../data/missions'
 import { flash, toast } from '../ui/feedback'
@@ -20,7 +22,7 @@ import { BUILDINGS } from '../data/economy'
 import { SPECIES } from '../data/species'
 
 const SAVE_EVERY_MS = 30_000
-export const RESET_BACKUP_KEY = `${SAVE_KEY}-avant-nouvelle-partie`
+export { RESET_BACKUP_KEY }
 
 /**
  * Démarre la partie : chargement + rattrapage, horloge du jeu chaque seconde,
@@ -32,6 +34,8 @@ export interface Game {
   dispatch(action: Action, from?: HTMLElement | null): boolean
   /** Rouvre La Gazette (dernière édition de cette page, ou « Rien de neuf »). */
   openGazette(): void
+  /** Appelé après « Recommencer à zéro » : l'affichage (sélection…) doit repartir à neuf. */
+  onRestart(fn: () => void): void
 }
 
 export function runGame(store: Storage, storageOk = true): Game | null {
@@ -56,6 +60,7 @@ export function runGame(store: Storage, storageOk = true): Game | null {
     onTicket: () => toggleTicketPanel(panelCtx),
     onVillage: () => toggleVillagePanel(panelCtx),
     onAutonomy: () => toggleAutonomyPanel(panelCtx),
+    onOptions: () => toggleOptionsPanel({ restart: () => restartGame() }),
   })
   // La Gazette : dernière édition gardée en mémoire de la page ; elle s'ouvre seule après une vraie absence.
   let news = session.summary && session.absentMs >= MISSIONS_TUNING.GAZETTE_MIN_ABSENCE_H * 3_600_000 ? { summary: session.summary, absentMs: session.absentMs } : null
@@ -63,6 +68,7 @@ export function runGame(store: Storage, storageOk = true): Game | null {
   const edition = (): GazetteEdition | null => (news ? gazetteEdition(news.summary, news.absentMs, state) : null)
   if (news) openGazette(edition())
   let canSave = session.canSave
+  const restartListeners: Array<() => void> = []
   let warnedError = false
   /** Avance de l'horloge du jeu sur l'heure réelle (boutons du panneau de test). */
   let testOffset = 0
@@ -100,16 +106,22 @@ export function runGame(store: Storage, storageOk = true): Game | null {
     get: () => state,
     set: (s) => { state = s; save() },
     advanceBy: (ms) => { testOffset += ms; state = advanceTo(state, now()).state; save() },
-    reset: () => {
-      const previous = store.getItem(SAVE_KEY)
-      if (previous !== null) { try { store.setItem(RESET_BACKUP_KEY, previous) } catch { /* rien */ } }
-      testOffset = 0
-      state = newGame(Math.floor(Math.random() * 2 ** 32), Date.now())
-      save()
-    },
+    reset: () => restartGame(),
     summary: session.summary,
     skippedMs: session.skippedMs,
   })
+  /** Recommencer à zéro (volet Options et panneau de test) : copie de secours, partie neuve, affichage remis à neuf. */
+  function restartGame(): void {
+    testOffset = 0
+    state = restartState(store, Date.now())
+    updateMissions(state, [])
+    news = null
+    save()
+    closeGazette()
+    closeDrawer()
+    resetMissionBanner()
+    for (const fn of restartListeners) fn()
+  }
   /**
    * Toutes les actions du joueur passent par ici : on applique, on sauvegarde, et on le montre
    * (bouton vert ou rouge, ressources qui s'allument, message court).
@@ -133,7 +145,7 @@ export function runGame(store: Storage, storageOk = true): Game | null {
     return true
   }
 
-  return { get: () => state, dispatch, openGazette: () => openGazette(edition()) }
+  return { get: () => state, dispatch, openGazette: () => openGazette(edition()), onRestart: (fn) => { restartListeners.push(fn) } }
 }
 
 /** Message de réussite ; `s` est l'état après l'action, `before` celui d'avant. */
