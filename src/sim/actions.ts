@@ -1,14 +1,18 @@
 import { SPECIES, type Food } from '../data/species'
+import { BUILDINGS, FARM, SLOTS } from '../data/economy'
 import { TUNING } from '../data/tuning'
-import type { GameState, Rect } from './types'
+import type { BuildingType, GameState, Rect } from './types'
+import { fairPrice } from './economy'
+import { canLevelUp, farmLevel } from './village'
 import { animalsIn, capacity, cleanliness } from './enclosure'
+import { buyAnimal, restock, sellAnimal } from './merchant'
 import { checkPlacement, enclosureCost, resizeCost, snapRect } from './placement'
 
 /** Résultat d'une action : nouvel état, ou raison du refus (en français, affichable telle quelle). */
 export type ActionResult = { ok: true; state: GameState } | { ok: false; reason: string }
 
 const NOT_FOUND: ActionResult = { ok: false, reason: 'Introuvable.' }
-const noMoney = (cost: number): ActionResult => ({ ok: false, reason: `Pas assez de pièces (il en faut ${cost}).` })
+export const noMoney = (cost: number): ActionResult => ({ ok: false, reason: `Pas assez de pièces (il en faut ${cost}).` })
 
 export const cureCost = (price: number): number => Math.max(TUNING.CURE_MIN_COST, Math.round(price * TUNING.CURE_PRICE_SHARE))
 
@@ -38,7 +42,7 @@ export function cureAnimal(state: GameState, animalId: number): ActionResult {
   return { ok: true, state: s }
 }
 
-/** Ajoute des rations dans la limite du garde-manger (l'achat à la ferme arrive à l'étape 4). */
+/** Ajoute des rations dans la limite du garde-manger (gratuit : réservé au panneau ?debug ; le joueur achète via buyRations). */
 export function addRations(state: GameState, food: Food, n: number): ActionResult {
   const p = state.pantry
   if (p.fourrage + p.viande >= p.capacity) return { ok: false, reason: 'Le garde-manger est plein.' }
@@ -116,6 +120,99 @@ export function cureAllInEnclosure(state: GameState, encId: number): ActionResul
   return { ok: true, state: s }
 }
 
+/** Bâtit un bâtiment (unique dans le village) sur un emplacement libre et débloqué. */
+export function buildBuilding(state: GameState, slot: number, type: BuildingType): ActionResult {
+  const sl = SLOTS.find((x) => x.id === slot)
+  if (!sl) return NOT_FOUND
+  if (state.village.level < sl.unlockLevel) return { ok: false, reason: `Cet emplacement se débloque au niveau ${sl.unlockLevel} du village.` }
+  if (sl.unlockLevel === 3) return { ok: false, reason: 'De nouveaux bâtiments arriveront bientôt ici.' } // pas de bâtiment au Bourg en V1
+  if (state.buildings.some((b) => b.slot === slot)) return { ok: false, reason: 'Cet emplacement est déjà pris.' }
+  const data = BUILDINGS[type]
+  if (state.village.level < data.unlockLevel) return { ok: false, reason: `Ce bâtiment se débloque au niveau ${data.unlockLevel} du village.` }
+  if (state.buildings.some((b) => b.type === type)) return { ok: false, reason: `Clairbois a déjà ${data.withArticle}.` }
+  if (data.buildCost === null) return { ok: false, reason: `La ${data.name.toLowerCase()} ne se construit pas.` }
+  if (state.coins < data.buildCost) return noMoney(data.buildCost)
+  const s = structuredClone(state)
+  s.coins -= data.buildCost
+  s.buildings.push({ slot, type, level: 1 })
+  return { ok: true, state: s }
+}
+
+/** Passe au niveau suivant du village (le bouton n'apparaît que si canLevelUp le permet). */
+export function levelUp(state: GameState): ActionResult {
+  const c = canLevelUp(state)
+  if (!c.ok) return { ok: false, reason: c.reason }
+  const s = structuredClone(state)
+  s.village.level = c.level
+  restock(s) // le catalogue s'élargit : le marchand en profite tout de suite
+  return { ok: true, state: s }
+}
+
+/** Améliore un bâtiment d'un niveau. */
+export function upgradeBuilding(state: GameState, slot: number): ActionResult {
+  const b = state.buildings.find((x) => x.slot === slot)
+  if (!b) return NOT_FOUND
+  if (b.level >= 3) return { ok: false, reason: 'Ce bâtiment est déjà au niveau maximum.' }
+  const cost = BUILDINGS[b.type].upgradeCost[b.level - 1]
+  if (state.coins < cost) return noMoney(cost)
+  const s = structuredClone(state)
+  s.coins -= cost
+  s.buildings.find((x) => x.slot === slot)!.level = (b.level + 1) as 2 | 3
+  return { ok: true, state: s }
+}
+
+/** Prix de n rations (remise selon le niveau de la ferme, arrondi au-dessus). */
+export function rationCost(state: GameState, food: Food, n: number): number {
+  const niveau = farmLevel(state)
+  const remise = niveau > 0 ? FARM.discount[niveau - 1] : 0
+  // Petite tolérance : 20 × 0,65 donne 13,000000000000002 en flottants.
+  return Math.ceil(n * FARM.foodPrice[food] * (1 - remise) - 1e-9)
+}
+
+/** Achète des rations à la ferme (remise selon son niveau) ; jamais d'achat partiel. */
+export function buyRations(state: GameState, food: Food, n: number): ActionResult {
+  if (!Number.isInteger(n) || n <= 0) return { ok: false, reason: 'Quantité invalide.' }
+  const niveau = farmLevel(state)
+  if (niveau === 0) return { ok: false, reason: 'Il faut une ferme pour acheter des rations.' }
+  const p = state.pantry
+  const place = p.capacity - p.fourrage - p.viande
+  if (place <= 0) return { ok: false, reason: 'Le garde-manger est plein.' }
+  if (n > place) return { ok: false, reason: `Il n'y a de la place que pour ${Math.floor(place)} rations.` }
+  const cost = rationCost(state, food, n)
+  if (state.coins < cost) return noMoney(cost)
+  const s = structuredClone(state)
+  s.coins -= cost
+  s.pantry[food] += n
+  return { ok: true, state: s }
+}
+
+/** Agrandit le garde-manger d'un cran. */
+export function upgradePantry(state: GameState): ActionResult {
+  const sizes = TUNING.PANTRY_SIZES
+  let i = 0
+  sizes.forEach((sz, k) => { if (sz.capacity <= state.pantry.capacity) i = k })
+  const next = sizes[i + 1]
+  if (!next) return { ok: false, reason: 'Le garde-manger est déjà au plus grand.' }
+  if (state.village.level < (next.level ?? 1)) {
+    return { ok: false, reason: `Le grand garde-manger se débloque au niveau ${next.level} du village.` }
+  }
+  const cost = next.cost ?? 0
+  if (state.coins < cost) return noMoney(cost)
+  const s = structuredClone(state)
+  s.coins -= cost
+  s.pantry.capacity = next.capacity
+  return { ok: true, state: s }
+}
+
+/** Fixe le prix du billet : entier de 0 à 3 × le prix juste. */
+export function setTicketPrice(state: GameState, price: number): ActionResult {
+  const max = 3 * fairPrice(state)
+  if (!Number.isInteger(price) || price < 0 || price > max) return { ok: false, reason: `Le prix doit être entre 0 et ${max} pièces.` }
+  const s = structuredClone(state)
+  s.ticketPrice = price
+  return { ok: true, state: s }
+}
+
 /** Toutes les actions du joueur, pour l'interface. */
 export type Action =
   | { type: 'nettoyer'; encId: number }
@@ -124,7 +221,14 @@ export type Action =
   | { type: 'construire'; rect: Rect }
   | { type: 'redimensionner'; encId: number; rect: Rect }
   | { type: 'renommer'; animalId: number; name: string }
-  | { type: 'rations'; food: Food; n: number }
+  | { type: 'batir'; slot: number; building: BuildingType }
+  | { type: 'ameliorer'; slot: number }
+  | { type: 'acheterRations'; food: Food; n: number }
+  | { type: 'agrandirGardeManger' }
+  | { type: 'billet'; price: number }
+  | { type: 'monterNiveau' }
+  | { type: 'acheterAnimal'; offerId: number; encId: number }
+  | { type: 'vendre'; animalId: number }
 
 export function applyAction(state: GameState, a: Action): ActionResult {
   switch (a.type) {
@@ -134,6 +238,13 @@ export function applyAction(state: GameState, a: Action): ActionResult {
     case 'construire': return buildEnclosure(state, a.rect)
     case 'redimensionner': return resizeEnclosure(state, a.encId, a.rect)
     case 'renommer': return renameAnimal(state, a.animalId, a.name)
-    case 'rations': return addRations(state, a.food, a.n)
+    case 'batir': return buildBuilding(state, a.slot, a.building)
+    case 'ameliorer': return upgradeBuilding(state, a.slot)
+    case 'acheterRations': return buyRations(state, a.food, a.n)
+    case 'agrandirGardeManger': return upgradePantry(state)
+    case 'billet': return setTicketPrice(state, a.price)
+    case 'monterNiveau': return levelUp(state)
+    case 'acheterAnimal': return buyAnimal(state, a.offerId, a.encId)
+    case 'vendre': return sellAnimal(state, a.animalId)
   }
 }

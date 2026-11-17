@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { saveGame, loadGame, SAVE_KEY, BROKEN_KEY, type Storage } from '../../src/save/save'
+import { MIGRATIONS } from '../../src/save/migrations'
 import { newGame } from '../../src/sim/newGame'
 
 function memory(init: Record<string, string> = {}): Storage & { data: Record<string, string> } {
@@ -30,17 +31,17 @@ describe('sauvegarde', () => {
     expect(m.data[BROKEN_KEY]).toBe('cassé 1')
   })
   it('sauvegarde d’une version plus récente : refusée sans rien écraser', () => {
-    const raw = JSON.stringify({ version: 2, savedAt: 1, state: {} })
+    const raw = JSON.stringify({ version: 3, savedAt: 1, state: {} })
     const m = memory({ [SAVE_KEY]: raw })
-    expect(loadGame(m)).toEqual({ kind: 'trop-recente', version: 2 })
+    expect(loadGame(m)).toEqual({ kind: 'trop-recente', version: 3 })
     expect(m.data[SAVE_KEY]).toBe(raw)
   })
   it('applique les migrations en chaîne', () => {
     const old = { ...g, version: 0, coins: undefined, argent: 42 }
     const m = memory({ [SAVE_KEY]: JSON.stringify({ version: 0, savedAt: 1, state: old }) })
-    const migrations = { 0: (o: any) => { const { argent, ...rest } = o; return { ...rest, coins: argent, version: 1 } } }
+    const migrations = { ...MIGRATIONS, 0: (o: any) => { const { argent, ...rest } = o; return { ...rest, coins: argent, version: 1 } } }
     const r = loadGame(m, migrations)
     expect(r.kind === 'ok' && r.state.coins).toBe(42)
-    expect(r.kind === 'ok' && r.state.version).toBe(1)
+    expect(r.kind === 'ok' && r.state.version).toBe(2)
   })
 })

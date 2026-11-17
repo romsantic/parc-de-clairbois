@@ -6,8 +6,12 @@ import { startSession } from './session'
 import { mountDebugPanel } from '../ui/debugPanel'
 import { showError, showNotice } from '../ui/errorScreen'
 import { mountTopBar } from '../ui/topBar'
+import { toggleTicketPanel } from '../ui/ticketPanel'
+import { toggleVillagePanel } from '../ui/villagePanel'
 import { flash, toast } from '../ui/feedback'
 import { applyAction, type Action } from '../sim/actions'
+import { BUILDINGS } from '../data/economy'
+import { SPECIES } from '../data/species'
 
 const SAVE_EVERY_MS = 30_000
 export const RESET_BACKUP_KEY = `${SAVE_KEY}-avant-nouvelle-partie`
@@ -38,7 +42,11 @@ export function runGame(store: Storage, storageOk = true): Game | null {
   if (!storageOk) showNotice('Ton navigateur bloque la sauvegarde : la partie ne sera pas conservée après fermeture.')
 
   let state = session.state
-  const topBar = mountTopBar(() => state)
+  const panelCtx = { get: () => state, dispatch: (a: Action, from?: HTMLElement | null) => dispatch(a, from) }
+  const topBar = mountTopBar(() => state, {
+    onTicket: () => toggleTicketPanel(panelCtx),
+    onVillage: () => toggleVillagePanel(panelCtx),
+  })
   let canSave = session.canSave
   let warnedError = false
   /** Avance de l'horloge du jeu sur l'heure réelle (boutons du panneau de test). */
@@ -98,14 +106,16 @@ export function runGame(store: Storage, storageOk = true): Game | null {
     if (df) topBar.pulse('fourrage', df)
     const dv = state.pantry.viande - before.pantry.viande
     if (dv) topBar.pulse('viande', dv)
-    toast(successMessage(action), true)
+    if (state.village.level !== before.village.level) topBar.pulse('village', 1)
+    toast(successMessage(action, state, before), true)
     return true
   }
 
   return { get: () => state, dispatch }
 }
 
-function successMessage(a: Action): string {
+/** Message de réussite ; `s` est l'état après l'action, `before` celui d'avant. */
+function successMessage(a: Action, s: GameState, before: GameState): string {
   switch (a.type) {
     case 'nettoyer': return 'Enclos nettoyé'
     case 'soignerTout': return 'Les animaux malades sont soignés'
@@ -113,6 +123,19 @@ function successMessage(a: Action): string {
     case 'construire': return 'Nouvel enclos construit'
     case 'redimensionner': return 'Enclos redimensionné'
     case 'renommer': return 'Nom changé'
-    case 'rations': return `+${a.n} ${a.food} dans le garde-manger`
+    case 'batir': return `${BUILDINGS[a.building].name} construit`
+    case 'ameliorer': {
+      const b = s.buildings.find((x) => x.slot === a.slot)
+      return b ? `${BUILDINGS[b.type].name} amélioré (niveau ${b.level})` : 'Bâtiment amélioré'
+    }
+    case 'acheterRations': return `+${a.n} ${a.food} dans le garde-manger`
+    case 'agrandirGardeManger': return `Garde-manger agrandi (${s.pantry.capacity} places)`
+    case 'billet': return `Billet à ${a.price} pièces`
+    case 'acheterAnimal': {
+      const offer = before.merchant.offers.find((o) => o.id === a.offerId)
+      return `${offer ? SPECIES[offer.species].name : 'Animal'} acheté`
+    }
+    case 'vendre': return `Animal vendu (+${s.coins - before.coins})`
+    case 'monterNiveau': return s.village.level === 3 ? 'Clairbois devient un bourg !' : 'Clairbois devient un village !'
   }
 }

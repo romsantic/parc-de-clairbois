@@ -65,3 +65,15 @@ describe('startSession', () => {
     expect(r.canSave).toBe(true)
   })
 })
+
+describe('relecture : marchand après migration', () => {
+  it("une partie v1 chargée quelques minutes après sa sauvegarde trouve déjà le premier stock", () => {
+    const v1 = { version: 1, time: NOW - 60_000, rng: 7, coins: 10, nextId: 5,
+      pantry: { fourrage: 1, viande: 0, capacity: 200 }, enclosures: [], animals: [] }
+    const m = memory({ [SAVE_KEY]: JSON.stringify({ version: 1, savedAt: NOW - 60_000, state: v1 }) })
+    const r = startSession(m, NOW)
+    expect(r.problem).toBeNull()
+    expect(r.state.merchant.offers.length).toBeGreaterThan(0)
+    expect(r.state.merchant.restocks).toBe(1)
+  })
+})

@@ -11,6 +11,9 @@ import { happiness } from '../sim/happiness'
 import { ICONS, iconButton } from './icons'
 import { closeDrawer, isDrawerOpen, openDrawer, refreshDrawer } from './drawer'
 import { toast } from './feedback'
+import { buildBuildingBar, slotKey } from './buildingBar'
+import { toggleMerchantPanel } from './merchantPanel'
+import { sellPrice } from '../sim/merchant'
 
 export interface BottomBarContext {
   get(): GameState
@@ -22,6 +25,7 @@ export interface BottomBarContext {
 
 const AGE = { bebe: 'bébé', jeune: 'jeune', adulte: 'adulte' } as const
 const pct = (x: number) => `${Math.round(x * 100)} %`
+const SELL_CONFIRM_DELAY_MS = 400
 const text = (tag: string, t: string, cls = '') => { const e = document.createElement(tag); e.textContent = t; if (cls) e.className = cls; return e }
 
 /** Barre de commande compacte en bas de l'écran, qui s'agrandit en volet à la demande (spec §7). */
@@ -43,16 +47,23 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
   mission.append(text('span', 'Les missions arrivent bientôt'))
   mission.addEventListener('click', () => toast('Les missions de Margaux arrivent bientôt', true))
 
-  const marchand = iconButton(ICONS.marchand, 'Marchand (bientôt)', { disabled: true })
+  const marchand = iconButton(ICONS.marchand, 'Marchand d’animaux')
+  marchand.addEventListener('click', () => toggleMerchantPanel({ get: ctx.get, selection: ctx.selection, dispatch: ctx.dispatch }))
   const gazette = iconButton(ICONS.gazette, 'Gazette (bientôt)', { disabled: true })
-  for (const b of [marchand, gazette]) b.addEventListener('click', () => toast('Bientôt disponible', true))
+  gazette.addEventListener('click', () => toast('Bientôt disponible', true))
   const fold = iconButton(ICONS.replier, 'Replier la barre')
   fold.addEventListener('click', () => { bar.hidden = true; tab.hidden = false; closeDrawer() })
   tab.addEventListener('click', () => { bar.hidden = false; tab.hidden = true })
   right.append(marchand, gazette, fold)
 
   let builtFor = ''
+  let builtKind = ''
   let drawerSeen = ''
+  let slotUpdate: (() => void) | null = null
+  /** Animal dont la vente attend sa confirmation (annulée au bout de 3 s) et moment où elle a été armée. */
+  let sellArmed: number | null = null
+  let sellArmedAt = 0
+  let sellTimer = 0
 
   function enclosureDetails(encId: number) {
     openDrawer(`enclos:${encId}`, 'Animaux de l’enclos', (body) => {
@@ -85,6 +96,30 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
           cure.addEventListener('click', () => { if (ctx.dispatch({ type: 'soigner', animalId: a.id }, cure)) refreshDrawer() })
           act.append(cure)
         }
+        const price = sellPrice(s, a)
+        if (price !== null) {
+          const armed = sellArmed === a.id
+          const sell = document.createElement('button')
+          sell.type = 'button'
+          sell.className = armed ? 'vendre confirmer' : 'vendre'
+          sell.textContent = armed ? 'Vendre ?' : `Vendre (${price})`
+          sell.addEventListener('click', () => {
+            // Un double-clic ne doit pas valider la vente : la confirmation demande un 2e clic distinct.
+            if (sellArmed === a.id && performance.now() - sellArmedAt < SELL_CONFIRM_DELAY_MS) return
+            clearTimeout(sellTimer)
+            if (sellArmed !== a.id) {
+              sellArmed = a.id
+              sellArmedAt = performance.now()
+              sellTimer = window.setTimeout(() => { sellArmed = null; if (isDrawerOpen(`enclos:${encId}`)) refreshDrawer() }, 3000)
+              refreshDrawer()
+              return
+            }
+            sellArmed = null
+            ctx.dispatch({ type: 'vendre', animalId: a.id }, sell)
+            refreshDrawer()
+          })
+          act.append(sell)
+        }
         tr.append(act)
         table.append(tr)
       }
@@ -93,7 +128,7 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
   }
 
   function build(p: Pick) {
-    left.replaceChildren(); actions.replaceChildren()
+    left.replaceChildren(); actions.replaceChildren(); slotUpdate = null
     const s = ctx.get()
     if (p.kind === 'enclos') {
       const enc = s.enclosures.find((e) => e.id === p.id)
@@ -114,13 +149,15 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
       actions.append(clean, cure, resize, details)
     } else if (p.kind === 'zone') {
       left.append(text('b', p.zone.name, 'nom'))
-      if (p.zone.unlockLevel > TUNING.VILLAGE_LEVEL_V1) {
+      if (p.zone.unlockLevel > s.village.level) {
         left.append(text('span', `Se débloque au niveau ${p.zone.unlockLevel} du village`, 'discret'))
       } else {
         const add = iconButton(ICONS.plus, 'Nouvel enclos')
         add.addEventListener('click', () => ctx.startBuild(p.zone, p.point))
         actions.append(add)
       }
+    } else if (p.kind === 'emplacement') {
+      slotUpdate = buildBuildingBar(ctx, p.slot, left, actions)
     } else {
       left.append(text('span', 'Clique un enclos ou une zone', 'discret'))
     }
@@ -128,8 +165,15 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
 
   function update() {
     const p = ctx.selection()
-    const key = p.kind === 'enclos' ? `e${p.id}` : p.kind === 'zone' ? `z${p.zone.id}` : 'rien'
-    if (key !== builtFor) { builtFor = key; build(p); if (!key.startsWith('e')) closeDrawer() }
+    const kind = p.kind === 'enclos' ? `e${p.id}` : p.kind === 'zone' ? `z${p.zone.id}` : p.kind === 'emplacement' ? `s${p.slot}` : 'rien'
+    const key = p.kind === 'emplacement' ? slotKey(ctx.get(), p.slot) : kind
+    if (key !== builtFor) {
+      builtFor = key; build(p)
+      // Le volet ne se ferme que si la sélection change, pas quand le même emplacement évolue (niveau, garde-manger).
+      if (kind !== builtKind && !kind.startsWith('e')) closeDrawer()
+      builtKind = kind
+    }
+    if (p.kind === 'emplacement') slotUpdate?.()
     if (p.kind === 'enclos') {
       const s = ctx.get()
       const enc = s.enclosures.find((e) => e.id === p.id)
@@ -152,7 +196,7 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
     if (p.kind === 'enclos') {
       const s = ctx.get()
       const k = JSON.stringify([s.time, animalsIn(s, p.id)])
-      if (k !== drawerSeen && refreshDrawer()) drawerSeen = k // sinon on réessaiera au prochain passage
+      if (k !== drawerSeen && isDrawerOpen(`enclos:${p.id}`) && refreshDrawer()) drawerSeen = k // sinon on réessaiera au prochain passage
     }
   }
 

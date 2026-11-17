@@ -82,7 +82,7 @@ describe('applyAction', () => {
     expect(applyAction(base(), { type: 'construire', rect: R(-13.5, -6, 9.5, 8) }).ok).toBe(true)
     expect(applyAction(base(), { type: 'redimensionner', encId: 1, rect: R(-26, -5, 14, 10) }).ok).toBe(true)
     expect(applyAction(base(), { type: 'renommer', animalId: 1, name: 'Zoé' }).ok).toBe(true)
-    expect(applyAction(base(), { type: 'rations', food: 'fourrage', n: 5 }).ok).toBe(true)
+    expect(applyAction(base(), { type: 'acheterRations', food: 'fourrage', n: 5 }).ok).toBe(true)
     expect(applyAction(base(), { type: 'soignerTout', encId: 1 })).toEqual({ ok: false, reason: 'Aucun animal malade ici.' })
     expect(applyAction(base(), { type: 'soigner', animalId: 1 })).toEqual({ ok: false, reason: "Cet animal n'est pas malade." })
   })

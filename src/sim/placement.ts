@@ -41,7 +41,7 @@ export function checkPlacement(state: GameState, r: Rect, ignoreId?: number): Pl
     return { ok: false, reason: `Un côté doit faire au moins ${TUNING.MIN_SIDE_M} m.` }
   const zone = zoneAt(r)
   if (!zone) return { ok: false, reason: "L'enclos doit rester dans une zone." }
-  if (zone.unlockLevel > TUNING.VILLAGE_LEVEL_V1)
+  if (zone.unlockLevel > state.village.level)
     return { ok: false, reason: `Cette zone se débloque au niveau ${zone.unlockLevel} du village.` }
   if (state.enclosures.some((e) => e.id !== ignoreId && overlaps(e.rect, r)))
     return { ok: false, reason: 'Il chevauche un autre enclos.' }

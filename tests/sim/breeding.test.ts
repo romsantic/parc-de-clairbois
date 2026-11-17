@@ -1,10 +1,17 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { breedingStep } from '../../src/sim/breeding'
 import { ageStage } from '../../src/sim/animal'
 import type { GameEvent, GameState } from '../../src/sim/types'
 import { ANIMAL_NAMES } from '../../src/data/names'
 import { HOUR_MS } from '../../src/data/tuning'
 import { animal, emptyState, enclosure, T0 } from './helpers'
+
+// Chance forcée : tant que `force.on` est vrai, tout tirage aléatoire vaut 0 (la conception réussit toujours).
+const force = vi.hoisted(() => ({ on: false }))
+vi.mock('../../src/sim/random', async (orig) => {
+  const m = await orig<typeof import('../../src/sim/random')>()
+  return { ...m, random: (st: Parameters<typeof m.random>[0]) => { const v = m.random(st); return force.on ? 0 : v } }
+})
 
 const MIN10 = 600_000
 
@@ -79,5 +86,35 @@ describe('breedingStep', () => {
       if (s.animals[0].pregnantSince !== null) ok = false
     }
     expect(ok).toBe(true)
+  })
+})
+
+describe('repos après une naissance', () => {
+  const withBirth = (hoursAgo: number) => {
+    const s = couple()
+    s.animals[0].lastBirthAt = T0 - hoursAgo * HOUR_MS
+    return s
+  }
+  it('une brebis qui a mis bas il y a 3 h ne conçoit pas avant 4 h de repos (chance forcée)', () => {
+    force.on = true
+    try {
+      const s = withBirth(3)
+      run(s, 5) // jusqu'à 3 h 50 après la naissance
+      expect(s.animals[0].pregnantSince).toBeNull()
+    } finally { force.on = false }
+  })
+  it('à 4 h de repos elle peut concevoir (chance forcée)', () => {
+    force.on = true
+    try {
+      const s = withBirth(3)
+      run(s, 6)
+      expect(s.animals[0].pregnantSince).not.toBeNull()
+    } finally { force.on = false }
+  })
+  it('la mère qui met bas reçoit lastBirthAt', () => {
+    const s = couple()
+    s.animals[0].pregnantSince = T0
+    run(s, 12)
+    expect(s.animals[0].lastBirthAt).toBe(s.time)
   })
 })

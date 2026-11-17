@@ -160,6 +160,7 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
 /* ---------- Barre de commande (bas) ---------- */
 .barre-bas {
+  box-sizing: border-box;
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 4;
   display: flex; align-items: center; gap: 10px; min-height: 48px; max-height: 48px;
   padding: 0 max(10px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(10px, env(safe-area-inset-left, 0px));
@@ -228,4 +229,33 @@ button.icone:hover::after, button.icone:focus-visible::after { opacity: 1; }
   /* La barre des ressources passe sur deux lignes : les boutons de caméra descendent d'autant. */
   .boutons-camera { top: calc(74px + env(safe-area-inset-top, 0px)); }
   .panneau-test { top: calc(74px + env(safe-area-inset-top, 0px)); }
+}
+
+/* ---------- Économie et village (étape 4) ---------- */
+.ressource.cliquable { cursor: pointer; }
+.ressource.cliquable:hover, .ressource.cliquable:focus-visible { background: rgba(0,0,0,.06); outline: none; }
+.ressource.billet[data-trop="oui"] { color: #b23a2a; }
+.ressource.village[data-pret="oui"]::after { content: ""; position: absolute; top: -1px; right: -1px; width: 9px; height: 9px; border-radius: 50%; background: #e0802a; box-shadow: 0 0 0 2px var(--papier); animation: pastille 1.4s ease-in-out infinite; }
+@keyframes pastille { 50% { transform: scale(1.35); } }
+@media (prefers-reduced-motion: reduce) { .ressource.village[data-pret="oui"]::after { animation: none; } }
+.zone-selection .estim { color: #6f6852; font-variant-numeric: tabular-nums; }
+.zone-selection .nom { overflow: hidden; text-overflow: ellipsis; }
+.zone-actions { overflow-x: auto; scrollbar-width: none; }
+button.icone .qte { position: absolute; top: -3px; left: -4px; font-style: normal; font-size: 10px; line-height: 13px; padding: 0 3px; border-radius: 6px; background: var(--papier); border: 1px solid var(--bord); }
+.volet p { margin: 4px 0; }
+.volet .gros { font-weight: 600; }
+.volet .discret { color: #6f6852; font-size: 13px; }
+.volet input.curseur { width: 100%; margin: 6px 0; }
+.volet .estimation { font-variant-numeric: tabular-nums; }
+.volet button.principal { background: #6fa84a; color: #fff; border-color: #5a8f39; }
+.volet button:disabled { opacity: .5; cursor: not-allowed; }
+.volet .offre { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 4px 0; border-bottom: 1px solid #e3d8bb; }
+.volet .offre .prix { font-variant-numeric: tabular-nums; }
+.volet .offre .cible { color: #2f6a12; }
+.volet .offre button { margin-left: auto; }
+.volet button.vendre { padding: 2px 8px; font-size: 13px; white-space: nowrap; }
+.volet button.vendre.confirmer { background: #f7d6cf; color: #8f2a1a; border-color: #e09484; }
+@media (max-width: 640px) {
+  .barre-haut { font-size: 13px; gap: 0 2px; }
+  .ressource { padding: 2px 5px; }
 }

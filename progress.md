@@ -7,7 +7,50 @@
 - **Romain** joue et décide ; il parle français, aime avancer **étape par étape**, valider sur maquette ou en jouant, et qu'on lui explique simplement (pas de jargon).
 - Chaque étape suit le même cycle : **plan écrit** (`docs/superpowers/plans/`) → relu et validé par Romain → **construction** en TDD (test qui échoue d'abord) sur une branche `etape-N-…` → vérification à la main dans le navigateur → **relecture indépendante** (agent sur le modèle le plus capable) → corrections → **fusion dans `main` avec l'accord de Romain** → publication automatique.
 - **Méthode d'économie demandée par Romain (à partir de l'étape 4)** : le chef d'orchestre (modèle le plus capable) écrit le plan, gère tout ce qui passe par Romain (téléchargements, choix, vérifications visuelles) et la relecture finale ; les **tâches de code bien délimitées** du plan vont à des agents **Sonnet** ; les tâches **mécaniques** (copie de fichiers, inventaires) à **Haiku**. Une session par étape pour garder l'historique court.
-- Toujours tenir ce fichier à jour à la fin d'une étape.
+- Toujours tenir ce fichier à jour à la fin d'une étape **et à la fin de chaque sous-tâche** (cocher la ligne dans « Suivi des sous-tâches »).
+
+## Organisation des sessions (demandée par Romain le 16/11/2026)
+
+- Découpage : **Version** (V1…V5) → **Étape** (une session par étape) → **Sous-tâche** (une tâche du plan de l'étape, confiée à un agent).
+- **Session de pilotage** : courte, elle sert de tableau de bord avec Romain. Elle lance les sessions d'étape, suit leurs comptes rendus et répond aux questions. On la **vide (clear) quand une sous-tâche est finie**, puis elle repart de ce fichier. Elle ne code pas.
+- **Session d'étape** : écrit le plan, le fait valider, confie chaque sous-tâche à un agent, vérifie, fait relire, fusionne avec l'accord de Romain et met à jour ce fichier.
+- Tout ce qui doit survivre à un « clear » est écrit ici, jamais seulement dans la conversation.
+
+## Modèle à utiliser selon le type de demande
+
+| Type de demande | Qui | Modèle |
+|---|---|---|
+| Discussion avec Romain, choix de jeu, idées, maquettes | chef (session) | le plus capable (Opus) |
+| Écrire un plan d'étape, découper en sous-tâches | chef | Opus |
+| Tâche de code bien délimitée (règles, interface, 3D) avec tests | agent | **Sonnet** |
+| Tâche mécanique : copier/renommer des fichiers, inventaires, listes de modèles, mises en forme | agent | **Haiku** |
+| Recherche dans le code (« où est X ? ») | agent Explore | Haiku |
+| Vérification à la main dans le navigateur | chef | Opus |
+| Relecture finale d'une étape | agent de relecture | Opus |
+| Correction d'un bug trouvé par la relecture | agent | Sonnet (Opus si le bug est subtil) |
+| Mise à jour de ce fichier, commits, fusion (avec l'accord de Romain) | chef | Opus |
+
+## Suivi des sous-tâches
+
+**V1 — étape 4 : économie et village** (branche `etape-4-economie`, plan `docs/superpowers/plans/2026-11-16-etape-4-economie-et-village.md`)
+
+| # | Sous-tâche | Modèle | État |
+|---|---|---|---|
+| 1 | État version 2, migration, vrai niveau du village | Sonnet | faite (f0e0489) |
+| 2 | Attrait, visiteurs et billet (règles pures) | Sonnet | faite (9565d62) |
+| 3 | Le parc gagne de l'argent à chaque pas | Sonnet | faite (580b614) |
+| 4 | Actions du village et de la ferme | Sonnet | faite (9899db9) |
+| 5 | Marchand d'animaux | Sonnet | faite (3e7a477) |
+| 6 | Rééquilibrer la reproduction | Sonnet | faite (4ffcfeb) |
+| 7 | Modèles des bâtiments | Haiku | faite (342b273) |
+| 8 | Bâtiments et emplacements sur la carte | Sonnet | faite (ffa1f6e) |
+| 9 | Chemins qui suivent le niveau du village | Sonnet | faite (319bc56) |
+| 10 | Interface : billet, village, marchand | Sonnet | faite (24dedcd) |
+| 11 | Vérification d'ensemble, relecture et publication | chef + relecture Opus | en cours |
+
+**Sous-tâche 11 (17/11/2026)** — vérification dans le navigateur faite (café, billet, marchand, vente, niveaux 2 et 3, chemins de jour et de nuit, sauvegarde v1, téléphone). Corrections : emplacements visibles et panneaux lisibles (64fa8b9) ; relecture finale Opus (0 critique, 1 important, 14 mineurs) corrigée en bd75fde — double-clic qui contournait la confirmation de vente/achat, copie de la sauvegarde v1 avant migration, validation renforcée des sauvegardes, marchand réapprovisionné au passage de niveau, « Remplir » le garde-manger, emplacements du Bourg réservés (« Bientôt »), case du billet en rouge quand la réputation baisse, barre du bas à 48 px. Laissé : quelques chiffres encore en dur hors de `src/data/` (M12). 338 tests verts. **Reste : accord de Romain pour fusionner dans `main`, vérification en ligne.**
+
+Étapes suivantes (5 Missions, 6 Finition V1) : leurs sous-tâches seront ajoutées ici quand leur plan sera écrit.
 
 ## Liens
 
@@ -23,7 +66,7 @@
 | 1. Fondations et test visuel (outillage, publication, packs 3D, monde, caméra) | ✅ fusionnée |
 | 2. Cœur de la simulation (faim, garde-manger, santé, naissances, absence, sauvegarde) | ✅ fusionnée |
 | 3. Carte jouable (zones, pose/redimensionnement d'enclos, sélection, barres, retour visuel) | ✅ fusionnée — vérifiée sur le téléphone de Romain |
-| **4. Économie et village** (visiteurs, attrait, billet réglable, bâtiments, niveaux du village, marchand, ferme et rations, chemins qui évoluent avec le niveau) | **à faire — prochaine** |
+| **4. Économie et village** (visiteurs, attrait, billet réglable, bâtiments, niveaux du village, marchand, ferme et rations, chemins qui évoluent avec le niveau) | **en cours** (voir « Suivi des sous-tâches ») |
 | 5. Missions (Premiers pas avec Margaux, histoire, quotidiennes, résumé d'absence/Gazette) | à faire |
 | 6. Finition V1 (équilibrage, téléphone, brume des zones, visiteurs sur les chemins, jour/nuit, perfs) | à faire |
 

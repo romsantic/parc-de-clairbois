@@ -3,14 +3,18 @@ import type { GameEvent, GameState } from './types'
 import { feedStep } from './feeding'
 import { healthStep } from './health'
 import { breedingStep } from './breeding'
+import { economyStep } from './economy'
+import { merchantStep } from './merchant'
 
-/** Un pas de 10 minutes, en place : repas, santé, puis naissances et conceptions. */
+/** Un pas de 10 minutes, en place : repas, santé, puis naissances et conceptions, puis recettes et marchand. */
 export function step(state: GameState): GameEvent[] {
   const events: GameEvent[] = []
   state.time += TUNING.STEP_MS
   feedStep(state, events)
   healthStep(state, events)
   breedingStep(state, events)
+  economyStep(state, events)
+  merchantStep(state, events)
   return events
 }
 
@@ -41,11 +45,13 @@ export function advanceTo(state: GameState, nowMs: number): { state: GameState; 
 /** Décale toutes les dates de la partie (temps non rejoué après le plafond). */
 function shiftDates(s: GameState, ms: number): void {
   s.time += ms
+  s.merchant.restockAt += ms
   for (const e of s.enclosures) e.cleanedAt += ms
   for (const a of s.animals) {
     a.bornAt += ms
     a.lastFedAt += ms
     if (a.pregnantSince !== null) a.pregnantSince += ms
+    if (a.lastBirthAt !== null) a.lastBirthAt += ms
     if (a.health.status === 'malade') a.health.since += ms
   }
 }

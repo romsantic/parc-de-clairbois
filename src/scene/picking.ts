@@ -5,13 +5,14 @@ import type { World } from './world'
 
 export type Pick =
   | { kind: 'enclos'; id: number }
+  | { kind: 'emplacement'; slot: number }
   | { kind: 'zone'; zone: Zone; point: { x: number; z: number } }
   | { kind: 'rien' }
 
 const CLICK_TOLERANCE_PX = 6
 
 /**
- * Clic (ou tap) sur la carte : enclos touché, sinon zone touchée au sol, sinon rien.
+ * Clic (ou tap) sur la carte : enclos ou emplacement du village touché, sinon zone touchée au sol, sinon rien.
  * Un glisser (rotation de la caméra) n'est pas un clic ; les clics sur l'interface sont ignorés
  * car ils ne visent pas le canevas.
  */
@@ -20,6 +21,7 @@ export function createPicker(
   canvas: HTMLCanvasElement,
   targets: () => Map<number, THREE.Object3D>,
   isBusy: () => boolean = () => false,
+  slotTargets: () => Map<number, THREE.Object3D> = () => new Map(),
 ) {
   const listeners: ((p: Pick) => void)[] = []
   const ray = new THREE.Raycaster()
@@ -41,11 +43,13 @@ export function createPicker(
 
   function pickAt(r: THREE.Raycaster): Pick {
     const objs = targets()
-    const hits = r.intersectObjects([...objs.values()], true)
+    const hits = r.intersectObjects([...objs.values(), ...slotTargets().values()], true)
     for (const h of hits) {
       let o: THREE.Object3D | null = h.object
-      while (o && o.userData.enclosureId === undefined) o = o.parent
-      if (o) return { kind: 'enclos', id: o.userData.enclosureId as number }
+      while (o && o.userData.enclosureId === undefined && o.userData.slot === undefined) o = o.parent
+      if (!o) continue
+      if (o.userData.slot !== undefined) return { kind: 'emplacement', slot: o.userData.slot as number }
+      return { kind: 'enclos', id: o.userData.enclosureId as number }
     }
     const p = new THREE.Vector3()
     if (r.ray.intersectPlane(ground, p)) {

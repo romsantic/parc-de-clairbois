@@ -1,5 +1,6 @@
 import type { GameState } from '../sim/types'
 import { SPECIES } from '../data/species'
+import { BUILDINGS, SLOTS } from '../data/economy'
 import { CURRENT_VERSION, MIGRATIONS, type Migration } from './migrations'
 
 export const SAVE_KEY = 'parc-clairbois:sauvegarde'
@@ -59,6 +60,10 @@ export function loadGame(store: Storage, migrations: Record<number, Migration> =
   if (typeof version !== 'number') return broken()
   if (version > CURRENT_VERSION) return { kind: 'trop-recente', version }
   const from = version
+  if (from < CURRENT_VERSION && store.getItem(`${SAVE_KEY}-v${from}`) === null) {
+    // Copie de la partie d'origine avant qu'elle soit réécrite au nouveau format (jamais écrasée).
+    try { store.setItem(`${SAVE_KEY}-v${from}`, raw) } catch { /* stockage plein : tant pis */ }
+  }
   let state: unknown = data.state
   try {
     while (version < CURRENT_VERSION) {
@@ -88,6 +93,21 @@ function looksLikeGame(s: unknown): s is GameState {
   }
   for (const a of g.animals) {
     if (!a || !(a.species in SPECIES) || !finite(a.bornAt) || !finite(a.lastFedAt) || !a.health) return false
+    if (a.lastBirthAt !== null && !finite(a.lastBirthAt)) return false
+  }
+  const v = g.village
+  if (!v || ![1, 2, 3].includes(v.level) || !finite(v.clientsServed)) return false
+  if (!finite(g.ticketPrice) || g.ticketPrice < 0 || !finite(g.reputation) || g.reputation < 0 || g.reputation > 1 || !finite(g.totalVisitors)) return false
+  if (!Array.isArray(g.buildings)) return false
+  const slots = new Set<number>()
+  for (const b of g.buildings) {
+    if (!b || !(b.type in BUILDINGS) || ![1, 2, 3].includes(b.level) || !SLOTS.some((x) => x.id === b.slot) || slots.has(b.slot)) return false
+    slots.add(b.slot)
+  }
+  const m = g.merchant
+  if (!m || !finite(m.restockAt) || !finite(m.restocks) || !Array.isArray(m.offers)) return false
+  for (const o of m.offers) {
+    if (!o || !finite(o.id) || !finite(o.price) || !(o.species in SPECIES) || !['F', 'M'].includes(o.sex) || !['jeune', 'adulte'].includes(o.stage)) return false
   }
   return true
 }

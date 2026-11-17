@@ -55,6 +55,14 @@ export const MODELS = {
   tonneau: 'models/village/Barrel.obj',
   charrette: 'models/village/Cart.obj',
   banc: 'models/village/Bench_1.obj',
+  maison4: 'models/village/House_4.obj',
+  etal2: 'models/village/MarketStand_2.obj',
+  kiosque: 'models/village/Gazebo.obj',
+  banc2: 'models/village/Bench_2.obj',
+  caisse: 'models/village/Crate.obj',
+  sacs: 'models/village/Bags.obj',
+  feu: 'models/village/Bonfire_Lit.obj',
+  forge: 'models/village/Blacksmith.obj',
 } as const
 
 export type ModelKey = keyof typeof MODELS

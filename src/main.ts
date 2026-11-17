@@ -9,14 +9,14 @@ import type { Storage } from './save/save'
 import { createCameraRig } from './scene/cameraRig'
 import { mountCameraButtons } from './ui/cameraButtons'
 import { buildDecor } from './scene/decor'
-import { drawZones } from './scene/zonesView'
+import { createZonesView } from './scene/zonesView'
 import { createParkView } from './scene/parkView'
+import { createVillageView } from './scene/villageView'
 import { createPicker, type Pick } from './scene/picking'
 import { mountBottomBar } from './ui/bottomBar'
 import { closeDrawer } from './ui/drawer'
 import { createEnclosureEditor } from './scene/enclosureEditor'
 import { SPECIES_MODELS } from './data/speciesModels'
-import { TUNING } from './data/tuning'
 import { createRng } from './core/rng'
 
 /** Le stockage du navigateur, ou une mémoire temporaire s'il est bloqué. */
@@ -83,18 +83,26 @@ async function start(): Promise<void> {
       showError("L'affichage 3D a été interrompu par l'appareil. Recharge la page pour retrouver ton parc.")
     })
     const decor = buildDecor(world, createRng(2026))
-    drawZones(world, TUNING.VILLAGE_LEVEL_V1)
+    const zones = createZonesView(world)
+    let zonesLevel = getState().village.level
+    zones.setLevel(zonesLevel)
+    decor.setPathLevel(zonesLevel)
+    const villageView = createVillageView(world, getState)
     const park = createParkView(world, getState, createRng(Date.now() >>> 0))
     const rig = createCameraRig(world, canvas)
     let selection: Pick = { kind: 'rien' }
-    const select = (p: Pick) => { selection = p; park.setSelected(p.kind === 'enclos' ? p.id : null) }
+    const select = (p: Pick) => {
+      selection = p
+      park.setSelected(p.kind === 'enclos' ? p.id : null)
+      villageView.setSelected(p.kind === 'emplacement' ? p.slot : null)
+    }
     const dispatch = game.dispatch
     const editor = createEnclosureEditor(world, canvas, rig, {
       get: getState,
       dispatch,
       onDone: (id) => { select({ kind: 'enclos', id }); bottomBar.refresh() },
     })
-    const picker = createPicker(world, canvas, () => park.enclosureMeshes(), () => editor.active())
+    const picker = createPicker(world, canvas, () => park.enclosureMeshes(), () => editor.active(), () => villageView.slotMeshes())
     const bottomBar = mountBottomBar({
       get: getState,
       selection: () => selection,
@@ -115,6 +123,9 @@ async function start(): Promise<void> {
         world.update(dt)
         decor.update(dt)
         park.update(dt)
+        const level = getState().village.level
+        if (level !== zonesLevel) { zonesLevel = level; zones.setLevel(level); decor.setPathLevel(level) }
+        villageView.update()
         world.renderer.render(world.scene, world.camera)
       } catch (e) {
         // Plutôt qu'une scène figée sans explication : on s'arrête et on le dit.

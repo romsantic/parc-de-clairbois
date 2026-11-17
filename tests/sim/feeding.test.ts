@@ -45,6 +45,11 @@ describe('autonomyHours', () => {
       animals: [animal(1, 'mouton', 'F', 1), animal(2, 'mouton', 'M', 1)] })
     expect(autonomyHours(s)).toBeCloseTo(120)
   })
+  it('30 fourrage, 2 moutons dont une gestante (portée moyenne 1,5) → ≈ 205,7 h', () => {
+    const s = emptyState({ pantry: { fourrage: 30, viande: 0, capacity: 200 },
+      animals: [animal(1, 'mouton', 'F', 1, { pregnantSince: T0 }), animal(2, 'mouton', 'M', 1)] })
+    expect(autonomyHours(s)).toBeCloseTo(30 / (3.5 / 24), 1)
+  })
   it("0 si un aliment nécessaire manque déjà", () => {
     const s = emptyState({ pantry: { fourrage: 10, viande: 0, capacity: 200 },
       animals: [animal(1, 'loup', 'F', 1), animal(2, 'mouton', 'M', 1)] })
