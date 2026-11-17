@@ -14,7 +14,7 @@ export interface Storage {
 
 export type LoadResult =
   | { kind: 'aucune' }
-  | { kind: 'ok'; state: GameState }
+  | { kind: 'ok'; state: GameState; savedAt?: number }
   | { kind: 'illisible' }
   | { kind: 'trop-recente'; version: number }
   | { kind: 'migration-impossible'; version: number }
@@ -75,7 +75,8 @@ export function loadGame(store: Storage, migrations: Record<number, Migration> =
   } catch {
     return { kind: 'migration-impossible', version: from }
   }
-  return looksLikeGame(state) ? { kind: 'ok', state } : broken()
+  const savedAt = (data as { savedAt?: unknown }).savedAt
+  return looksLikeGame(state) ? { kind: 'ok', state, savedAt: typeof savedAt === 'number' && Number.isFinite(savedAt) ? savedAt : undefined } : broken()
 }
 
 const finite = (x: unknown) => typeof x === 'number' && Number.isFinite(x)

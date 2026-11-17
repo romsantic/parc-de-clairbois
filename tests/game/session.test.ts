@@ -59,6 +59,12 @@ describe('startSession', () => {
     saveGame(m, newGame(5, NOW - 100 * DAY_MS), NOW - 100 * DAY_MS)
     expect(startSession(m, NOW).skippedMs).toBeGreaterThan(60 * DAY_MS)
   })
+  it("mesure l'absence depuis la dernière sauvegarde (0 pour une nouvelle partie)", () => {
+    expect(startSession(memory(), NOW).absentMs).toBe(0)
+    const m = memory()
+    saveGame(m, newGame(5, NOW - 5 * 3_600_000), NOW - 5 * 3_600_000)
+    expect(startSession(m, NOW).absentMs).toBe(5 * 3_600_000)
+  })
   it('sauvegarde abîmée : nouvelle partie, problème signalé', () => {
     const r = startSession(memory({ [SAVE_KEY]: 'zut' }), NOW)
     expect(r.problem).toBe('illisible')

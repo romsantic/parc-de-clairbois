@@ -10,6 +10,9 @@ import { toggleTicketPanel } from '../ui/ticketPanel'
 import { toggleVillagePanel } from '../ui/villagePanel'
 import { toggleAutonomyPanel } from '../ui/autonomyPanel'
 import { formatReward } from '../ui/format'
+import { openGazette } from '../ui/gazette'
+import { gazetteEdition, type GazetteEdition } from '../ui/gazetteModel'
+import { MISSIONS_TUNING } from '../data/missions'
 import { flash, toast } from '../ui/feedback'
 import { applyAction, type Action } from '../sim/actions'
 import { updateMissions } from '../sim/missions'
@@ -27,6 +30,8 @@ export const RESET_BACKUP_KEY = `${SAVE_KEY}-avant-nouvelle-partie`
 export interface Game {
   get(): GameState
   dispatch(action: Action, from?: HTMLElement | null): boolean
+  /** Rouvre La Gazette (dernière édition de cette page, ou « Rien de neuf »). */
+  openGazette(): void
 }
 
 export function runGame(store: Storage, storageOk = true): Game | null {
@@ -52,6 +57,11 @@ export function runGame(store: Storage, storageOk = true): Game | null {
     onVillage: () => toggleVillagePanel(panelCtx),
     onAutonomy: () => toggleAutonomyPanel(panelCtx),
   })
+  // La Gazette : dernière édition gardée en mémoire de la page ; elle s'ouvre seule après une vraie absence.
+  const hasEdition = !!session.summary && session.absentMs >= MISSIONS_TUNING.GAZETTE_MIN_ABSENCE_H * 3_600_000
+  // Recalculée à chaque ouverture : « à récupérer » et l'autonomie restent à jour.
+  const edition = (): GazetteEdition | null => (hasEdition ? gazetteEdition(session.summary!, session.absentMs, state) : null)
+  if (hasEdition) openGazette(edition())
   let canSave = session.canSave
   let warnedError = false
   /** Avance de l'horloge du jeu sur l'heure réelle (boutons du panneau de test). */
@@ -117,7 +127,7 @@ export function runGame(store: Storage, storageOk = true): Game | null {
     return true
   }
 
-  return { get: () => state, dispatch }
+  return { get: () => state, dispatch, openGazette: () => openGazette(edition()) }
 }
 
 /** Message de réussite ; `s` est l'état après l'action, `before` celui d'avant. */

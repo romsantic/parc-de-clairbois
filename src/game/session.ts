@@ -11,6 +11,8 @@ export interface Session {
   summary: Summary | null
   /** Temps d'absence au-delà de 30 jours, non rejoué. */
   skippedMs: number
+  /** Temps écoulé depuis la dernière sauvegarde (0 pour une nouvelle partie ou si on ne le sait pas). */
+  absentMs: number
   problem: 'illisible' | 'trop-recente' | 'migration-impossible' | null
   /** Faux si sauvegarder écraserait une partie qu'on ne sait pas lire, ou si le stockage manque. */
   canSave: boolean
@@ -26,7 +28,7 @@ const newSeed = () => Math.floor(Math.random() * 2 ** 32)
 /** Charge la partie (ou en crée une), rattrape le temps d'absence et prend la main sur la sauvegarde. */
 export function startSession(store: Storage, nowMs: number, storageOk = true): Session {
   const owner = newOwner()
-  const base = { summary: null, skippedMs: 0, owner }
+  const base = { summary: null, skippedMs: 0, absentMs: 0, owner }
   if (!storageOk) return { ...base, state: freshGame(nowMs), problem: null, canSave: false }
   const loaded = loadGame(store, undefined, nowMs)
   if (loaded.kind === 'trop-recente' || loaded.kind === 'migration-impossible') {
@@ -46,5 +48,5 @@ export function startSession(store: Storage, nowMs: number, storageOk = true): S
     restock(r.state)
   }
   const canSave = saveGame(store, r.state, nowMs, owner) === 'ok'
-  return { ...base, state: r.state, summary: summarize(r.events, r.state), skippedMs: r.skippedMs, problem: null, canSave }
+  return { ...base, state: r.state, summary: summarize(r.events, r.state), skippedMs: r.skippedMs, absentMs: loaded.savedAt === undefined ? 0 : Math.max(0, nowMs - loaded.savedAt), problem: null, canSave }
 }

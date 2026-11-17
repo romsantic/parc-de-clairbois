@@ -10,7 +10,6 @@ import { ageStage, satiety } from '../sim/animal'
 import { happiness } from '../sim/happiness'
 import { ICONS, iconButton } from './icons'
 import { closeDrawer, isDrawerOpen, openDrawer, refreshDrawer } from './drawer'
-import { toast } from './feedback'
 import { guide } from './highlight'
 import { armClaimGuard, claimButton, openMissionPanel, toggleMissionPanel } from './missionPanel'
 import { mountMissionBanner } from './missionBanner'
@@ -25,6 +24,7 @@ export interface BottomBarContext {
   dispatch(action: Action, from?: HTMLElement | null): boolean
   startBuild(zone: Zone, point: { x: number; z: number }): void
   startResize(encId: number): void
+  openGazette(): void
 }
 
 const AGE = { bebe: 'bébé', jeune: 'jeune', adulte: 'adulte' } as const
@@ -52,8 +52,8 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
 
   const marchand = guide(iconButton(ICONS.marchand, 'Marchand d’animaux'), 'marchand')
   marchand.addEventListener('click', () => toggleMerchantPanel({ get: ctx.get, selection: ctx.selection, dispatch: ctx.dispatch }))
-  const gazette = iconButton(ICONS.gazette, 'Gazette (bientôt)', { disabled: true })
-  gazette.addEventListener('click', () => toast('Bientôt disponible', true))
+  const gazette = iconButton(ICONS.gazette, 'La Gazette de Clairbois')
+  gazette.addEventListener('click', () => ctx.openGazette())
   const fold = iconButton(ICONS.replier, 'Replier la barre')
   fold.addEventListener('click', () => { bar.hidden = true; tab.hidden = false; closeDrawer() })
   tab.addEventListener('click', () => { bar.hidden = false; tab.hidden = true })

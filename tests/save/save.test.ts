@@ -14,7 +14,7 @@ describe('sauvegarde', () => {
   it('aller-retour fidèle', () => {
     const m = memory()
     saveGame(m, g, 1_800_000_123_000)
-    expect(loadGame(m)).toEqual({ kind: 'ok', state: g })
+    expect(loadGame(m)).toEqual({ kind: 'ok', state: g, savedAt: 1_800_000_123_000 })
     expect(JSON.parse(m.data[SAVE_KEY]).savedAt).toBe(1_800_000_123_000)
   })
   it('aucune sauvegarde', () => {

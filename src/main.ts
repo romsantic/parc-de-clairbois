@@ -111,6 +111,7 @@ async function start(): Promise<void> {
       dispatch,
       startBuild: (zone, point) => { closeDrawer(); editor.startBuild(zone, point) },
       startResize: (id) => { closeDrawer(); editor.startResize(id) },
+      openGazette: game.openGazette,
     })
     picker.onPick((p) => { select(p); bottomBar.refresh(); closeDrawer() }) // un clic sur la carte ferme le volet
     mountCameraButtons(rig)

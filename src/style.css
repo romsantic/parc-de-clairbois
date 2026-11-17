@@ -325,3 +325,25 @@ button.recuperer .cadeau svg { width: 18px; height: 18px; display: block; }
   .zone-mission.reussie .avancee { display: none; }
   button.recuperer .libelle, button.recuperer .recompense { display: none; }
 }
+
+/* ---------- La Gazette de Clairbois (résumé d'absence) ---------- */
+.gazette-fond { position: fixed; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(30, 26, 14, .45); }
+.gazette {
+  box-sizing: border-box; width: min(520px, 100%); max-height: 85vh; max-height: 85dvh; overflow-y: auto; overflow-x: hidden;
+  padding: 18px 22px 20px; background: #f7f0da; color: #2b2a24; border: 1px solid #b9a877; border-radius: 4px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .35), inset 0 0 40px rgba(160, 130, 60, .12); font-family: Georgia, 'Times New Roman', serif; overflow-wrap: anywhere;
+}
+.gazette-titre { margin: 0; text-align: center; font-size: 34px; line-height: 1.05; font-weight: 700; letter-spacing: .5px; font-family: 'Old English Text MT', Georgia, 'Times New Roman', serif; }
+.gazette-date { margin: 4px 0 0; text-align: center; font-size: 13px; font-style: italic; color: #6f6852; }
+.gazette-filet { border: 0; border-top: 3px double #2b2a24; margin: 10px 0 12px; }
+.gazette-une { margin: 0 0 4px; font-size: 22px; line-height: 1.2; font-weight: 800; }
+.gazette-absence { margin: 0 0 10px; font-style: italic; color: #6f6852; }
+.gazette-rubrique { margin: 0; padding: 6px 0; border-top: 1px solid #d8cba4; font-size: 15px; line-height: 1.4; }
+.gazette-etiquette { font-variant: small-caps; letter-spacing: .5px; margin-right: 4px; }
+.gazette-vide { margin: 14px 0; text-align: center; font-size: 17px; font-style: italic; }
+.gazette-retour { display: block; margin: 14px auto 0; padding: 8px 22px; font-family: inherit; }
+@media (max-width: 480px) {
+  .gazette { padding: 14px 14px 16px; }
+  .gazette-titre { font-size: 26px; }
+  .gazette-une { font-size: 19px; }
+}

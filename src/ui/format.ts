@@ -41,7 +41,7 @@ export function formatCountdown(ms: number): string {
 }
 
 /** Milliers séparés par une espace insécable fine : « 1 000 ». */
-function formatThousands(n: number): string {
+export function formatThousands(n: number): string {
   return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
 }
 
