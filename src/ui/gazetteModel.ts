@@ -35,8 +35,8 @@ export function gazetteEdition(s: Summary, absentMs: number, state?: GameState):
   if (s.naissances > 0) items.push({ label: 'Naissances', text: plural(s.naissances, 'naissance', 'naissances') })
   const fourrage = ago(s.fourrage), viande = ago(s.viande)
   if (fourrage > 0 || viande > 0) {
-    const eaten = [fourrage > 0 ? `${formatThousands(fourrage)} de fourrage` : '', viande > 0 ? `${formatThousands(viande)} de viande` : ''].filter(Boolean).join(' et ')
-    const left = state ? ` Il reste ${formatAutonomy(autonomyHours(state)).text} d'autonomie.` : ''
+    const eaten = [fourrage > 0 ? `${plural(fourrage, 'fourrage', 'fourrages')}` : '', viande > 0 ? `${plural(viande, 'viande', 'viandes')}` : ''].filter(Boolean).join(' et ')
+    const left = !state ? '' : state.animals.length === 0 ? ' Plus aucun animal à nourrir.' : ` Il reste ${formatAutonomy(autonomyHours(state)).text} d'autonomie.`
     items.push({ label: 'Garde-manger', text: `Les animaux ont mangé ${eaten}.${left}` })
   }
   if (s.malades > 0) items.push({ label: 'Santé', text: s.malades === 1 ? 'Un animal est tombé malade.' : `${s.malades} animaux sont tombés malades.` })

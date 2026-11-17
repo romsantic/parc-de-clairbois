@@ -65,6 +65,16 @@ describe('startSession', () => {
     saveGame(m, newGame(5, NOW - 5 * 3_600_000), NOW - 5 * 3_600_000)
     expect(startSession(m, NOW).absentMs).toBe(5 * 3_600_000)
   })
+  it("une mission réussie pendant l'absence figure dans le résumé", () => {
+    const m = memory()
+    const g = newGame(5, NOW - 5 * 3_600_000)
+    g.missions.tutorial = { step: 4, current: null, skipped: false } // « Construire le café » : le café existe déjà
+    g.buildings.push({ slot: 1, type: 'cafe', level: 1 })
+    saveGame(m, g, NOW - 5 * 3_600_000)
+    const r = startSession(m, NOW)
+    expect(r.state.missions.tutorial.current?.done).toBe(true)
+    expect(r.summary?.missions).toHaveLength(1)
+  })
   it('sauvegarde abîmée : nouvelle partie, problème signalé', () => {
     const r = startSession(memory({ [SAVE_KEY]: 'zut' }), NOW)
     expect(r.problem).toBe('illisible')

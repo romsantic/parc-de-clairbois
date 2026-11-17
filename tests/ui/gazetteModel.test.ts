@@ -1,3 +1,4 @@
+import { emptyState, enclosure, animal } from '../sim/helpers'
 import { describe, it, expect } from 'vitest'
 import { gazetteEdition, gazetteHeadline, formatDateFr } from '../../src/ui/gazetteModel'
 import { summarize, type Summary } from '../../src/sim/summary'
@@ -31,7 +32,7 @@ describe('rubriques', () => {
     const t = Object.fromEntries(gazetteEdition(s, H).items.map((i) => [i.label, i.text]))
     expect(t['Caisse']).toBe('100 pièces gagnées · 1 visiteur')
     expect(t['Naissances']).toBe('1 naissance')
-    expect(t['Garde-manger']).toBe('Les animaux ont mangé 12 de fourrage.')
+    expect(t['Garde-manger']).toBe('Les animaux ont mangé 12 fourrages.')
     expect(t['Santé']).toBe('2 animaux sont tombés malades.')
     expect(t['Disparus']).toBe('Rex, Lola')
     expect(t['Mission réussie']).toBe('Nettoyer l’enclos')
@@ -44,5 +45,22 @@ describe('date', () => {
   it('en français', () => {
     expect(formatDateFr(new Date(2026, 10, 17, 12).getTime())).toBe('mardi 17 novembre 2026')
     expect(formatDateFr(new Date(2026, 11, 1, 12).getTime())).toBe('mardi 1er décembre 2026')
+  })
+})
+
+describe('garde-manger', () => {
+  const eaten = { ...summarize([]), fourrage: 25, viande: 3 }
+  it('pluriels corrects', () => {
+    const t = gazetteEdition(eaten, H).items.find((i) => i.label === 'Garde-manger')!.text
+    expect(t).toBe('Les animaux ont mangé 25 fourrages et 3 viandes.')
+    expect(gazetteEdition({ ...eaten, fourrage: 1, viande: 0 }, H).items.find((i) => i.label === 'Garde-manger')!.text).toBe('Les animaux ont mangé 1 fourrage.')
+  })
+  it('sans animal : plus aucun animal à nourrir, jamais « ∞ »', () => {
+    const t = gazetteEdition(eaten, H, emptyState()).items.find((i) => i.label === 'Garde-manger')!.text
+    expect(t).toBe('Les animaux ont mangé 25 fourrages et 3 viandes. Plus aucun animal à nourrir.')
+  })
+  it('avec des animaux : l\'autonomie restante', () => {
+    const s = emptyState({ enclosures: [enclosure(1, 'mouton')], animals: [animal(1, 'mouton', 'F', 1)], pantry: { fourrage: 100, viande: 0, capacity: 1000 } })
+    expect(gazetteEdition(eaten, H, s).items.find((i) => i.label === 'Garde-manger')!.text).toMatch(/Il reste .+ d'autonomie\.$/)
   })
 })

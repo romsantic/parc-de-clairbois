@@ -326,3 +326,16 @@ describe('giveReward', () => {
     expect(r.ok && r.state.pantry.fourrage).toBe(1000)
   })
 })
+
+describe('résumé d\'absence : missions', () => {
+  it('une mission réussie pendant l\'absence apparaît dans le résumé avec son titre', () => {
+    const s = emptyState({
+      enclosures: [enclosure(1, 'mouton')], animals: [animal(1, 'mouton', 'F', 1), animal(2, 'mouton', 'M', 1)],
+      pantry: { fourrage: 500, viande: 0, capacity: 1000 },
+    })
+    s.missions.tutorial = { step: 7, current: { id: 'pas-gestation', base: 0, done: false, claimed: false }, skipped: false }
+    const r = advanceTo(s, T0 + 5 * DAY_MS)
+    expect(r.state.missions.tutorial.current?.done).toBe(true)
+    expect(summarize(r.events, r.state).missions).toContain('Attends la première gestation')
+  })
+})
