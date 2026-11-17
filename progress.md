@@ -46,9 +46,9 @@
 | 8 | Bâtiments et emplacements sur la carte | Sonnet | faite (ffa1f6e) |
 | 9 | Chemins qui suivent le niveau du village | Sonnet | faite (319bc56) |
 | 10 | Interface : billet, village, marchand | Sonnet | faite (24dedcd) |
-| 11 | Vérification d'ensemble, relecture et publication | chef + relecture Opus | en cours |
+| 11 | Vérification d'ensemble, relecture et publication | chef + relecture Opus | faite (997226d) |
 
-**Sous-tâche 11 (17/11/2026)** — vérification dans le navigateur faite (café, billet, marchand, vente, niveaux 2 et 3, chemins de jour et de nuit, sauvegarde v1, téléphone). Corrections : emplacements visibles et panneaux lisibles (64fa8b9) ; relecture finale Opus (0 critique, 1 important, 14 mineurs) corrigée en bd75fde — double-clic qui contournait la confirmation de vente/achat, copie de la sauvegarde v1 avant migration, validation renforcée des sauvegardes, marchand réapprovisionné au passage de niveau, « Remplir » le garde-manger, emplacements du Bourg réservés (« Bientôt »), case du billet en rouge quand la réputation baisse, barre du bas à 48 px. Laissé : quelques chiffres encore en dur hors de `src/data/` (M12). 338 tests verts. **Reste : accord de Romain pour fusionner dans `main`, vérification en ligne.**
+**Sous-tâche 11 (17/11/2026)** — vérification dans le navigateur faite (café, billet, marchand, vente, niveaux 2 et 3, chemins de jour et de nuit, sauvegarde v1, téléphone). Corrections : emplacements visibles et panneaux lisibles (64fa8b9) ; relecture finale Opus (0 critique, 1 important, 14 mineurs) corrigée en bd75fde — double-clic qui contournait la confirmation de vente/achat, copie de la sauvegarde v1 avant migration, validation renforcée des sauvegardes, marchand réapprovisionné au passage de niveau, « Remplir » le garde-manger, emplacements du Bourg réservés (« Bientôt »), case du billet en rouge quand la réputation baisse, barre du bas à 48 px. Laissé : quelques chiffres encore en dur hors de `src/data/` (M12). 338 tests verts. **Fusionnée dans `main` (997226d) avec l'accord de Romain le 17/11/2026, publiée et vérifiée en ligne.**
 
 Étapes suivantes (5 Missions, 6 Finition V1) : leurs sous-tâches seront ajoutées ici quand leur plan sera écrit.
 
@@ -66,8 +66,8 @@
 | 1. Fondations et test visuel (outillage, publication, packs 3D, monde, caméra) | ✅ fusionnée |
 | 2. Cœur de la simulation (faim, garde-manger, santé, naissances, absence, sauvegarde) | ✅ fusionnée |
 | 3. Carte jouable (zones, pose/redimensionnement d'enclos, sélection, barres, retour visuel) | ✅ fusionnée — vérifiée sur le téléphone de Romain |
-| **4. Économie et village** (visiteurs, attrait, billet réglable, bâtiments, niveaux du village, marchand, ferme et rations, chemins qui évoluent avec le niveau) | **en cours** (voir « Suivi des sous-tâches ») |
-| 5. Missions (Premiers pas avec Margaux, histoire, quotidiennes, résumé d'absence/Gazette) | à faire |
+| 4. Économie et village (visiteurs, attrait, billet réglable, bâtiments, niveaux du village, marchand, ferme et rations, chemins qui évoluent avec le niveau) | ✅ fusionnée le 17/11/2026 |
+| **5. Missions** (Premiers pas avec Margaux, histoire, quotidiennes, résumé d'absence/Gazette) | **à faire — prochaine** |
 | 6. Finition V1 (équilibrage, téléphone, brume des zones, visiteurs sur les chemins, jour/nuit, perfs) | à faire |
 
 Après la V1 : V2 à V5 décrites en fin de spec (personnel et centre vétérinaire, routes à construire contre de l'argent, expéditions, musée, labo, saisons…).
@@ -81,12 +81,18 @@ Après la V1 : V2 à V5 décrites en fin de spec (personnel et centre vétérina
 - Chemins de terre texturés ; ils **évolueront avec le niveau du village** (gravier, pavés, puis routes en V2).
 - Rester en **TypeScript** (pas de Rust : aucun besoin de performance à ce stade).
 
-## À régler à l'étape 4 (déjà repéré)
+## Décisions de l'étape 4 (en plus de la spec)
 
-- **Équilibrage** : les moutons se reproduisent très vite (gestation 2 h, adulte en 4 h) ; une nouvelle partie laissée 3 jours tombe malade. Pistes : plus de fourrage au départ, repos après une naissance, autonomie qui anticipe les naissances.
-- Aujourd'hui l'argent ne fait que baisser (aucun revenu) ; rations seulement via `?debug`.
-- `TUNING.VILLAGE_LEVEL_V1 = 1` est un bouche-trou : à remplacer par le vrai niveau du village dans l'état (migration de sauvegarde v1 → v2 à écrire dans `src/save/migrations.ts`).
-- Petits défauts laissés (sans effet visible) : autonomie avec les cochons, calculs O(N²) par pas, `JSON.stringify` du panneau de test.
+- Chaque bâtiment est **unique** ; les 2 emplacements du Bourg affichent « Bientôt » (nouveaux bâtiments dans une évolution future).
+- Passage de niveau **par un bouton** dans le volet du village (case village de la barre du haut), jamais automatique.
+- Réglages initiaux (tous dans `src/data/economy.ts` / `tuning.ts`, à ajuster en jouant) : 4 visiteurs par point d'attrait ; prix juste 4 + 2 × (niveau − 1) + 0,4 × attrait ; population 10 + 5 par niveau de bâtiment + 1 par 30 clients ; seuils 50 / 150 ; marchand renouvelé toutes les 6 h ; 30 fourrage au départ, conception 10 %/h, repos de 2 × gestation après une naissance.
+
+## À régler à l'étape 5 (déjà repéré)
+
+- `missionGateOk` (`src/sim/village.ts`) renvoie toujours vrai : y brancher la mission du palier.
+- Le tutoriel de Margaux s'appuie sur : ferme déjà construite, premier stock du marchand avec un couple de cochons, billet et café.
+- Laissé de la relecture : quelques chiffres encore en dur hors de `src/data/` (M12). Petits défauts anciens : calculs O(N²) par pas, `JSON.stringify` du panneau de test.
+- Les achats à la ferme (rations, amélioration, garde-manger) sont testés automatiquement mais pas encore essayés à la main.
 
 ## Architecture (où est quoi)
 
@@ -96,7 +102,7 @@ Après la V1 : V2 à V5 décrites en fin de spec (personnel et centre vétérina
 - `src/game/` session + boucle (`runGame` : horloge, sauvegarde, `dispatch` avec retour visuel).
 - `src/scene/` 3D : monde, décor, zones, vue du parc pilotée par l'état (`parkView`), éditeur d'enclos, sélection, caméra.
 - `src/ui/` barres, volet, retour visuel, panneau de test.
-- Tests : `tests/` (Vitest), 215 au 16/11/2026.
+- Tests : `tests/` (Vitest), 338 au 17/11/2026.
 
 ## Mémo technique (pièges déjà rencontrés)
 
