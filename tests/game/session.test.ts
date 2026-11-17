@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { startSession } from '../../src/game/session'
+import { startSession, resume } from '../../src/game/session'
 import { saveGame, loadGame, SAVE_KEY, type Storage } from '../../src/save/save'
 import { newGame } from '../../src/sim/newGame'
 import { DAY_MS } from '../../src/data/tuning'
@@ -91,5 +91,26 @@ describe('relecture : marchand après migration', () => {
     expect(r.problem).toBeNull()
     expect(r.state.merchant.offers.length).toBeGreaterThan(0)
     expect(r.state.merchant.restocks).toBe(1)
+  })
+})
+
+describe('resume (onglet repris sans rechargement)', () => {
+  it('une longue pause : le résumé et la durée sont rendus', () => {
+    const g = newGame(5, NOW)
+    const r = resume(g, NOW + 5 * 3_600_000)
+    expect(r.state.time).toBe(g.time + 5 * 3_600_000)
+    expect(r.news).not.toBeNull()
+    expect(r.news!.absentMs).toBe(5 * 3_600_000)
+    expect(r.news!.summary.pieces).toBeGreaterThanOrEqual(0)
+  })
+  it('un simple pas de la boucle : pas de Gazette', () => {
+    const g = newGame(5, NOW)
+    const r = resume(g, NOW + 20 * 60_000)
+    expect(r.state.time).toBe(g.time + 20 * 60_000)
+    expect(r.news).toBeNull()
+  })
+  it("l'heure locale est remise à jour (changement d'heure)", () => {
+    const g = { ...newGame(5, NOW), utcOffsetMin: 12345 }
+    expect(resume(g, NOW + 60_000).state.utcOffsetMin).toBe(-new Date(NOW + 60_000).getTimezoneOffset())
   })
 })

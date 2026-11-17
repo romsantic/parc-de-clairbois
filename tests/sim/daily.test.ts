@@ -206,6 +206,36 @@ describe('série et bon de réduction', () => {
     expect(r2.coins - r.coins).toBeLessThan((def.reward.coins ?? 0) + 1000)
     expect(r2.missions.daily.list.some((m) => m.id === mp.id && m.claimed)).toBe(false)
   })
+  it("minuit à l'envers : une horloge qui recule ne renouvelle rien et ne touche pas à la série", () => {
+    let s = withDaily()
+    s.missions.daily.streak = 2
+    s.missions.daily.lastFullDay = s.missions.daily.dayKey
+    finishAll(s)
+    s = toMidnight(s).state
+    expect(s.missions.daily.streak).toBe(2)
+    const list = structuredClone(s.missions.daily.list)
+    const key = s.missions.daily.dayKey
+    s.utcOffsetMin = -60 // l'horloge recule d'une heure : on revient au jour d'avant
+    s = advanceTo(s, s.time + 10 * 60_000).state
+    expect(s.missions.daily.dayKey).toBe(key)
+    expect(s.missions.daily.list).toEqual(list)
+    expect(s.missions.daily.streak).toBe(2)
+    s.utcOffsetMin = 0 // elle avance de nouveau
+    s = advanceTo(s, s.time + 10 * 60_000).state
+    expect(s.missions.daily.list).toEqual(list)
+    expect(s.missions.daily.streak).toBe(2)
+  })
+  it("une récompense versée d'office à minuit est annoncée (événement et résumé)", () => {
+    const s = withDaily({ ticketPrice: 0, reputation: 0 })
+    s.missions.daily.list[0].done = true
+    s.missions.daily.list[1].done = true
+    s.missions.daily.list[1].claimed = true
+    const r = toMidnight(s)
+    const versees = r.events.filter((e) => e.kind === 'missionVersee')
+    expect(versees).toEqual([{ kind: 'missionVersee', at: expect.any(Number), id: s.missions.daily.list[0].id }])
+    expect(summarize(r.events, r.state).missionsVersees).toEqual([missionDef('quotidienne', s.missions.daily.list[0].id)!.title])
+    expect(summarize([]).missionsVersees).toEqual([])
+  })
   it('jour suivant non terminé puis minuit → série 0', () => {
     let s = withDaily()
     finishAll(s)

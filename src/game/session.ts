@@ -3,7 +3,8 @@ import { newGame } from '../sim/newGame'
 import { advanceTo } from '../sim/advance'
 import { restock } from '../sim/merchant'
 import { summarize, type Summary } from '../sim/summary'
-import { updateMissions } from '../sim/missions'
+import { MISSIONS_TUNING } from '../data/missions'
+import { HOUR_MS } from '../data/tuning'
 import { loadGame, saveGame, type Storage } from '../save/save'
 
 export interface Session {
@@ -42,32 +43,25 @@ export function startSession(store: Storage, nowMs: number, storageOk = true): S
   }
   const start = structuredClone(loaded.state)
   start.utcOffsetMin = localOffset(nowMs) // l'heure locale, avant le rattrapage
-  const doneBefore = new Set(doneMissions(start).map((m) => m.key))
   const r = advanceTo(start, nowMs)
   if (r.state.merchant.restocks === 0 && r.state.merchant.offers.length === 0) {
     // Partie migrée de la v1 chargée avant le premier pas : le marchand a déjà son premier stock.
     r.state = structuredClone(r.state)
     restock(r.state)
   }
-  // Missions réussies pendant l'absence : on mesure une dernière fois, puis on rattrape toute mission
-  // devenue réussie sans événement correspondant, pour que le résumé n'en oublie aucune.
-  r.state = structuredClone(r.state)
-  updateMissions(r.state, r.events)
-  const reported = new Set(r.events.flatMap((e) => (e.kind === 'mission' ? [`${e.track}:${e.id}`] : [])))
-  for (const m of doneMissions(r.state)) {
-    if (!doneBefore.has(m.key) && !reported.has(m.key)) r.events.push({ kind: 'mission', at: r.state.time, track: m.track, id: m.id })
-  }
   const canSave = saveGame(store, r.state, nowMs, owner) === 'ok'
   return { ...base, state: r.state, summary: summarize(r.events, r.state), skippedMs: r.skippedMs, absentMs: loaded.savedAt === undefined ? 0 : Math.max(0, nowMs - loaded.savedAt), problem: null, canSave }
 }
 
-type Track = 'tutoriel' | 'histoire' | 'quotidienne'
-/** Missions marquées réussies dans l'état (mission courante des premiers pas ou de l'histoire, quotidiennes). */
-function doneMissions(s: GameState): { key: string; track: Track; id: string }[] {
-  const list: { key: string; track: Track; id: string }[] = []
-  const add = (track: Track, mp: { id: string; done: boolean } | null) => { if (mp?.done) list.push({ key: `${track}:${mp.id}`, track, id: mp.id }) }
-  add('tutoriel', s.missions.tutorial.current)
-  add('histoire', s.missions.story.current)
-  for (const mp of s.missions.daily.list) add('quotidienne', mp)
-  return list
+/**
+ * Rattrapage d'un onglet repris sans rechargement (écran verrouillé puis rouvert) : met l'heure locale à jour,
+ * avance le jeu jusqu'à `nowMs`, et rend de quoi ouvrir La Gazette si le jeu a avancé d'au moins
+ * `GAZETTE_MIN_ABSENCE_H` d'un coup (mesuré sur l'heure du jeu, avant et après).
+ */
+export function resume(state: GameState, nowMs: number): { state: GameState; news: { summary: Summary; absentMs: number } | null } {
+  const before = state.time
+  const r = advanceTo({ ...state, utcOffsetMin: localOffset(nowMs) }, nowMs)
+  const gapMs = r.state.time - before
+  const news = gapMs >= MISSIONS_TUNING.GAZETTE_MIN_ABSENCE_H * HOUR_MS ? { summary: summarize(r.events, r.state), absentMs: gapMs } : null
+  return { state: r.state, news }
 }

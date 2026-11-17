@@ -1,6 +1,8 @@
-import type { GameState } from '../sim/types'
+import type { GameState, MissionProgress } from '../sim/types'
 import { SPECIES } from '../data/species'
 import { BUILDINGS, SLOTS } from '../data/economy'
+import { TUTORIAL, STORY } from '../data/missions'
+import { STAT_KEYS } from '../sim/stats'
 import { CURRENT_VERSION, MIGRATIONS, type Migration } from './migrations'
 
 export const SAVE_KEY = 'parc-clairbois:sauvegarde'
@@ -80,6 +82,12 @@ export function loadGame(store: Storage, migrations: Record<number, Migration> =
 }
 
 const finite = (x: unknown) => typeof x === 'number' && Number.isFinite(x)
+const intBetween = (x: unknown, min: number, max: number) => typeof x === 'number' && Number.isInteger(x) && x >= min && x <= max
+/** Une mission en cours : id texte, valeur de départ finie, réussie et récupérée vrai/faux. */
+function validProgress(x: unknown): boolean {
+  const mp = x as MissionProgress | null
+  return !!mp && typeof mp === 'object' && typeof mp.id === 'string' && finite(mp.base) && typeof mp.done === 'boolean' && typeof mp.claimed === 'boolean'
+}
 
 /** Vérifie qu'une partie chargée est cohérente avant de la faire tourner. */
 function looksLikeGame(s: unknown): s is GameState {
@@ -112,11 +120,16 @@ function looksLikeGame(s: unknown): s is GameState {
   }
   const st = g.stats
   if (!st || !st.counts || typeof st.counts !== 'object' || !st.birthsBySpecies || typeof st.birthsBySpecies !== 'object') return false
+  for (const k of STAT_KEYS) if (!finite(st.counts[k])) return false
   for (const n of Object.values(st.counts)) if (!finite(n)) return false
+  for (const n of Object.values(st.birthsBySpecies)) if (!finite(n)) return false
   const ms = g.missions
-  if (!ms || !ms.tutorial || !finite(ms.tutorial.step) || !ms.story || !finite(ms.story.index)) return false
+  if (!ms || !ms.tutorial || !intBetween(ms.tutorial.step, 0, TUTORIAL.length) || !ms.story || !intBetween(ms.story.index, 0, STORY.length)) return false
+  if (ms.tutorial.current !== null && !validProgress(ms.tutorial.current)) return false
+  if (ms.story.current !== null && !validProgress(ms.story.current)) return false
   const d = ms.daily
   if (!d || !finite(d.dayKey) || !Array.isArray(d.list) || !finite(d.streak) || !finite(d.coupons)) return false
+  if (!d.list.every(validProgress)) return false
   if (d.lastFullDay !== null && !finite(d.lastFullDay)) return false
   if (typeof ms.unread !== 'boolean' || !finite(g.utcOffsetMin)) return false
   return true

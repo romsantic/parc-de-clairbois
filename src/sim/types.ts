@@ -92,3 +92,5 @@ export type GameEvent =
   | { kind: 'stock'; at: number }
   | { kind: 'mission'; at: number; track: 'tutoriel' | 'histoire' | 'quotidienne'; id: string }
   | { kind: 'quotidiennes'; at: number }
+  /** Une quotidienne réussie et non récupérée a été versée d'office à minuit. */
+  | { kind: 'missionVersee'; at: number; id: string }

@@ -7,6 +7,10 @@ export const TUNING = {
   STEP_MS: 600_000,
   MAX_CATCHUP_DAYS: 30,
 
+  /** Autonomie du garde-manger affichée : orange sous ce nombre d'heures, rouge sous le suivant. */
+  AUTONOMY_WARN_H: 24,
+  AUTONOMY_URGENT_H: 6,
+
   HUNGRY_AFTER_H: 12,
   SICK_AFTER_H: 24,
   DEATH_AFTER_SICK_H: 48,
@@ -22,6 +26,8 @@ export const TUNING = {
   START_COINS: 500,
   START_ENCLOSURE: { x: -26, z: -5, w: 12, d: 10 }, // dans la prairie, hors chemin
   START_FOURRAGE: 30,
+  /** L'enclos de départ a déjà un peu servi (heures depuis le dernier nettoyage) : le pas « Nettoie l'enclos » est possible tout de suite. */
+  START_DIRT_H: 12,
   START_PANTRY_CAPACITY: 200,
   /** Garde-manger : capacité, prix et niveau du village requis pour y accéder. */
   PANTRY_SIZES: [

@@ -29,7 +29,7 @@ export function newGame(seed: number, nowMs: number): GameState {
     utcOffsetMin: 0,
   }
   const encId = state.nextId++
-  state.enclosures.push({ id: encId, biome: 'prairie', species: 'mouton', rect: { ...TUNING.START_ENCLOSURE }, cleanedAt: time })
+  state.enclosures.push({ id: encId, biome: 'prairie', species: 'mouton', rect: { ...TUNING.START_ENCLOSURE }, cleanedAt: time - TUNING.START_DIRT_H * HOUR_MS })
   const adultBorn = time - 2 * SPECIES.mouton.gestationH * HOUR_MS
   for (const sex of ['F', 'M'] as const) {
     const name = ANIMAL_NAMES[Math.floor(random(state) * ANIMAL_NAMES.length)]

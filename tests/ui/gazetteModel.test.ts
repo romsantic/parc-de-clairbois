@@ -41,6 +41,14 @@ describe('rubriques', () => {
   })
 })
 
+describe("missions versées d'office", () => {
+  it('« (récompense versée) » au lieu de « (à récupérer) »', () => {
+    const s = { ...calm(), missions: ['Nettoyer 2 fois', 'Vendre un animal'], missionsVersees: ['Nettoyer 2 fois'] }
+    const t = gazetteEdition(s, H).items.filter((i) => i.label === 'Mission réussie').map((i) => i.text)
+    expect(t).toEqual(['Nettoyer 2 fois (récompense versée)', 'Vendre un animal'])
+  })
+})
+
 describe('date', () => {
   it('en français', () => {
     expect(formatDateFr(new Date(2026, 10, 17, 12).getTime())).toBe('mardi 17 novembre 2026')

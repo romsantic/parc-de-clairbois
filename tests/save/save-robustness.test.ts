@@ -59,6 +59,25 @@ describe('sauvegarde v2 abîmée (relecture)', () => {
     'billet négatif': (g) => { g.ticketPrice = -1 },
     'réputation hors bornes': (g) => { g.reputation = 1.5 },
     'niveau de village 4': (g) => { g.village.level = 4 },
+    'premiers pas : étape -1': (g) => { g.missions.tutorial.step = -1 },
+    'premiers pas : étape 2,5': (g) => { g.missions.tutorial.step = 2.5 },
+    'premiers pas : étape 10': (g) => { g.missions.tutorial.step = 10 },
+    'histoire : index -1': (g) => { g.missions.story.index = -1 },
+    'histoire : index 2,5': (g) => { g.missions.story.index = 2.5 },
+    'histoire : index trop grand': (g) => { g.missions.story.index = 1000 },
+    'compteur manquant': (g) => { delete g.stats.counts.nettoyages },
+    'compteur NaN': (g) => { g.stats.counts.soins = null },
+    'naissances par espèce non finies': (g) => { g.stats.birthsBySpecies = { mouton: 'beaucoup' } },
+    'mission courante sans id': (g) => { g.missions.tutorial.current = { base: 0, done: false, claimed: false } },
+    'mission courante : done non booléen': (g) => { g.missions.story.current = { id: 'x', base: 0, done: 1, claimed: false } },
+    'quotidienne sans id': (g) => { g.missions.daily.list = [{ base: 0, done: false, claimed: false }] },
+    'quotidienne : base non finie': (g) => { g.missions.daily.list = [{ id: 'a#1', base: null, done: false, claimed: false }] },
+    'quotidienne : claimed absent': (g) => { g.missions.daily.list = [{ id: 'a#1', base: 0, done: false }] },
+    'quotidienne : élément nul': (g) => { g.missions.daily.list = [null] },
+    'jour des quotidiennes non fini': (g) => { g.missions.daily.dayKey = null },
+    'série non finie': (g) => { g.missions.daily.streak = 'x' },
+    'bons non finis': (g) => { g.missions.daily.coupons = undefined },
+    'unread non booléen': (g) => { g.missions.unread = 1 },
   }
   for (const [name, corrupt] of Object.entries(cases)) {
     it(`met de côté une partie avec : ${name}`, () => {
@@ -69,6 +88,13 @@ describe('sauvegarde v2 abîmée (relecture)', () => {
       expect(m.data[BROKEN_KEY]).toBeDefined()
     })
   }
+  it('une partie en cours de mission, avec quotidiennes, reste lisible', () => {
+    const g = structuredClone(g0) as any // eslint-disable-line @typescript-eslint/no-explicit-any
+    g.missions.tutorial = { step: 3, current: { id: 'pas-billet', base: 0, done: true, claimed: false }, skipped: false }
+    g.missions.daily.list = [{ id: 'quot-pieces#1', base: 4, done: false, claimed: false }]
+    const m = memory({ [SAVE_KEY]: JSON.stringify({ version: 3, savedAt: 1, state: g }) })
+    expect(loadGame(m).kind).toBe('ok')
+  })
   it('une partie neuve reste lisible', () => {
     const m = memory({ [SAVE_KEY]: JSON.stringify({ version: 3, savedAt: 1, state: g0 }) })
     expect(loadGame(m).kind).toBe('ok')

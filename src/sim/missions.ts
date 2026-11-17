@@ -151,11 +151,15 @@ function dailyStep(state: GameState, events: GameEvent[]): void {
   if (m.tutorial.step < TUTORIAL.length) return
   const d = dayKey(state.time, state.utcOffsetMin)
   const daily = m.daily
-  if (daily.dayKey !== d) {
+  // Seulement vers un jour plus grand : une horloge reculée ou un voyage vers l'ouest ne renouvelle rien.
+  if (d > daily.dayKey) {
     const prev = daily.dayKey
     for (const mp of daily.list) {
       const def = dailyDef(mp.id)
-      if (mp.done && !mp.claimed && def) giveReward(state, def.reward)
+      if (mp.done && !mp.claimed && def) {
+        giveReward(state, def.reward)
+        events.push({ kind: 'missionVersee', at: state.time, id: mp.id })
+      }
     }
     // La série est comptée au moment où le jour devient complet : elle survit seulement au passage direct d'un jour complet au suivant.
     if (prev !== -1 && !(d === prev + 1 && daily.lastFullDay === prev)) daily.streak = 0
@@ -281,7 +285,6 @@ export function claimMission(state: GameState, track: MissionTrack, id?: string)
     s.missions.story.index++
     s.missions.story.current = null
   }
-  updateMissions(s, []) // la suivante peut être réussie aussitôt (ex. café déjà construit)
   return { ok: true, state: s }
 }
 
@@ -292,6 +295,5 @@ export function skipTutorial(state: GameState): ActionResult {
   for (const def of TUTORIAL.slice(s.missions.tutorial.step)) giveReward(s, def.reward)
   finishTutorial(s)
   s.missions.tutorial.skipped = true
-  updateMissions(s, [])
   return { ok: true, state: s }
 }

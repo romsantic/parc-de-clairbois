@@ -2,6 +2,7 @@
 import type { GameState } from '../sim/types'
 import type { Summary } from '../sim/summary'
 import { autonomyHours } from '../sim/feeding'
+import { MISSIONS_TUNING } from '../data/missions'
 import { dailyLines, currentLine } from './missionModel'
 import { formatAbsence, formatAutonomy, formatThousands } from './format'
 
@@ -42,9 +43,10 @@ export function gazetteEdition(s: Summary, absentMs: number, state?: GameState):
   if (s.malades > 0) items.push({ label: 'Santé', text: s.malades === 1 ? 'Un animal est tombé malade.' : `${s.malades} animaux sont tombés malades.` })
   if (s.morts.length > 0) items.push({ label: 'Disparus', text: s.morts.map((m) => m.name).join(', ') })
   const toClaim = new Set(state ? [currentLine(state), ...dailyLines(state)].filter((l) => l && l.done && !l.claimed).map((l) => l!.title) : [])
-  for (const title of s.missions) items.push({ label: 'Mission réussie', text: toClaim.has(title) ? `${title} (à récupérer)` : title })
+  const versees = new Set(s.missionsVersees)
+  for (const title of s.missions) items.push({ label: 'Mission réussie', text: versees.has(title) ? `${title} (récompense versée)` : toClaim.has(title) ? `${title} (à récupérer)` : title })
   if (s.quotidiennesRenouvelees) {
-    const n = state?.missions.daily.list.length || 3
+    const n = state?.missions.daily.list.length || MISSIONS_TUNING.DAILY_COUNT
     items.push({ label: 'Missions du jour', text: `${n} nouvelles missions du jour` })
   }
   if (s.serie > 0) items.push({ label: 'Série', text: plural(s.serie, 'jour', 'jours') + ' de suite' })

@@ -2,7 +2,7 @@ import type { GameState } from '../sim/types'
 import { advanceTo } from '../sim/advance'
 import { newGame } from '../sim/newGame'
 import { saveGame, SAVE_KEY, type Storage } from '../save/save'
-import { startSession } from './session'
+import { startSession, resume } from './session'
 import { mountDebugPanel } from '../ui/debugPanel'
 import { showError, showNotice } from '../ui/errorScreen'
 import { mountTopBar } from '../ui/topBar'
@@ -58,10 +58,10 @@ export function runGame(store: Storage, storageOk = true): Game | null {
     onAutonomy: () => toggleAutonomyPanel(panelCtx),
   })
   // La Gazette : dernière édition gardée en mémoire de la page ; elle s'ouvre seule après une vraie absence.
-  const hasEdition = !!session.summary && session.absentMs >= MISSIONS_TUNING.GAZETTE_MIN_ABSENCE_H * 3_600_000
+  let news = session.summary && session.absentMs >= MISSIONS_TUNING.GAZETTE_MIN_ABSENCE_H * 3_600_000 ? { summary: session.summary, absentMs: session.absentMs } : null
   // Recalculée à chaque ouverture : « à récupérer » et l'autonomie restent à jour.
-  const edition = (): GazetteEdition | null => (hasEdition ? gazetteEdition(session.summary!, session.absentMs, state) : null)
-  if (hasEdition) openGazette(edition())
+  const edition = (): GazetteEdition | null => (news ? gazetteEdition(news.summary, news.absentMs, state) : null)
+  if (news) openGazette(edition())
   let canSave = session.canSave
   let warnedError = false
   /** Avance de l'horloge du jeu sur l'heure réelle (boutons du panneau de test). */
@@ -83,10 +83,16 @@ export function runGame(store: Storage, storageOk = true): Game | null {
     }
   }
 
-  setInterval(() => { state = advanceTo(state, now()).state }, 1000)
+  // Chaque seconde, et dès que la page redevient visible : un long rattrapage (onglet gelé puis repris) ouvre La Gazette.
+  const tick = () => {
+    const r = resume(state, now())
+    state = r.state
+    if (r.news) { news = r.news; openGazette(edition()) }
+  }
+  setInterval(tick, 1000)
   setInterval(save, SAVE_EVERY_MS)
   window.addEventListener('pagehide', save)
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') save() })
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') save(); else tick() })
   // Un autre onglet vient de sauvegarder : on s'arrête tout de suite plutôt qu'au prochain essai.
   window.addEventListener('storage', (e) => { if (e.key === SAVE_KEY) save() })
 
