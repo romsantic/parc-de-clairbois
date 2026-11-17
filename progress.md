@@ -18,6 +18,8 @@
 
 ## Modèle à utiliser selon le type de demande
 
+**Règle permanente (Romain, 17/11/2026) : pour chaque sous-tâche, la session choisit d'elle-même l'agent et le modèle d'après ce tableau, sans que Romain ait à le redire.** Le choix est noté dans la colonne « Modèle » du suivi des sous-tâches.
+
 | Type de demande | Qui | Modèle |
 |---|---|---|
 | Discussion avec Romain, choix de jeu, idées, maquettes | chef (session) | le plus capable (Opus) |
