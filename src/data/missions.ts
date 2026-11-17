@@ -6,6 +6,7 @@ import type { BuildingType, StatKey } from '../sim/types'
 /** Ce que la mission demande. Ajouter une sorte = ajouter une ligne dans `MEASURES` (sim/missions.ts). */
 export type Objective =
   | { kind: 'compteur'; stat: StatKey; n: number }
+  | { kind: 'compteurs'; stats: StatKey[]; n: number }
   | { kind: 'batiment'; building: BuildingType; level?: 1 | 2 | 3 }
   | { kind: 'especes'; n: number; biome?: Biome }
   | { kind: 'couple'; species: SpeciesId }
@@ -158,3 +159,48 @@ export const STORY: MissionDef[] = [
 ]
 
 export const STORY_DONE_MESSAGE = 'Toutes les missions sont faites, merci ! De nouvelles aventures arriveront bientôt.'
+
+/** Condition pour qu'une quotidienne puisse être tirée. */
+export type DailyCondition = 'toujours' | 'ferme' | 'animalVendable' | 'couple' | 'malade'
+
+/**
+ * Une quotidienne du pool. `{n}` dans le titre est remplacé par la cible.
+ * `scale` : la récompense est multipliée par le niveau du village ; `targetScale` : la cible aussi.
+ * Le niveau est retenu dans l'identifiant tiré (« quot-pieces#2 ») pour que la mission ne change pas en cours de journée.
+ */
+export type DailyDef = MissionDef & { possible: DailyCondition; scale: boolean; targetScale?: boolean }
+
+export const DAILY_POOL: DailyDef[] = [
+  {
+    id: 'quot-nettoyer', title: 'Nettoie {n} fois', giver: MARGAUX, possible: 'toujours', scale: true,
+    text: 'Un parc propre, des animaux contents !', objective: { kind: 'compteur', stat: 'nettoyages', n: 2 }, reward: { coins: 30 },
+  },
+  {
+    id: 'quot-visiteurs', title: 'Accueille {n} visiteurs', giver: MARGAUX, possible: 'toujours', scale: true, targetScale: true,
+    text: "Fais venir du monde au parc aujourd'hui.", objective: { kind: 'compteur', stat: 'visiteurs', n: 50 }, reward: { coins: 40 },
+  },
+  {
+    id: 'quot-rations', title: 'Achète {n} rations', giver: FERMIER, possible: 'ferme', scale: true,
+    text: "Le garde-manger a toujours besoin d'être rempli.", objective: { kind: 'compteurs', stats: ['fourrageAchete', 'viandeAchetee'], n: 30 }, reward: { fourrage: 15 },
+  },
+  {
+    id: 'quot-vendre', title: 'Vends un animal', giver: MARGAUX, possible: 'animalVendable', scale: true,
+    text: 'Un animal en trop ? Le marchand te le rachète.', objective: { kind: 'compteur', stat: 'ventes', n: 1 }, reward: { coins: 50 },
+  },
+  {
+    id: 'quot-achat', title: 'Achète un animal', giver: MARGAUX, possible: 'toujours', scale: true,
+    text: 'Un nouveau pensionnaire fera plaisir aux visiteurs.', objective: { kind: 'compteur', stat: 'achatsAnimaux', n: 1 }, reward: { coins: 40 },
+  },
+  {
+    id: 'quot-naissance', title: 'Une naissance au parc', giver: GARDE, possible: 'couple', scale: true,
+    text: 'Avec un couple adulte, un petit peut arriver.', objective: { kind: 'compteur', stat: 'naissances', n: 1 }, reward: { coins: 50, fourrage: 10 },
+  },
+  {
+    id: 'quot-pieces', title: 'Gagne {n} pièces', giver: MARGAUX, possible: 'toujours', scale: true, targetScale: true,
+    text: 'Les recettes du jour comptent !', objective: { kind: 'compteur', stat: 'piecesGagnees', n: 300 }, reward: { coins: 30 },
+  },
+  {
+    id: 'quot-soin', title: 'Soigne un animal', giver: GARDE, possible: 'malade', scale: true,
+    text: 'Un animal malade a besoin de toi.', objective: { kind: 'compteur', stat: 'soins', n: 1 }, reward: { coins: 30 },
+  },
+]

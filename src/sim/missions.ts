@@ -1,9 +1,12 @@
 import { SPECIES } from '../data/species'
-import { STORY, TUTORIAL, type MissionDef, type Objective, type Reward } from '../data/missions'
+import { DAILY_POOL, MISSIONS_TUNING, STORY, TUTORIAL, type DailyCondition, type MissionDef, type Objective, type Reward } from '../data/missions'
+import { DAY_MS } from '../data/tuning'
 import type { ActionResult } from './actions'
 import { ageStage } from './animal'
 import { incomePerHour } from './economy'
 import { autonomyHours } from './feeding'
+import { sellPrice } from './merchant'
+import { random } from './random'
 import { population } from './village'
 import type { GameEvent, GameState, MissionProgress } from './types'
 
@@ -29,6 +32,10 @@ const MEASURES: { [K in Objective['kind']]: Measurer<K> } = {
   compteur: {
     base: (s, o) => s.stats.counts[o.stat],
     measure: (s, o, mp) => ({ value: s.stats.counts[o.stat] - mp.base, target: o.n }),
+  },
+  compteurs: {
+    base: (s, o) => o.stats.reduce((n, k) => n + s.stats.counts[k], 0),
+    measure: (s, o, mp) => ({ value: o.stats.reduce((n, k) => n + s.stats.counts[k], 0) - mp.base, target: o.n }),
   },
   batiment: {
     measure: (s, o) => ({ value: s.buildings.some((b) => b.type === o.building && b.level >= (o.level ?? 1)) ? 1 : 0, target: 1 }),
@@ -81,11 +88,97 @@ export function storyStart(level: 1 | 2 | 3): number {
   return level === 1 ? 0 : STORY.findIndex((m) => m.gate === level) + 1
 }
 
-/** Définition d'une mission d'après sa piste et son identifiant (les quotidiennes viendront avec la tâche 3). */
+/** Identifiant d'une quotidienne tirée : « quot-pieces#2 » (le niveau du village au tirage). */
+const dailyId = (poolId: string, level: number): string => `${poolId}#${level}`
+
+/** Une quotidienne telle qu'elle a été tirée : cible et récompense fixées par le niveau retenu dans l'identifiant. */
+function dailyDef(id: string): MissionDef | undefined {
+  const [poolId, lv] = id.split('#')
+  const pool = DAILY_POOL.find((p) => p.id === poolId)
+  const level = Number(lv)
+  if (!pool || !Number.isInteger(level) || level < 1) return undefined
+  const k = pool.scale ? level : 1
+  const kt = pool.targetScale ? level : 1
+  const o = pool.objective
+  const objective: Objective = o.kind === 'compteur' || o.kind === 'compteurs' ? { ...o, n: o.n * kt } : o
+  const reward: Reward = {}
+  for (const f of ['coins', 'fourrage', 'viande'] as const) if (pool.reward[f] !== undefined) reward[f] = pool.reward[f]! * k
+  const n = 'n' in objective ? objective.n : 0
+  return { id, title: pool.title.replace('{n}', String(n)), text: pool.text, giver: pool.giver, objective, reward }
+}
+
+/** Définition d'une mission d'après sa piste et son identifiant. */
 export function missionDef(track: MissionTrack, id: string): MissionDef | undefined {
   if (track === 'tutoriel') return TUTORIAL.find((m) => m.id === id)
   if (track === 'histoire') return STORY.find((m) => m.id === id)
-  return undefined
+  return dailyDef(id)
+}
+
+/** Numéro du jour local (change à minuit, heure de l'appareil). */
+export function dayKey(time: number, utcOffsetMin: number): number {
+  return Math.floor((time + utcOffsetMin * 60_000) / DAY_MS)
+}
+
+const POSSIBLE: Record<DailyCondition, (s: GameState) => boolean> = {
+  toujours: () => true,
+  ferme: (s) => s.buildings.some((b) => b.type === 'ferme'),
+  animalVendable: (s) => s.animals.some((a) => a.health.status === 'ok' && sellPrice(s, a) !== null),
+  couple: (s) => s.enclosures.some((e) => {
+    const adults = s.animals.filter((a) => a.enclosureId === e.id && ageStage(a, s.time) === 'adulte')
+    return adults.some((a) => a.sex === 'F') && adults.some((a) => a.sex === 'M')
+  }),
+  malade: (s) => s.animals.some((a) => a.health.status === 'malade'),
+}
+
+/** Tire les quotidiennes du jour parmi celles possibles (hasard de la partie, donc reproductible). */
+function drawDaily(state: GameState): MissionProgress[] {
+  const possible = DAILY_POOL.filter((p) => POSSIBLE[p.possible](state))
+  const list: MissionProgress[] = []
+  while (list.length < MISSIONS_TUNING.DAILY_COUNT && possible.length > 0) {
+    const [pool] = possible.splice(Math.floor(random(state) * possible.length), 1)
+    const id = dailyId(pool.id, state.village.level)
+    list.push({ id, base: baseOf(state, dailyDef(id)!), done: false, claimed: false })
+  }
+  return list
+}
+
+/**
+ * Quotidiennes : change de jour (verse d'office les réussies non récupérées, règle la série, tire les nouvelles),
+ * puis mesure celles du jour. Rien tant que les premiers pas ne sont ni finis ni passés.
+ */
+function dailyStep(state: GameState, events: GameEvent[]): void {
+  const m = state.missions
+  if (m.tutorial.step < TUTORIAL.length) return
+  const d = dayKey(state.time, state.utcOffsetMin)
+  const daily = m.daily
+  if (daily.dayKey !== d) {
+    const prev = daily.dayKey
+    for (const mp of daily.list) {
+      const def = dailyDef(mp.id)
+      if (mp.done && !mp.claimed && def) giveReward(state, def.reward)
+    }
+    // La série est comptée au moment où le jour devient complet : elle survit seulement au passage direct d'un jour complet au suivant.
+    if (prev !== -1 && !(d === prev + 1 && daily.lastFullDay === prev)) daily.streak = 0
+    daily.dayKey = d
+    daily.list = drawDaily(state)
+    events.push({ kind: 'quotidiennes', at: state.time })
+    m.unread = true
+  }
+  for (const mp of daily.list) {
+    if (mp.done) continue
+    const def = dailyDef(mp.id)
+    if (!def) continue
+    const p = progress(state, def, mp)
+    if (p.value >= p.target) {
+      mp.done = true
+      events.push({ kind: 'mission', at: state.time, track: 'quotidienne', id: mp.id })
+    }
+  }
+  if (daily.list.length > 0 && daily.list.every((mp) => mp.done) && daily.lastFullDay !== d) {
+    daily.lastFullDay = d
+    daily.streak++
+    if (daily.streak % MISSIONS_TUNING.STREAK_DAYS === 0) daily.coupons++
+  }
 }
 
 export function currentMission(state: GameState): { track: 'tutoriel' | 'histoire'; def: MissionDef; mp: MissionProgress } | null {
@@ -129,9 +222,10 @@ export function updateMissions(state: GameState, events: GameEvent[]): void {
   const m = state.missions
   if (m.tutorial.step < TUTORIAL.length) advance(state, events, 'tutoriel', TUTORIAL[m.tutorial.step], m.tutorial)
   else if (m.story.index < STORY.length) advance(state, events, 'histoire', STORY[m.story.index], m.story)
+  dailyStep(state, events)
 }
 
-/** Appelé à la fin de chaque pas de simulation. Point d'extension : la tâche 3 y ajoute les quotidiennes. */
+/** Appelé à la fin de chaque pas de simulation. (premiers pas, histoire, quotidiennes). */
 export function missionsStep(state: GameState, events: GameEvent[]): void {
   updateMissions(state, events)
 }
@@ -153,8 +247,17 @@ export function giveReward(state: GameState, reward: Reward): { lost: number } {
 
 /** Le joueur récupère la récompense d'une mission réussie, une seule fois ; la suivante démarre. */
 export function claimMission(state: GameState, track: MissionTrack, id?: string): ActionResult {
-  // Les quotidiennes arrivent avec la tâche 3 : ajouter ici leur branche.
-  if (track === 'quotidienne') return { ok: false, reason: 'Introuvable.' }
+  if (track === 'quotidienne') {
+    const mp = id === undefined ? undefined : state.missions.daily.list.find((x) => x.id === id)
+    const def = id === undefined ? undefined : dailyDef(id)
+    if (!mp || !def) return { ok: false, reason: 'Introuvable.' }
+    if (mp.claimed) return { ok: false, reason: 'Récompense déjà récupérée.' }
+    if (!mp.done) return { ok: false, reason: "Cette mission n'est pas encore réussie." }
+    const s = structuredClone(state)
+    giveReward(s, def.reward)
+    s.missions.daily.list.find((x) => x.id === id)!.claimed = true
+    return { ok: true, state: s }
+  }
   const m = state.missions
   const tuto = track === 'tutoriel'
   const defs = tuto ? TUTORIAL : STORY
