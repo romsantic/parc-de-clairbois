@@ -98,6 +98,7 @@ Après la V1 : V2 à V5 décrites en fin de spec (personnel et centre vétérina
 ## À prévoir à l'étape 6 (demandé par Romain le 17/11/2026)
 
 - **Bouton « Recommencer à zéro »** accessible en jeu (pas seulement dans `?debug`) : efface la partie en cours et relance une nouvelle partie depuis le début. Confirmation en deux clics (comme la vente), avec un texte clair « Tout ton parc sera effacé ». Pas d'écran d'accueil ni de parties multiples : le jeu continue de s'ouvrir directement sur le parc.
+- **Missions du jour de plus en plus difficiles** : la quantité demandée **et** la récompense de chaque quotidienne doivent suivre l'avancement réel du parc, pas seulement le niveau du village (aujourd'hui seules « visiteurs » et « pièces » voient leur cible grandir ; les récompenses sont × niveau). Exemple de Romain : « Acheter 30 rations » n'a plus d'intérêt avec un parc complet. Piste : régler chaque cible sur l'état du parc (consommation par jour, visiteurs par heure, recettes, nombre d'animaux…) et la récompense sur l'effort demandé. Fichiers : `src/data/missions.ts` (`DAILY_POOL`) et le tirage dans `src/sim/`.
 
 ## Décisions de l'étape 4 (en plus de la spec)
 
