@@ -123,6 +123,11 @@ Après la V1 : V2 à V5 décrites en fin de spec (personnel et centre vétérina
 - Le « ! » doré qui se déplace au-dessus de la cible des premiers pas n'a pas été regardé à l'œil (panneau du navigateur masqué pendant la vérification).
 - Textes des habitants écrits par un agent : à relire par Romain en jouant.
 - Rattrapage de moins d'une heure en direct : ses événements ne sont pas gardés (sans conséquence, pas de Gazette en dessous d'une heure).
+- Téléphone : avec un bâtiment sélectionné **et** une mission réussie, le titre de la mission dans la barre du bas devient très court (≈ 31 px) ; les 8 icônes de la ferme défilent dans une zone de 110 px. À revoir avec le reste de la finition téléphone.
+- La Gazette peut s'ouvrir par-dessus un volet déjà ouvert (onglet repris après plus d'une heure) : fermer le volet avant de l'ouvrir.
+- Premier pas « Ouvre la fiche de l'enclos des moutons » : n'importe quelle fiche d'enclos le valide (sans gêne au départ, un seul enclos).
+- Marchand : cocher « Utiliser mon bon » reconstruit le volet (bouton Acheter inactif 400 ms) ; les cases cochées restent cochées après un achat si un autre bon reste.
+- `npm run build` affiche un avertissement de taille du paquet JavaScript (déjà ancien) : découper le code si les perfs du chargement sur téléphone le demandent.
 
 ## Architecture (où est quoi)
 
