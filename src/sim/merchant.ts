@@ -59,22 +59,23 @@ export function acceptsSpecies(state: GameState, enc: Enclosure, species: Specie
   return null
 }
 
-/** Prix réellement payé pour une offre : −25 % s'il reste un bon de réduction. */
-export function offerPriceFor(state: GameState, offer: Offer): number {
-  return state.missions.daily.coupons > 0 ? Math.round(offer.price * (1 - MISSIONS_TUNING.COUPON_DISCOUNT)) : offer.price
+/** Prix réellement payé pour une offre : −25 % si le joueur choisit d'utiliser un bon et qu'il en reste. */
+export function offerPriceFor(state: GameState, offer: Offer, useCoupon = false): number {
+  return useCoupon && state.missions.daily.coupons > 0 ? Math.round(offer.price * (1 - MISSIONS_TUNING.COUPON_DISCOUNT)) : offer.price
 }
 
 /** Achète une offre et place l'animal dans un enclos. */
-export function buyAnimal(state: GameState, offerId: number, encId: number): ActionResult {
+export function buyAnimal(state: GameState, offerId: number, encId: number, useCoupon = false): ActionResult {
   const offer = state.merchant.offers.find((o) => o.id === offerId)
   const enc = state.enclosures.find((e) => e.id === encId)
   if (!offer || !enc) return { ok: false, reason: 'Introuvable.' }
   const refus = acceptsSpecies(state, enc, offer.species)
   if (refus) return { ok: false, reason: refus }
-  const price = offerPriceFor(state, offer)
+  if (useCoupon && state.missions.daily.coupons <= 0) return { ok: false, reason: "Tu n'as pas de bon de réduction." }
+  const price = offerPriceFor(state, offer, useCoupon)
   if (state.coins < price) return noMoney(price)
   const s = structuredClone(state)
-  if (state.missions.daily.coupons > 0) s.missions.daily.coupons--
+  if (useCoupon) s.missions.daily.coupons--
   s.coins -= price
   s.merchant.offers = s.merchant.offers.filter((o) => o.id !== offerId)
   const e = s.enclosures.find((x) => x.id === encId)!

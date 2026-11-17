@@ -50,21 +50,35 @@ export function toggleMerchantPanel(ctx: MerchantContext): void {
     const countdown = text('p', '', 'gros')
     const list = document.createElement('div')
     list.className = 'offres'
-    const coupon = text('p', `Bon −${Math.round(MISSIONS_TUNING.COUPON_DISCOUNT * 100)} % sur ce prochain achat`, 'bon')
-    body.append(countdown, coupon, list)
+    body.append(countdown, list)
     let sig = ''
+    // Cases « Utiliser mon bon » cochées, par offre : gardées pendant les rafraîchissements.
+    const checked = new Set<number>()
 
     function rows() {
       const s = ctx.get()
       list.replaceChildren()
-      coupon.hidden = s.missions.daily.coupons <= 0 || s.merchant.offers.length === 0
+      const hasCoupon = s.missions.daily.coupons > 0
       buyBlockedUntil = performance.now() + BUY_DELAY_MS
       if (s.merchant.offers.length === 0) list.append(text('p', 'Plus rien en stock pour le moment.', 'discret'))
       for (const o of s.merchant.offers) {
         const row = document.createElement('div')
         row.className = 'offre'
+        const useCoupon = hasCoupon && checked.has(o.id)
         row.append(text('b', SPECIES[o.species].name), text('span', o.sex === 'F' ? '♀' : '♂'), text('span', o.stage),
-          priceCell(o.price, offerPriceFor(s, o)))
+          priceCell(o.price, offerPriceFor(s, o, useCoupon)))
+        if (hasCoupon) {
+          const label = document.createElement('label')
+          label.className = 'bon'
+          const box = document.createElement('input')
+          box.type = 'checkbox'; box.checked = useCoupon
+          box.addEventListener('change', () => {
+            if (box.checked) checked.add(o.id); else checked.delete(o.id)
+            sig = ''; update() // le prix suit la case ; les boutons ne sont refaits que sur ce changement
+          })
+          label.append(box, ` Utiliser mon bon (−${Math.round(MISSIONS_TUNING.COUPON_DISCOUNT * 100)} %)`)
+          row.append(label)
+        }
         const t = merchantTarget(s, ctx.selection(), o.species)
         const buy = document.createElement('button')
         buy.type = 'button'; buy.textContent = 'Acheter'
@@ -72,7 +86,7 @@ export function toggleMerchantPanel(ctx: MerchantContext): void {
           row.append(text('span', `→ ${enclosureLabel(s, t.encId)}`, 'cible'))
           buy.addEventListener('click', () => {
             if (performance.now() < buyBlockedUntil) return
-            if (ctx.dispatch({ type: 'acheterAnimal', offerId: o.id, encId: t.encId }, buy)) {
+            if (ctx.dispatch({ type: 'acheterAnimal', offerId: o.id, encId: t.encId, useCoupon }, buy)) {
               buyBlockedUntil = performance.now() + BUY_DELAY_MS
               refreshDrawer()
             }

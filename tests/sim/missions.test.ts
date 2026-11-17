@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { animal, emptyState, enclosure, storyAt, T0 } from './helpers'
 import { applyAction, type Action } from '../../src/sim/actions'
 import { advanceTo } from '../../src/sim/advance'
-import { canLevelUp, missionGateOk } from '../../src/sim/village'
+import { canLevelUp, missionGateOk, population } from '../../src/sim/village'
 import { summarize } from '../../src/sim/summary'
 import { claimMission, currentMission, giveReward, progress, skipTutorial, updateMissions } from '../../src/sim/missions'
 import { STORY, TUTORIAL } from '../../src/data/missions'
@@ -216,7 +216,7 @@ describe('histoire', () => {
   it('la dernière mission faite : plus de mission courante', () => {
     const s = emptyState({ missions: storyAt(10), pantry: { fourrage: 0, viande: 0, capacity: 1000 } })
     s.buildings = []
-    s.village = { level: 3, clientsServed: 150 * 30 }
+    s.village = { level: 3, clientsServed: 250 * 30 }
     updateMissions(s, [])
     expect(idOf(s)).toBe('hist-habitants-150')
     expect(currentMission(s)!.mp.done).toBe(true)
@@ -258,7 +258,32 @@ describe('passage de niveau', () => {
     expect(canLevelUp(at60(3, true))).toEqual({ ok: true, level: 2 })
     expect(canLevelUp(at60(4))).toEqual({ ok: true, level: 2 })
   })
-  it('porte du Bourg : mission « 100 habitants »', () => {
+  const withPopulation = (s: GameState, n: number): GameState => {
+    s.village.clientsServed = 0
+    s.village.clientsServed = (n - population(s)) * 30
+    expect(population(s)).toBe(n)
+    return s
+  }
+  it('Village, porte « 150 habitants » : pas réussie à 120, réussie à 150', () => {
+    const faible = withPopulation(emptyState({ village: { level: 2, clientsServed: 0 }, missions: storyAt(7) }), 120)
+    updateMissions(faible, [])
+    expect(idOf(faible)).toBe('hist-habitants-100')
+    expect(currentMission(faible)!.mp.done).toBe(false)
+    expect(progress(faible, STORY[7], faible.missions.story.current!)).toEqual({ value: 120, target: 150 })
+    const fort = withPopulation(emptyState({ village: { level: 2, clientsServed: 0 }, missions: storyAt(7) }), 150)
+    updateMissions(fort, [])
+    expect(currentMission(fort)!.mp.done).toBe(true)
+  })
+  it('Bourg, finale « 250 habitants » : pas réussie à 150, réussie à 250', () => {
+    const faible = withPopulation(emptyState({ village: { level: 3, clientsServed: 0 }, missions: storyAt(10) }), 150)
+    updateMissions(faible, [])
+    expect(idOf(faible)).toBe('hist-habitants-150')
+    expect(currentMission(faible)!.mp.done).toBe(false)
+    const fort = withPopulation(emptyState({ village: { level: 3, clientsServed: 0 }, missions: storyAt(10) }), 250)
+    updateMissions(fort, [])
+    expect(currentMission(fort)!.mp.done).toBe(true)
+  })
+  it('porte du Bourg : mission « 150 habitants »', () => {
     expect(missionGateOk(emptyState({ missions: storyAt(7) }), 3)).toBe(false)
     expect(missionGateOk(emptyState({ missions: storyAt(8) }), 3)).toBe(true)
   })
@@ -283,7 +308,7 @@ describe('mesures', () => {
     expect(progress(s, def('pas-enclos'), mp('pas-enclos'))).toEqual({ value: 1, target: 2 })
     expect(progress(s, def('hist-foret'), mp('hist-foret'))).toEqual({ value: 2, target: 2 })
     expect(progress(s, def('hist-especes-3'), mp('hist-especes-3'))).toEqual({ value: 3, target: 3 })
-    expect(progress(s, def('hist-habitants-100'), mp('hist-habitants-100'))).toEqual({ value: 15, target: 100 })
+    expect(progress(s, def('hist-habitants-100'), mp('hist-habitants-100'))).toEqual({ value: 15, target: 150 })
     expect(progress(s, def('hist-visiteurs-20'), mp('hist-visiteurs-20')).target).toBe(20)
   })
   it('naissanceDe : naissances des espèces citées depuis le début de la mission', () => {

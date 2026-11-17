@@ -25,7 +25,7 @@ Ce sont des **propositions** (tous les chiffres dans `src/data/missions.ts`, fac
 | **Passer le tutoriel** | Bouton « Passer les premiers pas » dans le volet Missions, en deux clics : donne les récompenses des étapes restantes, puis on enchaîne sur les missions d'histoire. |
 | **Ancienne partie** *(choix de Romain)* | Elle commence aussi par les premiers pas ; ce qui est déjà fait (café construit, couple de cochons, deuxième enclos) est réussi tout de suite : il suffit de cliquer « Récupérer » pour passer au suivant. Le bouton « Passer » reste possible. |
 | **Missions d'histoire déjà couvertes** *(choix de Romain : remplacer)* | La spec prévoyait « Construire le café » au Hameau (déjà fait dans les premiers pas), « débloque le redimensionnement » (il existe déjà) et « 50 habitants » au Village (déjà atteint pour y arriver). Proposition : remplacées, voir le tableau ci-dessous. |
-| **Série des quotidiennes** *(choix de Romain : 3 missions ; −25 % sur 1 achat)* | Un jour compte si **les 3 missions du jour** sont faites. Au **7ᵉ jour** de suite : **−25 % sur le prochain achat** chez le marchand (bon gardé jusqu'à ce qu'on s'en serve), puis la série continue (nouveau bon tous les 7 jours). Sauter un jour remet la série à zéro, rien d'autre. |
+| **Série des quotidiennes** *(choix de Romain : 3 missions ; −25 % sur 1 achat)* | Un jour compte si **les 3 missions du jour** sont faites. Au **7ᵉ jour** de suite : **−25 % sur le prochain achat** chez le marchand (bon gardé jusqu'à ce que tu choisisses l'animal sur lequel l'utiliser *(choix de Romain, 17/11)*), puis la série continue (nouveau bon tous les 7 jours). Sauter un jour remet la série à zéro, rien d'autre. |
 | **Minuit** | Minuit à l'heure de l'appareil. Pendant une longue absence, les jours manqués cassent la série ; au retour, 3 nouvelles missions du jour. |
 | **Gazette** | S'ouvre toute seule au retour si l'absence a duré **au moins 1 heure**. L'icône Gazette de la barre du bas la rouvre à tout moment (dernière édition). |
 
@@ -56,10 +56,10 @@ Calcul : avec 500 pièces au départ, les récompenses suffisent pour enchaîner
 | Village | Construire l'auberge | L'aubergiste | 500 pièces |
 | Village | Posséder 2 espèces de forêt | La garde forestière | 800 pièces |
 | Village | 2 jours d'autonomie au garde-manger | Le fermier | 100 fourrages + 50 viandes |
-| Village | 100 habitants *(au lieu de 50)* → **ouvre le passage au Bourg** | Margaux | 1 000 pièces |
+| Village | 150 habitants *(au lieu de 50 ; choix de Romain, 17/11)* → **ouvre le passage au Bourg** | Margaux | 1 000 pièces |
 | Bourg | Faire naître un loup ou un taureau | La garde forestière | 1 500 pièces |
 | Bourg | Posséder les 10 espèces | Margaux | 3 000 pièces |
-| Bourg | 150 habitants → **fin de la V1** : grande fête, message de Margaux | Margaux | 5 000 pièces |
+| Bourg | 250 habitants *(choix de Romain, 17/11)* → **fin de la V1** : grande fête, message de Margaux | Margaux | 5 000 pièces |
 
 Après la dernière : « Toutes les missions sont faites, merci ! De nouvelles aventures arriveront bientôt. »
 

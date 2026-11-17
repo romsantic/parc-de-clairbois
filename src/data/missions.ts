@@ -100,6 +100,7 @@ export const TUTORIAL: MissionDef[] = [
  * Les 11 missions d'histoire : 0 à 3 Hameau, 4 à 7 Village, 8 à 10 Bourg.
  * Les index de début de palier (0, 4, 8) sont aussi écrits en dur dans la migration v2 → v3 (un test les compare).
  */
+// Les id « hist-habitants-100 » et « hist-habitants-150 » sont gardés (parties sauvegardées) : leurs objectifs sont 150 et 250.
 export const STORY: MissionDef[] = [
   {
     id: 'hist-naissance', title: 'Première naissance au parc', giver: MARGAUX,
@@ -137,9 +138,9 @@ export const STORY: MissionDef[] = [
     objective: { kind: 'autonomie', hours: 48 }, reward: { fourrage: 100, viande: 50 },
   },
   {
-    id: 'hist-habitants-100', title: 'Atteins 100 habitants', giver: MARGAUX, gate: 3,
-    text: "Clairbois grandit ! À 100 habitants, nous pourrons devenir un bourg. Construis, améliore et accueille du monde.",
-    objective: { kind: 'habitants', n: 100 }, reward: { coins: 1000 },
+    id: 'hist-habitants-100', title: 'Atteins 150 habitants', giver: MARGAUX, gate: 3,
+    text: "Clairbois grandit ! À 150 habitants, nous pourrons devenir un bourg. Construis, améliore et accueille du monde.",
+    objective: { kind: 'habitants', n: 150 }, reward: { coins: 1000 },
   },
   {
     id: 'hist-loup-taureau', title: 'Fais naître un loup ou un taureau', giver: GARDE,
@@ -152,9 +153,9 @@ export const STORY: MissionDef[] = [
     objective: { kind: 'especes', n: 10 }, reward: { coins: 3000 },
   },
   {
-    id: 'hist-habitants-150', title: 'Atteins 150 habitants', giver: MARGAUX, gate: 'fin',
-    text: "Dernière étape : 150 habitants, et Clairbois sera la plus belle ville de la région. Toute la fête sera pour toi !",
-    objective: { kind: 'habitants', n: 150 }, reward: { coins: 5000 },
+    id: 'hist-habitants-150', title: 'Atteins 250 habitants', giver: MARGAUX, gate: 'fin',
+    text: "Dernière étape : 250 habitants, et Clairbois sera la plus belle ville de la région. Toute la fête sera pour toi !",
+    objective: { kind: 'habitants', n: 250 }, reward: { coins: 5000 },
   },
 ]
 

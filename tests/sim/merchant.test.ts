@@ -185,20 +185,30 @@ describe('bon de réduction', () => {
     s.missions.daily.coupons = 1
     return s
   }
-  it('un cochon à 150 avec un bon : -113 pièces, bon consommé', () => {
+  it('sans demander le bon : prix plein, bon conservé', () => {
     const s = ok(buyAnimal(withCoupon(), 50, 2))
+    expect(s.coins).toBe(850)
+    expect(s.missions.daily.coupons).toBe(1)
+  })
+  it('avec useCoupon et 0 bon : refus', () => {
+    const s = withCoupon(); s.missions.daily.coupons = 0
+    expect(buyAnimal(s, 50, 2, true)).toEqual({ ok: false, reason: "Tu n'as pas de bon de réduction." })
+  })
+  it('un cochon à 150 avec le bon choisi : -113 pièces, bon consommé', () => {
+    const s = ok(buyAnimal(withCoupon(), 50, 2, true))
     expect(s.coins).toBe(1000 - 113)
     expect(s.missions.daily.coupons).toBe(0)
   })
   it('offerPriceFor donne le prix réel', () => {
     const s = withCoupon()
-    expect(offerPriceFor(s, s.merchant.offers[0])).toBe(113)
-    s.missions.daily.coupons = 0
     expect(offerPriceFor(s, s.merchant.offers[0])).toBe(150)
+    expect(offerPriceFor(s, s.merchant.offers[0], true)).toBe(113)
+    s.missions.daily.coupons = 0
+    expect(offerPriceFor(s, s.merchant.offers[0], true)).toBe(150)
   })
   it('le refus tient compte du prix réduit', () => {
-    expect(buyAnimal(withCoupon(112), 50, 2)).toEqual({ ok: false, reason: 'Pas assez de pièces (il en faut 113).' })
-    expect(buyAnimal(withCoupon(113), 50, 2).ok).toBe(true)
+    expect(buyAnimal(withCoupon(112), 50, 2, true)).toEqual({ ok: false, reason: 'Pas assez de pièces (il en faut 113).' })
+    expect(buyAnimal(withCoupon(113), 50, 2, true).ok).toBe(true)
   })
   it('sans bon, le prix est plein', () => {
     const s = withCoupon(); s.missions.daily.coupons = 0

@@ -229,7 +229,7 @@ export type Action =
   | { type: 'agrandirGardeManger' }
   | { type: 'billet'; price: number }
   | { type: 'monterNiveau' }
-  | { type: 'acheterAnimal'; offerId: number; encId: number }
+  | { type: 'acheterAnimal'; offerId: number; encId: number; useCoupon?: boolean }
   | { type: 'vendre'; animalId: number }
   /** Observation silencieuse : le joueur a vu la fiche d'un enclos ou le volet Autonomie. */
   | { type: 'vu'; what: 'ficheEnclos' | 'autonomie' }
@@ -274,7 +274,7 @@ function run(state: GameState, a: Action): ActionResult {
     case 'agrandirGardeManger': return upgradePantry(state)
     case 'billet': return setTicketPrice(state, a.price)
     case 'monterNiveau': return levelUp(state)
-    case 'acheterAnimal': return buyAnimal(state, a.offerId, a.encId)
+    case 'acheterAnimal': return buyAnimal(state, a.offerId, a.encId, a.useCoupon)
     case 'vendre': return sellAnimal(state, a.animalId)
     case 'vu': return { ok: true, state: structuredClone(state) }
     case 'recuperer': return claimMission(state, a.track, a.id)
