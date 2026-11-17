@@ -153,6 +153,7 @@ export function mountDebugPanel(ctl: DebugController): void {
   // Ne redessine que si la partie a changé : sinon les boutons seraient recréés sous le clic.
   // Signature légère (pas de JSON.stringify de toute la partie chaque seconde, trop lourd avec un grand parc) :
   // toute action remplace la partie ou fait avancer l'horloge.
+  // Le rendu repose sur le changement de référence de la partie (g !== lastGame) ; la signature rattrape l'horloge qui avance en place.
   const signature = (g: GameState) => `${g.time}|${g.coins}|${g.animals.length}|${g.enclosures.length}|${g.pantry.fourrage}|${g.pantry.viande}`
   let lastGame = ctl.get(), lastSeen = signature(lastGame)
   setInterval(() => {
