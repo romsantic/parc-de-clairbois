@@ -86,7 +86,15 @@ const intBetween = (x: unknown, min: number, max: number) => typeof x === 'numbe
 /** Une mission en cours : id texte, valeur de départ finie, réussie et récupérée vrai/faux. */
 function validProgress(x: unknown): boolean {
   const mp = x as MissionProgress | null
-  return !!mp && typeof mp === 'object' && typeof mp.id === 'string' && finite(mp.base) && typeof mp.done === 'boolean' && typeof mp.claimed === 'boolean'
+  if (!mp || typeof mp !== 'object' || typeof mp.id !== 'string' || !finite(mp.base) || typeof mp.done !== 'boolean' || typeof mp.claimed !== 'boolean') return false
+  // Quotidienne tirée : cible (nombre fini > 0) et récompense (nombres finis >= 0) facultatives, mais saines si présentes.
+  if (mp.n !== undefined && !(finite(mp.n) && mp.n > 0)) return false
+  if (mp.reward !== undefined) {
+    const r = mp.reward as unknown
+    if (!r || typeof r !== 'object' || Array.isArray(r)) return false
+    for (const [k, v] of Object.entries(r)) if (!['coins', 'fourrage', 'viande'].includes(k) || !finite(v) || (v as number) < 0) return false
+  }
+  return true
 }
 
 /** Vérifie qu'une partie chargée est cohérente avant de la faire tourner. */

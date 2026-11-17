@@ -42,6 +42,65 @@ export const MISSIONS_TUNING = {
   GAZETTE_MIN_ABSENCE_H: 1,
 }
 
+/**
+ * Réglage des quotidiennes : tout se règle sur l'état du parc au moment du tirage (minuit) et ne bouge plus de la journée.
+ * Cibles : heures d'activité du parc ; récompenses : heures de recettes (au moins REWARD_MIN pièces).
+ */
+export const DAILY_TUNING = {
+  /** Visiteurs à accueillir : ce que le parc reçoit en tant d'heures. */
+  VISITORS_HOURS: 3,
+  /** Pièces à gagner : les recettes de tant d'heures. */
+  COINS_HOURS: 3,
+  /** Rations à acheter : cette part de ce que mangent les animaux en un jour. */
+  RATIONS_DAY_SHARE: 0.5,
+  /** Nettoyages : un par enclos, entre ces bornes. */
+  CLEAN_MIN: 2,
+  CLEAN_MAX: 6,
+  /** Vendre / acheter : 1 animal, ou TRADE_MANY quand le parc en a plus que TRADE_MANY_ABOVE. */
+  TRADE_MANY_ABOVE: 20,
+  TRADE_MANY: 2,
+  /** Planchers des cibles (un parc à l'arrêt a quand même une mission faisable). */
+  MIN_VISITORS: 50,
+  MIN_COINS: 300,
+  MIN_RATIONS: 30,
+  /** Récompense en pièces : tant d'heures de recettes, jamais moins de REWARD_MIN. */
+  REWARD_HOURS: 1,
+  REWARD_MIN: 30,
+  /** Multiplicateur de la récompense pour les missions qui coûtent (acheter des rations ou un animal). */
+  COSTLY_FACTOR: 1.5,
+  /** Récompense en nourriture (fermier) : cette part de la consommation d'un jour, au moins FOOD_MIN. */
+  FOOD_DAY_SHARE: 0.25,
+  FOOD_MIN: 15,
+  /** Petit bonus de nourriture d'une naissance. */
+  BIRTH_FOOD_DAY_SHARE: 0.1,
+  BIRTH_FOOD_MIN: 10,
+  /** Chiffres ronds : en dessous de `below`, on arrondit au multiple de `step`. */
+  NICE_STEPS: [
+    { below: 100, step: 5 },
+    { below: 500, step: 10 },
+    { below: 2000, step: 50 },
+    { below: 10000, step: 100 },
+    { below: Infinity, step: 500 },
+  ] as readonly { below: number; step: number }[],
+}
+
+/** L'état du parc au moment du tirage des quotidiennes. */
+export interface ParkPace {
+  visitorsPerH: number
+  coinsPerH: number
+  rationsPerDay: number
+  enclosures: number
+  animals: number
+}
+
+/** Arrondit à un chiffre « rond » selon la taille du nombre (147 → 150, 1234 → 1250) ; jamais moins d'un pas. */
+export function niceRound(x: number, steps: readonly { below: number; step: number }[] = DAILY_TUNING.NICE_STEPS): number {
+  const v = Math.max(0, Number.isFinite(x) ? x : 0)
+  const { step } = steps.find((s) => v < s.below) ?? steps[steps.length - 1]
+  return Math.max(step, Math.round(v / step) * step)
+}
+
+
 const MARGAUX = 'Margaux, la maire'
 const FERMIER = 'Le fermier'
 const AUBERGISTE = "L'aubergiste"
@@ -165,43 +224,88 @@ export const STORY_DONE_MESSAGE = 'Toutes les missions sont faites, merci ! De n
 export type DailyCondition = 'toujours' | 'ferme' | 'animalVendable' | 'couple' | 'malade'
 
 /**
- * Une quotidienne du pool. `{n}` dans le titre est remplacé par la cible.
- * `scale` : la récompense est multipliée par le niveau du village ; `targetScale` : la cible aussi.
- * Le niveau est retenu dans l'identifiant tiré (« quot-pieces#2 ») pour que la mission ne change pas en cours de journée.
+ * Une quotidienne du pool. `{n}` dans le titre est remplacé par la cible ; `titleOne` sert quand la cible est 1.
+ * `target` donne la cible d'après l'état du parc, `reward` la récompense d'après l'état du parc et la cible.
+ * Le tirage garde la cible et la récompense avec la mission (`MissionProgress.n` / `.reward`) : elles ne changent plus de la journée.
+ * L'objectif sert de modèle : son `n` est remplacé par la cible tirée.
  */
-export type DailyDef = MissionDef & { possible: DailyCondition; scale: boolean; targetScale?: boolean }
+export type DailyDef = Omit<MissionDef, 'reward'> & {
+  possible: DailyCondition
+  titleOne?: string
+  target: (p: ParkPace) => number
+  reward: (p: ParkPace, n: number) => Reward
+}
+
+const T = DAILY_TUNING
+const nice = (x: number) => niceRound(x)
+const atLeast = (min: number, x: number) => Math.max(min, nice(x))
+/** Pièces : ~REWARD_HOURS heures de recettes, au moins REWARD_MIN. */
+const coinsReward = (p: ParkPace, factor = 1): Reward => ({ coins: Math.max(T.REWARD_MIN, nice(p.coinsPerH * T.REWARD_HOURS * factor)) })
+const foodReward = (p: ParkPace, share: number, min: number): number => Math.max(min, nice(p.rationsPerDay * share))
+const tradeCount = (p: ParkPace) => (p.animals > T.TRADE_MANY_ABOVE ? T.TRADE_MANY : 1)
 
 export const DAILY_POOL: DailyDef[] = [
   {
-    id: 'quot-nettoyer', title: 'Nettoie {n} fois', giver: MARGAUX, possible: 'toujours', scale: true,
-    text: 'Un parc propre, des animaux contents !', objective: { kind: 'compteur', stat: 'nettoyages', n: 2 }, reward: { coins: 30 },
+    id: 'quot-nettoyer', title: 'Nettoie {n} fois', giver: MARGAUX, possible: 'toujours',
+    text: 'Un parc propre, des animaux contents !', objective: { kind: 'compteur', stat: 'nettoyages', n: 2 },
+    target: (p) => Math.min(T.CLEAN_MAX, Math.max(T.CLEAN_MIN, p.enclosures)),
+    reward: (p) => coinsReward(p),
   },
   {
-    id: 'quot-visiteurs', title: 'Accueille {n} visiteurs', giver: MARGAUX, possible: 'toujours', scale: true, targetScale: true,
-    text: "Fais venir du monde au parc aujourd'hui.", objective: { kind: 'compteur', stat: 'visiteurs', n: 50 }, reward: { coins: 40 },
+    id: 'quot-visiteurs', title: 'Accueille {n} visiteurs', giver: MARGAUX, possible: 'toujours',
+    text: "Fais venir du monde au parc aujourd'hui.", objective: { kind: 'compteur', stat: 'visiteurs', n: 50 },
+    target: (p) => atLeast(T.MIN_VISITORS, p.visitorsPerH * T.VISITORS_HOURS),
+    reward: (p) => coinsReward(p),
   },
   {
-    id: 'quot-rations', title: 'Achète {n} rations', giver: FERMIER, possible: 'ferme', scale: true,
-    text: "Le garde-manger a toujours besoin d'être rempli.", objective: { kind: 'compteurs', stats: ['fourrageAchete', 'viandeAchetee'], n: 30 }, reward: { fourrage: 15 },
+    id: 'quot-rations', title: 'Achète {n} rations', giver: FERMIER, possible: 'ferme',
+    text: "Le garde-manger a toujours besoin d'être rempli.", objective: { kind: 'compteurs', stats: ['fourrageAchete', 'viandeAchetee'], n: 30 },
+    target: (p) => atLeast(T.MIN_RATIONS, p.rationsPerDay * T.RATIONS_DAY_SHARE),
+    reward: (p) => ({ fourrage: foodReward(p, T.FOOD_DAY_SHARE, T.FOOD_MIN) }),
   },
   {
-    id: 'quot-vendre', title: 'Vends un animal', giver: MARGAUX, possible: 'animalVendable', scale: true,
-    text: 'Un animal en trop ? Le marchand te le rachète.', objective: { kind: 'compteur', stat: 'ventes', n: 1 }, reward: { coins: 50 },
+    id: 'quot-vendre', title: 'Vends {n} animaux', titleOne: 'Vends un animal', giver: MARGAUX, possible: 'animalVendable',
+    text: 'Un animal en trop ? Le marchand te le rachète.', objective: { kind: 'compteur', stat: 'ventes', n: 1 },
+    target: tradeCount,
+    reward: (p) => coinsReward(p),
   },
   {
-    id: 'quot-achat', title: 'Achète un animal', giver: MARGAUX, possible: 'toujours', scale: true,
-    text: 'Un nouveau pensionnaire fera plaisir aux visiteurs.', objective: { kind: 'compteur', stat: 'achatsAnimaux', n: 1 }, reward: { coins: 40 },
+    id: 'quot-achat', title: 'Achète {n} animaux', titleOne: 'Achète un animal', giver: MARGAUX, possible: 'toujours',
+    text: 'Un nouveau pensionnaire fera plaisir aux visiteurs.', objective: { kind: 'compteur', stat: 'achatsAnimaux', n: 1 },
+    target: tradeCount,
+    reward: (p) => coinsReward(p, T.COSTLY_FACTOR),
   },
   {
-    id: 'quot-naissance', title: 'Une naissance au parc', giver: GARDE, possible: 'couple', scale: true,
-    text: 'Avec un couple adulte, un petit peut arriver.', objective: { kind: 'compteur', stat: 'naissances', n: 1 }, reward: { coins: 50, fourrage: 10 },
+    id: 'quot-naissance', title: 'Une naissance au parc', giver: GARDE, possible: 'couple',
+    text: 'Avec un couple adulte, un petit peut arriver.', objective: { kind: 'compteur', stat: 'naissances', n: 1 },
+    target: () => 1,
+    reward: (p) => ({ ...coinsReward(p, T.COSTLY_FACTOR), fourrage: foodReward(p, T.BIRTH_FOOD_DAY_SHARE, T.BIRTH_FOOD_MIN) }),
   },
   {
-    id: 'quot-pieces', title: 'Gagne {n} pièces', giver: MARGAUX, possible: 'toujours', scale: true, targetScale: true,
-    text: 'Les recettes du jour comptent !', objective: { kind: 'compteur', stat: 'piecesGagnees', n: 300 }, reward: { coins: 30 },
+    id: 'quot-pieces', title: 'Gagne {n} pièces', giver: MARGAUX, possible: 'toujours',
+    text: 'Les recettes du jour comptent !', objective: { kind: 'compteur', stat: 'piecesGagnees', n: 300 },
+    target: (p) => atLeast(T.MIN_COINS, p.coinsPerH * T.COINS_HOURS),
+    reward: (p) => coinsReward(p),
   },
   {
-    id: 'quot-soin', title: 'Soigne un animal', giver: GARDE, possible: 'malade', scale: true,
-    text: 'Un animal malade a besoin de toi.', objective: { kind: 'compteur', stat: 'soins', n: 1 }, reward: { coins: 30 },
+    id: 'quot-soin', title: 'Soigne un animal', giver: GARDE, possible: 'malade',
+    text: 'Un animal malade a besoin de toi.', objective: { kind: 'compteur', stat: 'soins', n: 1 },
+    target: () => 1,
+    reward: (p) => coinsReward(p),
   },
 ]
+
+/**
+ * Anciennes quotidiennes (parties v3 : identifiant « quot-pieces#2 », sans cible ni récompense gardées).
+ * Valeurs figées, ne plus y toucher : cible et récompense × niveau du village (la cible seulement si `targetScale`).
+ */
+export const DAILY_LEGACY: Record<string, { n: number; reward: Reward; targetScale?: boolean }> = {
+  'quot-nettoyer': { n: 2, reward: { coins: 30 } },
+  'quot-visiteurs': { n: 50, reward: { coins: 40 }, targetScale: true },
+  'quot-rations': { n: 30, reward: { fourrage: 15 } },
+  'quot-vendre': { n: 1, reward: { coins: 50 } },
+  'quot-achat': { n: 1, reward: { coins: 40 } },
+  'quot-naissance': { n: 1, reward: { coins: 50, fourrage: 10 } },
+  'quot-pieces': { n: 300, reward: { coins: 30 }, targetScale: true },
+  'quot-soin': { n: 1, reward: { coins: 30 } },
+}

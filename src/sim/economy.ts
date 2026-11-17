@@ -6,6 +6,7 @@ import type { SpeciesId } from '../data/species'
 import { bump } from './stats'
 import { happiness } from './happiness'
 import { buildRoster } from './enclosure'
+import type { ParkPace } from '../data/missions'
 import type { BuildingType, GameEvent, GameState } from './types'
 
 /** Attrait : par espèce présente, base × (1 + 0,5 × √(n − 1)), n = nombre d'animaux de l'espèce. */
@@ -87,6 +88,18 @@ export function incomePerHour(state: GameState, price: number = state.ticketPric
     village += f.pieces
   }
   return { visiteurs, billets: visiteurs * price, village, clients }
+}
+
+/** L'avancement du parc à cet instant : de quoi régler les missions du jour. */
+export function parkPace(state: GameState): ParkPace {
+  const inc = incomePerHour(state)
+  return {
+    visitorsPerH: inc.visiteurs,
+    coinsPerH: inc.billets + inc.village,
+    rationsPerDay: state.animals.reduce((n, a) => n + SPECIES[a.species].rationsPerDay, 0),
+    enclosures: state.enclosures.length,
+    animals: state.animals.length,
+  }
 }
 
 /** Un pas (1/6 h) : recettes, clients, réputation et fourrage gratuit de la ferme. */

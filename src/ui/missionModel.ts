@@ -41,7 +41,7 @@ export function currentLine(state: GameState): MissionLine | null {
 export function dailyLines(state: GameState): MissionLine[] {
   const out: MissionLine[] = []
   for (const mp of state.missions.daily.list) {
-    const def = missionDef('quotidienne', mp.id)
+    const def = missionDef('quotidienne', mp.id, mp)
     if (def) out.push(line(state, 'quotidienne', def, mp))
   }
   return out
