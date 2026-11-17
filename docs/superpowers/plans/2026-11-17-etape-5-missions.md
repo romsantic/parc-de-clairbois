@@ -20,12 +20,12 @@ Ce sont des **propositions** (tous les chiffres dans `src/data/missions.ts`, fac
 
 | Sujet | Proposition |
 |---|---|
-| **Récompense** | Versée **automatiquement** dès que la mission est réussie (même pendant l'absence) : la mission passe en vert, « +100 » s'envole, message « Mission réussie : … ». Pas de bouton à cliquer. |
+| **Récompense** *(choix de Romain)* | Versée **automatiquement** dès que la mission est réussie (même pendant l'absence) : la mission passe en vert, « +100 » s'envole, message « Mission réussie : … ». Pas de bouton à cliquer. |
 | **Ordre** | D'abord les 9 premiers pas avec Margaux, puis les missions d'histoire. Les **missions quotidiennes commencent après les premiers pas** (ou dès qu'on les passe), pour ne pas tout mélanger au début. |
 | **Passer le tutoriel** | Bouton « Passer les premiers pas » dans le volet Missions, en deux clics : donne les récompenses des étapes restantes, puis on enchaîne sur les missions d'histoire. |
-| **Ancienne partie** (celle de ton téléphone) | Elle commence aussi par les premiers pas ; ce qui est déjà fait (café construit, couple de cochons, deuxième enclos) se valide tout seul en quelques secondes. Le bouton « Passer » reste possible. |
-| **Missions d'histoire déjà couvertes** | La spec prévoyait « Construire le café » au Hameau (déjà fait dans les premiers pas), « débloque le redimensionnement » (il existe déjà) et « 50 habitants » au Village (déjà atteint pour y arriver). Proposition : remplacées, voir le tableau ci-dessous. |
-| **Série des quotidiennes** | Un jour compte si **les 3 missions du jour** sont faites. Au **7ᵉ jour** de suite : **−25 % sur le prochain achat** chez le marchand (bon gardé jusqu'à ce qu'on s'en serve), puis la série continue (nouveau bon tous les 7 jours). Sauter un jour remet la série à zéro, rien d'autre. |
+| **Ancienne partie** *(choix de Romain)* | Elle commence aussi par les premiers pas ; ce qui est déjà fait (café construit, couple de cochons, deuxième enclos) se valide tout seul en quelques secondes. Le bouton « Passer » reste possible. |
+| **Missions d'histoire déjà couvertes** *(choix de Romain : remplacer)* | La spec prévoyait « Construire le café » au Hameau (déjà fait dans les premiers pas), « débloque le redimensionnement » (il existe déjà) et « 50 habitants » au Village (déjà atteint pour y arriver). Proposition : remplacées, voir le tableau ci-dessous. |
+| **Série des quotidiennes** *(choix de Romain : 3 missions ; −25 % sur 1 achat)* | Un jour compte si **les 3 missions du jour** sont faites. Au **7ᵉ jour** de suite : **−25 % sur le prochain achat** chez le marchand (bon gardé jusqu'à ce qu'on s'en serve), puis la série continue (nouveau bon tous les 7 jours). Sauter un jour remet la série à zéro, rien d'autre. |
 | **Minuit** | Minuit à l'heure de l'appareil. Pendant une longue absence, les jours manqués cassent la série ; au retour, 3 nouvelles missions du jour. |
 | **Gazette** | S'ouvre toute seule au retour si l'absence a duré **au moins 1 heure**. L'icône Gazette de la barre du bas la rouvre à tout moment (dernière édition). |
 

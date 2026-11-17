@@ -52,7 +52,7 @@
 
 **Sous-tâche 11 (17/11/2026)** — vérification dans le navigateur faite (café, billet, marchand, vente, niveaux 2 et 3, chemins de jour et de nuit, sauvegarde v1, téléphone). Corrections : emplacements visibles et panneaux lisibles (64fa8b9) ; relecture finale Opus (0 critique, 1 important, 14 mineurs) corrigée en bd75fde — double-clic qui contournait la confirmation de vente/achat, copie de la sauvegarde v1 avant migration, validation renforcée des sauvegardes, marchand réapprovisionné au passage de niveau, « Remplir » le garde-manger, emplacements du Bourg réservés (« Bientôt »), case du billet en rouge quand la réputation baisse, barre du bas à 48 px. Laissé : quelques chiffres encore en dur hors de `src/data/` (M12). 338 tests verts. **Fusionnée dans `main` (997226d) avec l'accord de Romain le 17/11/2026, publiée et vérifiée en ligne.**
 
-**V1 — étape 5 : missions** (branche `etape-5-missions`, plan `docs/superpowers/plans/2026-11-17-etape-5-missions.md`) — **plan écrit le 17/11/2026, en attente de la validation de Romain**
+**V1 — étape 5 : missions** (branche `etape-5-missions`, plan `docs/superpowers/plans/2026-11-17-etape-5-missions.md`) — **plan écrit le 17/11/2026 ; les 5 choix de jeu sont faits (tous ceux proposés) ; Romain relit le plan avant le feu vert**
 
 | # | Sous-tâche | Agent · modèle | État |
 |---|---|---|---|
