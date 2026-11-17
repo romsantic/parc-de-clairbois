@@ -82,7 +82,7 @@
 | 3. Carte jouable (zones, pose/redimensionnement d'enclos, sélection, barres, retour visuel) | ✅ fusionnée — vérifiée sur le téléphone de Romain |
 | 4. Économie et village (visiteurs, attrait, billet réglable, bâtiments, niveaux du village, marchand, ferme et rations, chemins qui évoluent avec le niveau) | ✅ fusionnée le 17/11/2026 |
 | **5. Missions** (Premiers pas avec Margaux, histoire, quotidiennes, résumé d'absence/Gazette) | **en cours** (branche `etape-5-missions`) |
-| 6. Finition V1 (équilibrage, téléphone, brume des zones, visiteurs sur les chemins, jour/nuit, perfs) | à faire |
+| 6. Finition V1 (équilibrage, téléphone, brume des zones, visiteurs sur les chemins, jour/nuit, perfs, **bouton « Recommencer à zéro »**) | à faire |
 
 Après la V1 : V2 à V5 décrites en fin de spec (personnel et centre vétérinaire, routes à construire contre de l'argent, expéditions, musée, labo, saisons…).
 
@@ -94,6 +94,10 @@ Après la V1 : V2 à V5 décrites en fin de spec (personnel et centre vétérina
 - Barres : haut = ressources en icônes ; bas = **une ligne compacte (48 px)** qui s'agrandit en volet (détails, plus tard missions/marchand/Gazette) ; retour visuel vert/rouge + « +n » qui s'envole + message court.
 - Chemins de terre texturés ; ils **évolueront avec le niveau du village** (gravier, pavés, puis routes en V2).
 - Rester en **TypeScript** (pas de Rust : aucun besoin de performance à ce stade).
+
+## À prévoir à l'étape 6 (demandé par Romain le 17/11/2026)
+
+- **Bouton « Recommencer à zéro »** accessible en jeu (pas seulement dans `?debug`) : efface la partie en cours et relance une nouvelle partie depuis le début. Confirmation en deux clics (comme la vente), avec un texte clair « Tout ton parc sera effacé ». Pas d'écran d'accueil ni de parties multiples : le jeu continue de s'ouvrir directement sur le parc.
 
 ## Décisions de l'étape 4 (en plus de la spec)
 
