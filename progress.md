@@ -72,7 +72,7 @@
 |---|---|---|---|
 | 1 | Bouton « Recommencer à zéro » (volet Options ⚙) | agent · Sonnet | faite (a95b961 → d07ba25) — relue, vérifiée dans le navigateur (ordinateur et téléphone, double-clic rapide ignoré) — 502 tests |
 | 2 | Perfs de la simulation (grand parc, 30 jours < 2 s) et compteur d'images | agent · Sonnet | faite (2961545 + f0ad802) — 30 jours d'absence d'un grand parc : 2–3 s → ≈ 1 s ; `bigPark()` réaliste et `crowdedPark()` de stress — 507 tests |
-| 3 | Joueur automatique et rapport d'équilibrage | agent · Sonnet | à faire |
+| 3 | Joueur automatique et rapport d'équilibrage | agent · Sonnet | faite (a1590a3 + 18de4b1) — relu ; rythme actuel : Village jour 3, Bourg jour 5, fin de la V1 jour 6 à 10 (cible 21), 100 000 pièces au jour 5 : économie trop généreuse (réglage en sous-tâche 5) — 514 tests |
 | 4 | Missions du jour qui grandissent avec le parc | agent · Sonnet | à faire |
 | 5 | Réglage de l'équilibre (chiffres choisis avec Romain) | chef (Opus) + agent · Sonnet | à faire |
 | 6 | Brume des zones fermées | agent · Sonnet | à faire |
