@@ -37,7 +37,7 @@ export function hasProgressed(s: GameState): boolean {
 export function restartState(store: Storage, nowMs: number, replaced?: GameState): GameState {
   const previous = store.getItem(SAVE_KEY)
   // Une partie qui n'a pas avancé ne remplace pas la copie : on ne perd pas le vrai parc en recommençant deux fois.
-  if (previous !== null && (!replaced || hasProgressed(replaced))) { try { store.setItem(RESET_BACKUP_KEY, previous) } catch { /* rien */ } }
+  if (previous !== null && (!replaced || hasProgressed(replaced) || store.getItem(RESET_BACKUP_KEY) === null)) { try { store.setItem(RESET_BACKUP_KEY, previous) } catch { /* rien */ } }
   return freshGame(nowMs)
 }
 const newSeed = () => Math.floor(Math.random() * 2 ** 32)

@@ -58,6 +58,14 @@ describe('restartState : copie de secours', () => {
     expect(m.data[RESET_BACKUP_KEY]).toBe(backup)
     expect(stored(m)).toBeTruthy()
   })
+  it('fait toujours la copie la première fois, même si la partie n’a pas avancé', () => {
+    const old = newGame(5, NOW); old.coins = 4242
+    const m = memory()
+    saveGame(m, old, NOW, 'a')
+    const before = m.data[SAVE_KEY]
+    restartState(m, NOW, old) // tutoriel à 0, mais aucune copie n'existe encore
+    expect(m.data[RESET_BACKUP_KEY]).toBe(before)
+  })
   it('remplace la copie si la partie effacée a avancé', () => {
     const m = memory()
     saveGame(m, newGame(1, NOW), NOW, 'a')
