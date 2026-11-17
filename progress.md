@@ -61,8 +61,8 @@
 | 3 | Missions quotidiennes, série et bon de réduction | agent · Sonnet | faite (3fd385d) — 420 tests |
 | 4 | Petits textes d'affichage (récompense, avancée, durée d'absence) | agent · Haiku | faite (ac6bd45) — 431 tests |
 | 5 | Interface des missions (barre, volet, bannière, mise en évidence, autonomie) | agent · Sonnet | faite (254aedd + 8adca8f) — vérifiée dans le navigateur (premiers pas, Passer, quotidiennes, refus du village, sauvegarde v2, téléphone) |
-| 6 | La Gazette de Clairbois (résumé d'absence) | agent · Sonnet | à faire |
-| 7 | Vérification d'ensemble, relecture et publication | chef (Opus) + relecture · Opus | à faire |
+| 6 | La Gazette de Clairbois (résumé d'absence) | agent · Sonnet | faite (48707f3 + a6add65) — vérifiée dans le navigateur (absence de 5 jours) — 462 tests |
+| 7 | Vérification d'ensemble, relecture et publication | chef (Opus) + relecture · Opus | en cours (relecture Opus) |
 
 Étape suivante (6 Finition V1) : ses sous-tâches seront ajoutées ici quand son plan sera écrit.
 
