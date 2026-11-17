@@ -23,13 +23,14 @@ export function toggleOptionsPanel(ctx: OptionsContext): void {
     const go = document.createElement('button')
     go.type = 'button'
     go.className = guard.armed() ? 'vendre confirmer' : 'vendre'
-    go.textContent = guard.armed() ? 'Recommencer ?' : 'Recommencer à zéro'
+    go.textContent = guard.armed() ? 'Tout ton parc sera effacé — confirmer ?' : 'Recommencer à zéro'
     go.addEventListener('click', () => {
       const r = guard.click()
+      if (r === 'ignored') return
       clearTimeout(timer)
       if (r === 'confirmed') { ctx.restart(); return } // ferme aussi le volet
       timer = window.setTimeout(disarm, CONFIRM_TIMEOUT_MS)
-      if (r === 'armed') refreshDrawer()
+      refreshDrawer()
     })
     body.append(warn, go)
   })

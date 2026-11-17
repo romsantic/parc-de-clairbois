@@ -44,6 +44,31 @@ describe('restartState', () => {
   })
 })
 
+describe('restartState : copie de secours', () => {
+  const stored = (m: Storage) => m.getItem(SAVE_KEY)
+  it('ne remplace pas la copie si la partie effacée n’a pas avancé', () => {
+    const real = newGame(1, NOW); real.coins = 777
+    const m = memory()
+    saveGame(m, real, NOW, 'a')
+    restartState(m, NOW) // 1re remise à zéro : copie du vrai parc
+    const backup = m.data[RESET_BACKUP_KEY]
+    const fresh = newGame(2, NOW)
+    saveGame(m, fresh, NOW, 'a')
+    restartState(m, NOW, fresh) // 2e : la partie remplacée est neuve
+    expect(m.data[RESET_BACKUP_KEY]).toBe(backup)
+    expect(stored(m)).toBeTruthy()
+  })
+  it('remplace la copie si la partie effacée a avancé', () => {
+    const m = memory()
+    saveGame(m, newGame(1, NOW), NOW, 'a')
+    const played = newGame(3, NOW); played.missions.tutorial.step = 2
+    saveGame(m, played, NOW, 'a')
+    const now = m.data[SAVE_KEY]
+    restartState(m, NOW, played)
+    expect(m.data[RESET_BACKUP_KEY]).toBe(now)
+  })
+})
+
 describe('createConfirmGuard', () => {
   it('le 1er clic arme, un 2e clic trop rapproché est ignoré, un 2e clic assez tardif confirme', () => {
     let t = 1000

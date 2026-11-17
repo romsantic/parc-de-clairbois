@@ -28,10 +28,16 @@ export interface Session {
 const newOwner = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
 const localOffset = (nowMs: number): number => -new Date(nowMs).getTimezoneOffset()
 const freshGame = (nowMs: number): GameState => ({ ...newGame(newSeed(), nowMs), utcOffsetMin: localOffset(nowMs) })
+/** Vrai si le joueur a dépassé le tout début : premiers pas entamés, passés, ou une mission récupérée. */
+export function hasProgressed(s: GameState): boolean {
+  const m = s.missions
+  return m.tutorial.step > 0 || m.tutorial.skipped || m.story.index > 0 || m.tutorial.current?.claimed === true
+}
 /** Recommencer à zéro : garde une copie de la partie actuelle puis rend une partie neuve (à sauvegarder par l'appelant). */
-export function restartState(store: Storage, nowMs: number): GameState {
+export function restartState(store: Storage, nowMs: number, replaced?: GameState): GameState {
   const previous = store.getItem(SAVE_KEY)
-  if (previous !== null) { try { store.setItem(RESET_BACKUP_KEY, previous) } catch { /* rien */ } }
+  // Une partie qui n'a pas avancé ne remplace pas la copie : on ne perd pas le vrai parc en recommençant deux fois.
+  if (previous !== null && (!replaced || hasProgressed(replaced))) { try { store.setItem(RESET_BACKUP_KEY, previous) } catch { /* rien */ } }
   return freshGame(nowMs)
 }
 const newSeed = () => Math.floor(Math.random() * 2 ** 32)

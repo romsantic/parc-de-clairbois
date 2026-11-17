@@ -112,8 +112,9 @@ export function runGame(store: Storage, storageOk = true): Game | null {
   })
   /** Recommencer à zéro (volet Options et panneau de test) : copie de secours, partie neuve, affichage remis à neuf. */
   function restartGame(): void {
+    if (!canSave) { toast("Ton parc est ouvert dans un autre onglet : impossible de recommencer ici.", false); return }
     testOffset = 0
-    state = restartState(store, Date.now())
+    state = restartState(store, Date.now(), state)
     updateMissions(state, [])
     news = null
     save()
