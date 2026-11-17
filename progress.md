@@ -52,7 +52,19 @@
 
 **Sous-tâche 11 (17/11/2026)** — vérification dans le navigateur faite (café, billet, marchand, vente, niveaux 2 et 3, chemins de jour et de nuit, sauvegarde v1, téléphone). Corrections : emplacements visibles et panneaux lisibles (64fa8b9) ; relecture finale Opus (0 critique, 1 important, 14 mineurs) corrigée en bd75fde — double-clic qui contournait la confirmation de vente/achat, copie de la sauvegarde v1 avant migration, validation renforcée des sauvegardes, marchand réapprovisionné au passage de niveau, « Remplir » le garde-manger, emplacements du Bourg réservés (« Bientôt »), case du billet en rouge quand la réputation baisse, barre du bas à 48 px. Laissé : quelques chiffres encore en dur hors de `src/data/` (M12). 338 tests verts. **Fusionnée dans `main` (997226d) avec l'accord de Romain le 17/11/2026, publiée et vérifiée en ligne.**
 
-Étapes suivantes (5 Missions, 6 Finition V1) : leurs sous-tâches seront ajoutées ici quand leur plan sera écrit.
+**V1 — étape 5 : missions** (branche `etape-5-missions`, plan `docs/superpowers/plans/2026-11-17-etape-5-missions.md`) — **plan écrit le 17/11/2026, en attente de la validation de Romain**
+
+| # | Sous-tâche | Agent · modèle | État |
+|---|---|---|---|
+| 1 | État version 3, compteurs et migration | agent · Sonnet | à faire |
+| 2 | Données des missions et moteur (premiers pas, histoire, passage de niveau) | agent · Sonnet | à faire |
+| 3 | Missions quotidiennes, série et bon de réduction | agent · Sonnet | à faire |
+| 4 | Petits textes d'affichage (récompense, avancée, durée d'absence) | agent · Haiku | à faire |
+| 5 | Interface des missions (barre, volet, bannière, mise en évidence, autonomie) | agent · Sonnet | à faire |
+| 6 | La Gazette de Clairbois (résumé d'absence) | agent · Sonnet | à faire |
+| 7 | Vérification d'ensemble, relecture et publication | chef (Opus) + relecture · Opus | à faire |
+
+Étape suivante (6 Finition V1) : ses sous-tâches seront ajoutées ici quand son plan sera écrit.
 
 ## Liens
 
@@ -69,7 +81,7 @@
 | 2. Cœur de la simulation (faim, garde-manger, santé, naissances, absence, sauvegarde) | ✅ fusionnée |
 | 3. Carte jouable (zones, pose/redimensionnement d'enclos, sélection, barres, retour visuel) | ✅ fusionnée — vérifiée sur le téléphone de Romain |
 | 4. Économie et village (visiteurs, attrait, billet réglable, bâtiments, niveaux du village, marchand, ferme et rations, chemins qui évoluent avec le niveau) | ✅ fusionnée le 17/11/2026 |
-| **5. Missions** (Premiers pas avec Margaux, histoire, quotidiennes, résumé d'absence/Gazette) | **à faire — prochaine** |
+| **5. Missions** (Premiers pas avec Margaux, histoire, quotidiennes, résumé d'absence/Gazette) | **en cours** (branche `etape-5-missions`) |
 | 6. Finition V1 (équilibrage, téléphone, brume des zones, visiteurs sur les chemins, jour/nuit, perfs) | à faire |
 
 Après la V1 : V2 à V5 décrites en fin de spec (personnel et centre vétérinaire, routes à construire contre de l'argent, expéditions, musée, labo, saisons…).
