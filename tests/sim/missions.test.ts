@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { animal, emptyState, enclosure, storyAt, T0 } from './helpers'
 import { applyAction, type Action } from '../../src/sim/actions'
 import { advanceTo } from '../../src/sim/advance'
-import { canLevelUp, missionGateOk, population } from '../../src/sim/village'
+import { canLevelUp, clientsForNewcomers, missionGateOk, population } from '../../src/sim/village'
 import { summarize } from '../../src/sim/summary'
 import { claimMission, currentMission, giveReward, progress, skipTutorial, updateMissions } from '../../src/sim/missions'
 import { STORY, TUTORIAL } from '../../src/data/missions'
@@ -216,7 +216,7 @@ describe('histoire', () => {
   it('la dernière mission faite : plus de mission courante', () => {
     const s = emptyState({ missions: storyAt(10), pantry: { fourrage: 0, viande: 0, capacity: 1000 } })
     s.buildings = []
-    s.village = { level: 3, clientsServed: 250 * 30 }
+    s.village = { level: 3, clientsServed: clientsForNewcomers(250) }
     updateMissions(s, [])
     expect(idOf(s)).toBe('hist-habitants-150')
     expect(currentMission(s)!.mp.done).toBe(true)
@@ -260,7 +260,7 @@ describe('passage de niveau', () => {
   })
   const withPopulation = (s: GameState, n: number): GameState => {
     s.village.clientsServed = 0
-    s.village.clientsServed = (n - population(s)) * 30
+    s.village.clientsServed = clientsForNewcomers(n - population(s))
     expect(population(s)).toBe(n)
     return s
   }

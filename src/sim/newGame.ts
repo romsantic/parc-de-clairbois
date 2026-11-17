@@ -14,7 +14,7 @@ export function newGame(seed: number, nowMs: number): GameState {
     version: 3, time, rng: seed >>> 0, coins: TUNING.START_COINS, nextId: 1,
     pantry: { fourrage: TUNING.START_FOURRAGE, viande: 0, capacity: TUNING.START_PANTRY_CAPACITY },
     enclosures: [], animals: [],
-    ticketPrice: 5, reputation: 1,
+    ticketPrice: 2, reputation: 1,
     village: { level: 1, clientsServed: 0 },
     buildings: [{ slot: 0, type: 'ferme', level: 1 }],
     merchant: { restockAt: time, restocks: 0, offers: [] },

@@ -7,9 +7,9 @@ export const ECONOMY = {
   /** Bonus d'attrait par animal supplémentaire de la même espèce : × (1 + 0,5 × √(n − 1)). */
   APPEAL_EXTRA_FACTOR: 0.5,
   /** Prix juste = arrondi de FAIR_BASE + FAIR_PER_LEVEL × (niveau − 1) + FAIR_PER_APPEAL × attrait. */
-  FAIR_BASE: 4,
-  FAIR_PER_LEVEL: 2,
-  FAIR_PER_APPEAL: 0.4,
+  FAIR_BASE: 2,
+  FAIR_PER_LEVEL: 1,
+  FAIR_PER_APPEAL: 0.05,
   /** Multiplicateur de visiteurs selon [prix / prix juste, multiplicateur] ; 1,3 sous le premier point, 0 après le dernier. */
   PRICE_CURVE: [[0.5, 1.3], [1, 1], [1.5, 0.6], [2, 0.25], [3, 0]] as [number, number][],
   /** Bonus de visiteurs quand l'auberge est construite. */
@@ -20,12 +20,14 @@ export const ECONOMY = {
   REPUTATION_DROP_ABOVE: 1.5,
   REPUTATION_DROP_PER_H: 0.02,
   REPUTATION_GAIN_PER_H: 0.01,
-  /** Un nouvel habitant pour autant de clients servis. */
+  /** Nouveaux venus (réglage de l'étape 6, choix de Romain 17/11) : un habitant pour CLIENTS_PER_NEWCOMER clients servis jusqu'à NEWCOMER_FAST_CLIENTS clients, puis un pour CLIENTS_PER_NEWCOMER_LATE. */
   CLIENTS_PER_NEWCOMER: 30,
+  NEWCOMER_FAST_CLIENTS: 2400,
+  CLIENTS_PER_NEWCOMER_LATE: 350,
   BASE_POPULATION: 10,
   RESIDENTS_PER_LEVEL: 5,
   /** Habitants requis pour passer au niveau 2 puis 3. */
-  LEVEL_POPULATION: { 2: 50, 3: 150 } as Record<2 | 3, number>,
+  LEVEL_POPULATION: { 2: 40, 3: 150 } as Record<2 | 3, number>,
   LEVEL_NAMES: ['Hameau', 'Village', 'Bourg'],
   /** Boutique : dépense par client = (BOUTIQUE_BASE + BOUTIQUE_PER_SPECIES × espèces) × multiplicateur du niveau. */
   BOUTIQUE_BASE: 1,
@@ -52,9 +54,9 @@ export interface BuildingData {
 
 export const BUILDINGS: Record<BuildingType, BuildingData> = {
   ferme: { name: 'Ferme', withArticle: 'une ferme', unlockLevel: 1, buildCost: null, upgradeCost: [400, 1000], share: 0, spend: [0, 0, 0], maxClientsPerH: [0, 0, 0] },
-  cafe: { name: 'Café', withArticle: 'un café', unlockLevel: 1, buildCost: 300, upgradeCost: [600, 1200], share: 0.4, spend: [3, 4, 5], maxClientsPerH: [10, 25, 50] },
-  boutique: { name: 'Boutique', withArticle: 'une boutique', unlockLevel: 2, buildCost: 800, upgradeCost: [1500, 3000], share: 0.3, spend: [1, 1.25, 1.5], maxClientsPerH: [10, 25, 50] },
-  auberge: { name: 'Auberge', withArticle: 'une auberge', unlockLevel: 2, buildCost: 1200, upgradeCost: [2500, 5000], share: 0.1, spend: [8, 10, 12], maxClientsPerH: [4, 8, 15] },
+  cafe: { name: 'Café', withArticle: 'un café', unlockLevel: 1, buildCost: 300, upgradeCost: [600, 1200], share: 0.4, spend: [1.5, 2, 2.5], maxClientsPerH: [10, 25, 50] },
+  boutique: { name: 'Boutique', withArticle: 'une boutique', unlockLevel: 2, buildCost: 800, upgradeCost: [1500, 3000], share: 0.3, spend: [0.5, 0.6, 0.75], maxClientsPerH: [10, 25, 50] },
+  auberge: { name: 'Auberge', withArticle: 'une auberge', unlockLevel: 2, buildCost: 1200, upgradeCost: [2500, 5000], share: 0.1, spend: [4, 5, 6], maxClientsPerH: [4, 8, 15] },
 }
 
 export const FARM = {

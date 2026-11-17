@@ -84,10 +84,12 @@ export function loadGame(store: Storage, migrations: Record<number, Migration> =
 const finite = (x: unknown) => typeof x === 'number' && Number.isFinite(x)
 const intBetween = (x: unknown, min: number, max: number) => typeof x === 'number' && Number.isInteger(x) && x >= min && x <= max
 /** Une mission en cours : id texte, valeur de départ finie, réussie et récupérée vrai/faux. */
-function validProgress(x: unknown): boolean {
+function validProgress(x: unknown, drawnDaily = false): boolean {
   const mp = x as MissionProgress | null
   if (!mp || typeof mp !== 'object' || typeof mp.id !== 'string' || !finite(mp.base) || typeof mp.done !== 'boolean' || typeof mp.claimed !== 'boolean') return false
   // Quotidienne tirée : cible (nombre fini > 0) et récompense (nombres finis >= 0) facultatives, mais saines si présentes.
+  // Quotidienne au format neuf (id sans « # ») : cible et récompense obligatoires.
+  if (drawnDaily && !mp.id.includes('#') && (mp.n === undefined || mp.reward === undefined)) return false
   if (mp.n !== undefined && !(finite(mp.n) && mp.n > 0)) return false
   if (mp.reward !== undefined) {
     const r = mp.reward as unknown
@@ -137,7 +139,7 @@ function looksLikeGame(s: unknown): s is GameState {
   if (ms.story.current !== null && !validProgress(ms.story.current)) return false
   const d = ms.daily
   if (!d || !finite(d.dayKey) || !Array.isArray(d.list) || !finite(d.streak) || !finite(d.coupons)) return false
-  if (!d.list.every(validProgress)) return false
+  if (!d.list.every((m) => validProgress(m, true))) return false
   if (d.lastFullDay !== null && !finite(d.lastFullDay)) return false
   if (typeof ms.unread !== 'boolean' || !finite(g.utcOffsetMin)) return false
   return true

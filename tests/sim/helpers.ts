@@ -13,7 +13,7 @@ export function emptyState(over: Partial<GameState> = {}): GameState {
     version: 3, time: T0, rng: 12345, coins: 1000, nextId: 100,
     pantry: { fourrage: 0, viande: 0, capacity: 1000 },
     enclosures: [], animals: [],
-    ticketPrice: 5, reputation: 1,
+    ticketPrice: 2, reputation: 1,
     village: { level: 1, clientsServed: 0 },
     buildings: [{ slot: 0, type: 'ferme', level: 1 }],
     merchant: { restockAt: T0, restocks: 0, offers: [] },

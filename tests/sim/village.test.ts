@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { population, canLevelUp, farmLevel, missionGateOk } from '../../src/sim/village'
+import { population, canLevelUp, farmLevel, missionGateOk, newcomers, clientsForNewcomers } from '../../src/sim/village'
 import { advanceTo } from '../../src/sim/advance'
 import { newGame } from '../../src/sim/newGame'
 import { summarize } from '../../src/sim/summary'
@@ -24,11 +24,21 @@ describe('population et niveau', () => {
     expect(population(s)).toBe(10 + 5 + 10)
     expect(population(emptyState({ village: { level: 1, clientsServed: 300 } }))).toBe(25)
   })
+  it('nouveaux venus : vite au début (1 pour 30), puis lentement (1 pour 350 après 2400 clients)', () => {
+    expect(newcomers(0)).toBe(0)
+    expect(newcomers(29)).toBe(0)
+    expect(newcomers(30)).toBe(1)
+    expect(newcomers(2400)).toBe(80)
+    expect(newcomers(2400 + 349)).toBe(80)
+    expect(newcomers(2400 + 350)).toBe(81)
+    expect(newcomers(2400 + 3500)).toBe(90)
+    for (const n of [0, 1, 80, 81, 150]) expect(newcomers(clientsForNewcomers(n))).toBe(n)
+  })
   it('canLevelUp : seuils et raisons', () => {
     const at = (n: number, level: 1 | 2 | 3 = 1) =>
-      emptyState({ village: { level, clientsServed: (n - 15) * 30 }, missions: storyAt(level === 1 ? 4 : 8) })
-    expect(canLevelUp(at(49))).toEqual({ ok: false, reason: 'Il faut 50 habitants (encore 1).' })
-    expect(canLevelUp(at(50))).toEqual({ ok: true, level: 2 })
+      emptyState({ village: { level, clientsServed: clientsForNewcomers(n - 15) }, missions: storyAt(level === 1 ? 4 : 8) })
+    expect(canLevelUp(at(39))).toEqual({ ok: false, reason: 'Il faut 40 habitants (encore 1).' })
+    expect(canLevelUp(at(40))).toEqual({ ok: true, level: 2 })
     expect(canLevelUp(at(150, 2))).toEqual({ ok: true, level: 3 })
     expect(canLevelUp(at(500, 3))).toEqual({ ok: false, reason: 'Clairbois est déjà un bourg.' })
     expect(missionGateOk(emptyState(), 2)).toBe(false)
@@ -39,23 +49,23 @@ describe('population et niveau', () => {
     expect(farmLevel(emptyState({ buildings: [] }))).toBe(0)
   })
   it('le niveau ne change jamais tout seul (30 jours à 200 habitants)', () => {
-    const s = happySheep({ village: { level: 1, clientsServed: 30 * 185 } })
+    const s = happySheep({ village: { level: 1, clientsServed: clientsForNewcomers(185) } })
     const r = advanceTo(s, T0 + 30 * DAY_MS)
     expect(r.state.village.level).toBe(1)
   })
 })
 
 describe('recettes à chaque pas', () => {
-  it('1 h, 2 moutons heureux au prix juste → 30 pièces', () => {
+  it('1 h, 2 moutons heureux au prix juste → 12 pièces', () => {
     const r = advanceTo(happySheep(), T0 + HOUR_MS)
-    expect(r.state.coins - 1000).toBeCloseTo(30, 2)
+    expect(r.state.coins - 1000).toBeCloseTo(12, 2)
     expect(r.state.totalVisitors).toBeCloseTo(6, 2)
     expect(r.events.some((e) => e.kind === 'recettes')).toBe(true)
   })
   it('réputation : prix à 2 × juste 10 h → 0,8 ; puis prix juste 10 h → 0,9', () => {
-    const a = advanceTo(happySheep({ ticketPrice: 10 }), T0 + 10 * HOUR_MS).state
+    const a = advanceTo(happySheep({ ticketPrice: 4 }), T0 + 10 * HOUR_MS).state
     expect(a.reputation).toBeCloseTo(0.8, 5)
-    a.ticketPrice = 5
+    a.ticketPrice = 2
     const b = advanceTo(a, a.time + 10 * HOUR_MS).state
     expect(b.reputation).toBeCloseTo(0.9, 5)
   })

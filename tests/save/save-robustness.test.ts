@@ -76,6 +76,8 @@ describe('sauvegarde v2 abîmée (relecture)', () => {
     'quotidienne : élément nul': (g) => { g.missions.daily.list = [null] },
     'quotidienne : cible nulle': (g) => { g.missions.daily.list = [{ id: 'quot-pieces', base: 0, done: false, claimed: false, n: 0, reward: { coins: 30 } }] },
     'quotidienne : cible non finie': (g) => { g.missions.daily.list = [{ id: 'quot-pieces', base: 0, done: false, claimed: false, n: 'beaucoup', reward: { coins: 30 } }] },
+    'quotidienne neuve : cible absente': (g) => { g.missions.daily.list = [{ id: 'quot-pieces', base: 0, done: false, claimed: false, reward: { coins: 30 } }] },
+    'quotidienne neuve : récompense absente': (g) => { g.missions.daily.list = [{ id: 'quot-pieces', base: 0, done: false, claimed: false, n: 150 }] },
     'quotidienne : récompense non objet': (g) => { g.missions.daily.list = [{ id: 'quot-pieces', base: 0, done: false, claimed: false, n: 150, reward: 30 }] },
     'quotidienne : récompense négative': (g) => { g.missions.daily.list = [{ id: 'quot-pieces', base: 0, done: false, claimed: false, n: 150, reward: { coins: -5 } }] },
     'quotidienne : récompense inconnue': (g) => { g.missions.daily.list = [{ id: 'quot-pieces', base: 0, done: false, claimed: false, n: 150, reward: { diamants: 5 } }] },
