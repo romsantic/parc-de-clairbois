@@ -3,12 +3,14 @@ import type { Summary } from '../sim/summary'
 import type { ActionResult } from '../sim/actions'
 import { cleanEnclosure, cureAnimal, addRations, cureCost } from '../sim/actions'
 import { SPECIES } from '../data/species'
+import { TUTORIAL } from '../data/missions'
 import { ECONOMY } from '../data/economy'
-import { DAY_MS, HOUR_MS } from '../data/tuning'
+import { DAY_MS, HOUR_MS, TUNING } from '../data/tuning'
 import { ageStage, satiety } from '../sim/animal'
 import { animalsIn, capacity, cleanliness } from '../sim/enclosure'
 import { happiness } from '../sim/happiness'
 import { autonomyHours } from '../sim/feeding'
+import { msUntilNextDay } from './missionModel'
 
 /** Ce que le panneau de test peut faire sur la partie en cours. */
 export interface DebugController {
@@ -53,6 +55,17 @@ export function mountDebugPanel(ctl: DebugController): void {
     render()
   }
 
+  /** Rend la mission courante réussie (sans verser la récompense : il reste à cliquer « Récupérer »). */
+  function finishMission() {
+    const s = structuredClone(ctl.get())
+    const m = s.missions
+    const cur = m.tutorial.step < TUTORIAL.length ? m.tutorial.current : m.story.current
+    if (cur) cur.done = true
+    else for (const d of m.daily.list) d.done = true
+    ctl.set(s)
+    render()
+  }
+
   function render() {
     const s = ctl.get()
     panel.replaceChildren()
@@ -79,6 +92,8 @@ export function mountDebugPanel(ctl: DebugController): void {
       button('+20 fourrage', () => act(addRations(ctl.get(), 'fourrage', 20))),
       button('+20 viande', () => act(addRations(ctl.get(), 'viande', 20))),
       button('+20 habitants', () => { const n = structuredClone(ctl.get()); n.village.clientsServed += 20 * ECONOMY.CLIENTS_PER_NEWCOMER; ctl.set(n); render() }),
+      button('Finir la mission', () => finishMission()),
+      button('Jour suivant', () => { const t = ctl.get(); ctl.advanceBy(msUntilNextDay(t.time, t.utcOffsetMin) + TUNING.STEP_MS); render() }),
       button('Niveau suivant', () => { const n = structuredClone(ctl.get()); n.village.level = Math.min(3, n.village.level + 1) as 1 | 2 | 3; ctl.set(n); render() }),
     )
     panel.append(bar)

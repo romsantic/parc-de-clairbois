@@ -10,7 +10,10 @@ import { ageStage, satiety } from '../sim/animal'
 import { happiness } from '../sim/happiness'
 import { ICONS, iconButton } from './icons'
 import { closeDrawer, isDrawerOpen, openDrawer, refreshDrawer } from './drawer'
-import { toast } from './feedback'
+import { guide } from './highlight'
+import { armClaimGuard, claimButton, openMissionPanel, toggleMissionPanel } from './missionPanel'
+import { mountMissionBanner } from './missionBanner'
+import { currentLine, dailyCount, storyEnded, storyEndMessage } from './missionModel'
 import { buildBuildingBar, slotKey } from './buildingBar'
 import { toggleMerchantPanel } from './merchantPanel'
 import { sellPrice } from '../sim/merchant'
@@ -21,6 +24,7 @@ export interface BottomBarContext {
   dispatch(action: Action, from?: HTMLElement | null): boolean
   startBuild(zone: Zone, point: { x: number; z: number }): void
   startResize(encId: number): void
+  openGazette(): void
 }
 
 const AGE = { bebe: 'bébé', jeune: 'jeune', adulte: 'adulte' } as const
@@ -34,7 +38,7 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
   bar.className = 'barre-bas'
   const left = document.createElement('div'); left.className = 'zone-selection'
   const actions = document.createElement('div'); actions.className = 'zone-actions'
-  const mission = document.createElement('button'); mission.type = 'button'; mission.className = 'zone-mission'
+  const mission = document.createElement('div'); mission.className = 'zone-mission'
   const right = document.createElement('div'); right.className = 'zone-droite'
   bar.append(left, actions, mission, right)
 
@@ -43,14 +47,13 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
   tab.setAttribute('aria-label', 'Déplier la barre'); tab.hidden = true
   document.body.append(bar, tab)
 
-  mission.innerHTML = ICONS.cible
-  mission.append(text('span', 'Les missions arrivent bientôt'))
-  mission.addEventListener('click', () => toast('Les missions de Margaux arrivent bientôt', true))
+  const panelCtx = { get: ctx.get, dispatch: ctx.dispatch }
+  mountMissionBanner(ctx.get, () => openMissionPanel(panelCtx))
 
-  const marchand = iconButton(ICONS.marchand, 'Marchand d’animaux')
+  const marchand = guide(iconButton(ICONS.marchand, 'Marchand d’animaux'), 'marchand')
   marchand.addEventListener('click', () => toggleMerchantPanel({ get: ctx.get, selection: ctx.selection, dispatch: ctx.dispatch }))
-  const gazette = iconButton(ICONS.gazette, 'Gazette (bientôt)', { disabled: true })
-  gazette.addEventListener('click', () => toast('Bientôt disponible', true))
+  const gazette = iconButton(ICONS.gazette, 'La Gazette de Clairbois')
+  gazette.addEventListener('click', () => ctx.openGazette())
   const fold = iconButton(ICONS.replier, 'Replier la barre')
   fold.addEventListener('click', () => { bar.hidden = true; tab.hidden = false; closeDrawer() })
   tab.addEventListener('click', () => { bar.hidden = false; tab.hidden = true })
@@ -132,20 +135,24 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
     const s = ctx.get()
     if (p.kind === 'enclos') {
       const enc = s.enclosures.find((e) => e.id === p.id)
-      if (!enc) { left.append(text('span', 'Clique un enclos ou une zone', 'discret')); return }
+      if (!enc) { left.append(text('span', 'Clique un enclos ou une zone', 'discret invite')); return }
       left.innerHTML = ICONS.patte
       left.append(text('b', enc.species ? SPECIES[enc.species].name : 'Enclos vide', 'nom'), text('span', '', 'compte'))
       const gauge = document.createElement('span'); gauge.className = 'jauge'; gauge.title = 'Propreté'
       gauge.append(document.createElement('i'))
       left.append(gauge, text('span', '', 'malades'))
-      const clean = iconButton(ICONS.balai, 'Nettoyer', { price: TUNING.CLEAN_COST })
+      const clean = guide(iconButton(ICONS.balai, 'Nettoyer', { price: TUNING.CLEAN_COST }), 'nettoyer')
       clean.addEventListener('click', () => ctx.dispatch({ type: 'nettoyer', encId: p.id }, clean))
       const cure = iconButton(ICONS.soin, 'Soigner les malades')
       cure.addEventListener('click', () => ctx.dispatch({ type: 'soignerTout', encId: p.id }, cure))
       const resize = iconButton(ICONS.agrandir, 'Redimensionner')
       resize.addEventListener('click', () => ctx.startResize(p.id))
-      const details = iconButton(ICONS.liste, 'Détails des animaux')
-      details.addEventListener('click', () => isDrawerOpen(`enclos:${p.id}`) ? closeDrawer() : enclosureDetails(p.id))
+      const details = guide(iconButton(ICONS.liste, 'Détails des animaux'), 'detailsEnclos')
+      details.addEventListener('click', () => {
+        if (isDrawerOpen(`enclos:${p.id}`)) { closeDrawer(); return }
+        enclosureDetails(p.id)
+        ctx.dispatch({ type: 'vu', what: 'ficheEnclos' })
+      })
       actions.append(clean, cure, resize, details)
     } else if (p.kind === 'zone') {
       left.append(text('b', p.zone.name, 'nom'))
@@ -153,17 +160,49 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
         left.append(text('span', `Se débloque au niveau ${p.zone.unlockLevel} du village`, 'discret'))
       } else {
         const add = iconButton(ICONS.plus, 'Nouvel enclos')
+        if (p.zone.id === 'prairie') guide(add, 'prairie')
         add.addEventListener('click', () => ctx.startBuild(p.zone, p.point))
         actions.append(add)
       }
     } else if (p.kind === 'emplacement') {
       slotUpdate = buildBuildingBar(ctx, p.slot, left, actions)
     } else {
-      left.append(text('span', 'Clique un enclos ou une zone', 'discret'))
+      left.append(text('span', 'Clique un enclos ou une zone', 'discret invite'))
     }
   }
 
+  /** Zone mission : reconstruite seulement quand la mission change ; l'avancée se met à jour sur place. */
+  let missionSeen = ''
+  let missionProgress: HTMLElement | null = null
+  let missionDaily: HTMLElement | null = null
+  function updateMission() {
+    const s = ctx.get()
+    const l = currentLine(s)
+    const d = dailyCount(s)
+    const ended = !l && storyEnded(s)
+    const sig = JSON.stringify([l?.id, l?.done, d !== null, ended])
+    if (sig !== missionSeen) {
+      missionSeen = sig
+      mission.replaceChildren()
+      mission.classList.toggle('reussie', !!l?.done)
+      const open = document.createElement('button')
+      open.type = 'button'; open.className = 'mission-ouvrir'
+      open.innerHTML = ICONS.cible
+      open.append(text('span', l ? l.title : ended ? storyEndMessage : 'Une nouvelle mission arrive…', 'titre'))
+      missionProgress = l ? text('span', '', 'avancee') : null
+      if (missionProgress) open.append(missionProgress)
+      missionDaily = d ? text('span', '', 'quot') : null
+      if (missionDaily) { missionDaily.title = 'Missions du jour réussies'; open.append(missionDaily) }
+      open.addEventListener('click', () => toggleMissionPanel(panelCtx))
+      mission.append(open)
+      if (l?.done) { mission.append(claimButton(panelCtx, l, true, updateMission)); armClaimGuard() }
+    }
+    if (missionProgress && l) missionProgress.textContent = l.progress
+    if (missionDaily && d) missionDaily.textContent = `☀ ${d.done}/${d.total}`
+  }
+
   function update() {
+    updateMission()
     const p = ctx.selection()
     const kind = p.kind === 'enclos' ? `e${p.id}` : p.kind === 'zone' ? `z${p.zone.id}` : p.kind === 'emplacement' ? `s${p.slot}` : 'rien'
     const key = p.kind === 'emplacement' ? slotKey(ctx.get(), p.slot) : kind

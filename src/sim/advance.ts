@@ -5,6 +5,7 @@ import { healthStep } from './health'
 import { breedingStep } from './breeding'
 import { economyStep } from './economy'
 import { merchantStep } from './merchant'
+import { missionsStep } from './missions'
 
 /** Un pas de 10 minutes, en place : repas, santé, puis naissances et conceptions, puis recettes et marchand. */
 export function step(state: GameState): GameEvent[] {
@@ -15,6 +16,7 @@ export function step(state: GameState): GameEvent[] {
   breedingStep(state, events)
   economyStep(state, events)
   merchantStep(state, events)
+  missionsStep(state, events) // en dernier : mesure ce que ce pas vient de changer
   return events
 }
 

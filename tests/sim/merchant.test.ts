@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { newGame } from '../../src/sim/newGame'
-import { catalogue, restock, merchantStep, acceptsSpecies, buyAnimal, sellPrice, sellAnimal } from '../../src/sim/merchant'
+import { catalogue, restock, merchantStep, acceptsSpecies, buyAnimal, sellPrice, sellAnimal, offerPriceFor } from '../../src/sim/merchant'
 import { applyAction, buyRations } from '../../src/sim/actions'
 import { advanceTo } from '../../src/sim/advance'
 import { ageStage } from '../../src/sim/animal'
@@ -175,5 +175,43 @@ describe('relecture : enclos vidé par la vente', () => {
     const un = ok(sellAnimal(s, 2))
     expect(un.enclosures[0].species).toBe('mouton')
     expect(ok(sellAnimal(un, 3)).enclosures[0].species).toBeNull()
+  })
+})
+
+describe('bon de réduction', () => {
+  const withCoupon = (coins = 1000): GameState => {
+    const s = emptyState({ coins, enclosures: [enclosure(2, null)] })
+    s.merchant.offers = [{ id: 50, species: 'cochon', sex: 'F', stage: 'adulte', price: 150 }]
+    s.missions.daily.coupons = 1
+    return s
+  }
+  it('sans demander le bon : prix plein, bon conservé', () => {
+    const s = ok(buyAnimal(withCoupon(), 50, 2))
+    expect(s.coins).toBe(850)
+    expect(s.missions.daily.coupons).toBe(1)
+  })
+  it('avec useCoupon et 0 bon : refus', () => {
+    const s = withCoupon(); s.missions.daily.coupons = 0
+    expect(buyAnimal(s, 50, 2, true)).toEqual({ ok: false, reason: "Tu n'as pas de bon de réduction." })
+  })
+  it('un cochon à 150 avec le bon choisi : -113 pièces, bon consommé', () => {
+    const s = ok(buyAnimal(withCoupon(), 50, 2, true))
+    expect(s.coins).toBe(1000 - 113)
+    expect(s.missions.daily.coupons).toBe(0)
+  })
+  it('offerPriceFor donne le prix réel', () => {
+    const s = withCoupon()
+    expect(offerPriceFor(s, s.merchant.offers[0])).toBe(150)
+    expect(offerPriceFor(s, s.merchant.offers[0], true)).toBe(113)
+    s.missions.daily.coupons = 0
+    expect(offerPriceFor(s, s.merchant.offers[0], true)).toBe(150)
+  })
+  it('le refus tient compte du prix réduit', () => {
+    expect(buyAnimal(withCoupon(112), 50, 2, true)).toEqual({ ok: false, reason: 'Pas assez de pièces (il en faut 113).' })
+    expect(buyAnimal(withCoupon(113), 50, 2, true).ok).toBe(true)
+  })
+  it('sans bon, le prix est plein', () => {
+    const s = withCoupon(); s.missions.daily.coupons = 0
+    expect(ok(buyAnimal(s, 50, 2)).coins).toBe(850)
   })
 })

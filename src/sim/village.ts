@@ -1,4 +1,5 @@
 import { BUILDINGS, ECONOMY, SLOTS } from '../data/economy'
+import { STORY } from '../data/missions'
 import type { BuildingType, GameState } from './types'
 
 /** Habitants : base + RESIDENTS_PER_LEVEL par niveau de chaque bâtiment + un nouvel habitant par groupe de clients servis. */
@@ -8,9 +9,11 @@ export function population(state: GameState): number {
     + Math.floor(state.village.clientsServed / ECONOMY.CLIENTS_PER_NEWCOMER)
 }
 
-/** Mission du palier. À l'étape 4 elle est toujours remplie ; l'étape 5 vérifiera la vraie mission. */
-export function missionGateOk(_state: GameState, _level: 2 | 3): boolean {
-  return true
+/** Mission du palier : la mission d'histoire marquée `gate: level` est réussie (même pas encore récupérée), ou l'histoire est déjà au-delà. */
+export function missionGateOk(state: GameState, level: 2 | 3): boolean {
+  const gateIndex = STORY.findIndex((m) => m.gate === level)
+  const { index, current } = state.missions.story
+  return index > gateIndex || (index === gateIndex && current?.done === true)
 }
 
 /** Un emplacement libre et débloqué peut-il encore recevoir un bâtiment ? (Pas au Bourg en V1 ; sinon s'il reste un type constructible.) */

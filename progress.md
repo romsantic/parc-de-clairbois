@@ -52,7 +52,21 @@
 
 **Sous-tâche 11 (17/11/2026)** — vérification dans le navigateur faite (café, billet, marchand, vente, niveaux 2 et 3, chemins de jour et de nuit, sauvegarde v1, téléphone). Corrections : emplacements visibles et panneaux lisibles (64fa8b9) ; relecture finale Opus (0 critique, 1 important, 14 mineurs) corrigée en bd75fde — double-clic qui contournait la confirmation de vente/achat, copie de la sauvegarde v1 avant migration, validation renforcée des sauvegardes, marchand réapprovisionné au passage de niveau, « Remplir » le garde-manger, emplacements du Bourg réservés (« Bientôt »), case du billet en rouge quand la réputation baisse, barre du bas à 48 px. Laissé : quelques chiffres encore en dur hors de `src/data/` (M12). 338 tests verts. **Fusionnée dans `main` (997226d) avec l'accord de Romain le 17/11/2026, publiée et vérifiée en ligne.**
 
-Étapes suivantes (5 Missions, 6 Finition V1) : leurs sous-tâches seront ajoutées ici quand leur plan sera écrit.
+**V1 — étape 5 : missions** (branche `etape-5-missions`, plan `docs/superpowers/plans/2026-11-17-etape-5-missions.md`) — **plan écrit le 17/11/2026, validé par Romain** (récompenses à récupérer par un bouton « Récupérer », pas automatiques)
+
+| # | Sous-tâche | Agent · modèle | État |
+|---|---|---|---|
+| 1 | État version 3, compteurs et migration | agent · Sonnet | faite (db790fb) — 355 tests |
+| 2 | Données des missions et moteur (premiers pas, histoire, passage de niveau) | agent · Sonnet | faite (9c1afd5) — 390 tests |
+| 3 | Missions quotidiennes, série et bon de réduction | agent · Sonnet | faite (3fd385d) — 420 tests |
+| 4 | Petits textes d'affichage (récompense, avancée, durée d'absence) | agent · Haiku | faite (ac6bd45) — 431 tests |
+| 5 | Interface des missions (barre, volet, bannière, mise en évidence, autonomie) | agent · Sonnet | faite (254aedd + 8adca8f) — vérifiée dans le navigateur (premiers pas, Passer, quotidiennes, refus du village, sauvegarde v2, téléphone) |
+| 6 | La Gazette de Clairbois (résumé d'absence) | agent · Sonnet | faite (48707f3 + a6add65) — vérifiée dans le navigateur (absence de 5 jours) — 462 tests |
+| 7 | Vérification d'ensemble, relecture et publication | chef (Opus) + relecture · Opus | relecture et corrections faites (6ceae07, 2af73bf) — 493 tests — **en attente de l'accord de fusion de Romain** |
+
+**Sous-tâche 7 (17/11/2026)** — relecture Opus : 0 critique, 5 importants, quelques mineurs, tous corrigés en 6ceae07 (enclos de départ un peu sale pour que « Nettoie l'enclos » marche tout de suite ; Gazette aussi quand l'onglet est repris sans rechargement ; validation complète des sauvegardes v3 ; minuit qui ne recule pas ; quotidiennes versées d'office signalées « (récompense versée) » ; seuils d'autonomie dans `TUNING`). Deux nouveaux choix de Romain en 2af73bf : missions d'habitants **150** (porte du Bourg) et **250** (finale V1) ; bon −25 % **au choix** (case « Utiliser mon bon » par offre). Vérifié dans le navigateur (en lisant la page, panneau masqué) : les 9 premiers pas, Passer, quotidiennes, refus du village, sauvegarde v2, Gazette après 5 jours, bon de réduction, téléphone. Pas vu à l'œil : le « ! » doré qui se déplace sur la carte.
+
+Étape suivante (6 Finition V1) : ses sous-tâches seront ajoutées ici quand son plan sera écrit.
 
 ## Liens
 
@@ -69,8 +83,8 @@
 | 2. Cœur de la simulation (faim, garde-manger, santé, naissances, absence, sauvegarde) | ✅ fusionnée |
 | 3. Carte jouable (zones, pose/redimensionnement d'enclos, sélection, barres, retour visuel) | ✅ fusionnée — vérifiée sur le téléphone de Romain |
 | 4. Économie et village (visiteurs, attrait, billet réglable, bâtiments, niveaux du village, marchand, ferme et rations, chemins qui évoluent avec le niveau) | ✅ fusionnée le 17/11/2026 |
-| **5. Missions** (Premiers pas avec Margaux, histoire, quotidiennes, résumé d'absence/Gazette) | **à faire — prochaine** |
-| 6. Finition V1 (équilibrage, téléphone, brume des zones, visiteurs sur les chemins, jour/nuit, perfs) | à faire |
+| **5. Missions** (Premiers pas avec Margaux, histoire, quotidiennes, résumé d'absence/Gazette) | **en cours** (branche `etape-5-missions`) |
+| 6. Finition V1 (équilibrage, téléphone, brume des zones, visiteurs sur les chemins, jour/nuit, perfs, **bouton « Recommencer à zéro »**) | à faire |
 
 Après la V1 : V2 à V5 décrites en fin de spec (personnel et centre vétérinaire, routes à construire contre de l'argent, expéditions, musée, labo, saisons…).
 
@@ -83,28 +97,43 @@ Après la V1 : V2 à V5 décrites en fin de spec (personnel et centre vétérina
 - Chemins de terre texturés ; ils **évolueront avec le niveau du village** (gravier, pavés, puis routes en V2).
 - Rester en **TypeScript** (pas de Rust : aucun besoin de performance à ce stade).
 
+## À prévoir à l'étape 6 (demandé par Romain le 17/11/2026)
+
+- **Bouton « Recommencer à zéro »** accessible en jeu (pas seulement dans `?debug`) : efface la partie en cours et relance une nouvelle partie depuis le début. Confirmation en deux clics (comme la vente), avec un texte clair « Tout ton parc sera effacé ». Pas d'écran d'accueil ni de parties multiples : le jeu continue de s'ouvrir directement sur le parc.
+- **Missions du jour de plus en plus difficiles** : la quantité demandée **et** la récompense de chaque quotidienne doivent suivre l'avancement réel du parc, pas seulement le niveau du village (aujourd'hui seules « visiteurs » et « pièces » voient leur cible grandir ; les récompenses sont × niveau). Exemple de Romain : « Acheter 30 rations » n'a plus d'intérêt avec un parc complet. Piste : régler chaque cible sur l'état du parc (consommation par jour, visiteurs par heure, recettes, nombre d'animaux…) et la récompense sur l'effort demandé. Fichiers : `src/data/missions.ts` (`DAILY_POOL`) et le tirage dans `src/sim/`.
+
+## Décisions de l'étape 5 (en plus de la spec)
+
+- Récompenses **à récupérer par un bouton « Récupérer »** ; la mission suivante n'arrive qu'après le clic. Exception : une quotidienne réussie mais pas récupérée est versée d'office à minuit.
+- Ordre : 9 premiers pas avec Margaux (bouton « Passer » qui donne les récompenses restantes), puis l'histoire ; les quotidiennes commencent après les premiers pas. Une ancienne partie refait les premiers pas (ce qui est déjà fait est réussi aussitôt).
+- Histoire : Hameau = première naissance, améliorer la ferme, 3 espèces, 20 visiteurs/h (porte du Village) ; Village = auberge, 2 espèces de forêt, 2 jours d'autonomie, 150 habitants (porte du Bourg) ; Bourg = naissance d'un loup ou d'un taureau, les 10 espèces, 250 habitants (fin de la V1).
+- Quotidiennes : 3 par jour à minuit (heure de l'appareil) ; un jour compte pour la série si les 3 sont réussies ; tous les 7 jours, un bon −25 % que le joueur utilise sur l'animal de son choix.
+- Gazette : s'ouvre seule après au moins 1 h d'absence (rechargement ou onglet repris) ; l'icône la rouvre.
+
 ## Décisions de l'étape 4 (en plus de la spec)
 
 - Chaque bâtiment est **unique** ; les 2 emplacements du Bourg affichent « Bientôt » (nouveaux bâtiments dans une évolution future).
 - Passage de niveau **par un bouton** dans le volet du village (case village de la barre du haut), jamais automatique.
 - Réglages initiaux (tous dans `src/data/economy.ts` / `tuning.ts`, à ajuster en jouant) : 4 visiteurs par point d'attrait ; prix juste 4 + 2 × (niveau − 1) + 0,4 × attrait ; population 10 + 5 par niveau de bâtiment + 1 par 30 clients ; seuils 50 / 150 ; marchand renouvelé toutes les 6 h ; 30 fourrage au départ, conception 10 %/h, repos de 2 × gestation après une naissance.
 
-## À régler à l'étape 5 (déjà repéré)
+## Laissé pour l'étape 6 (repéré aux étapes 4 et 5)
 
-- `missionGateOk` (`src/sim/village.ts`) renvoie toujours vrai : y brancher la mission du palier.
-- Le tutoriel de Margaux s'appuie sur : ferme déjà construite, premier stock du marchand avec un couple de cochons, billet et café.
-- Laissé de la relecture : quelques chiffres encore en dur hors de `src/data/` (M12). Petits défauts anciens : calculs O(N²) par pas, `JSON.stringify` du panneau de test.
+- Petits défauts anciens : quelques chiffres encore en dur hors de `src/data/` (position de la mairie dans `decor.ts`…), calculs O(N²) par pas, `JSON.stringify` du panneau de test.
 - Les achats à la ferme (rations, amélioration, garde-manger) sont testés automatiquement mais pas encore essayés à la main.
+- Le « ! » doré qui se déplace au-dessus de la cible des premiers pas n'a pas été regardé à l'œil (panneau du navigateur masqué pendant la vérification).
+- Textes des habitants écrits par un agent : à relire par Romain en jouant.
+- Rattrapage de moins d'une heure en direct : ses événements ne sont pas gardés (sans conséquence, pas de Gazette en dessous d'une heure).
 
 ## Architecture (où est quoi)
 
-- `src/data/` chiffres du jeu (espèces, réglages, zones, modèles par espèce) — aucune logique.
+- `src/data/` chiffres du jeu (espèces, réglages, zones, modèles par espèce, économie, missions) — aucune logique.
+- Missions : données dans `src/data/missions.ts`, moteur pur dans `src/sim/missions.ts` (table `MEASURES` : une ligne par sorte d'objectif) ; compteurs dans `state.stats` ; mis à jour à chaque pas et après chaque action ; sauvegarde v3.
 - `src/sim/` règles pures et testées sur un `GameState` sérialisable ; **une seule** fonction fait avancer le temps : `advanceTo(state, now)` par pas fixes de 10 min (jeu en direct = rattrapage d'absence). Actions du joueur : `applyAction` / `previewEnclosure` dans `actions.ts`.
 - `src/save/` sauvegarde versionnée (propriétaire par onglet, copies de secours, migrations).
 - `src/game/` session + boucle (`runGame` : horloge, sauvegarde, `dispatch` avec retour visuel).
 - `src/scene/` 3D : monde, décor, zones, vue du parc pilotée par l'état (`parkView`), éditeur d'enclos, sélection, caméra.
 - `src/ui/` barres, volet, retour visuel, panneau de test.
-- Tests : `tests/` (Vitest), 338 au 17/11/2026.
+- Tests : `tests/` (Vitest), 493 au 17/11/2026 (étape 5).
 
 ## Mémo technique (pièges déjà rencontrés)
 

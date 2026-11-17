@@ -5,6 +5,7 @@ import type { Animal, GameEvent, GameState } from './types'
 import { ageStage, isHungry } from './animal'
 import { animalsIn, capacity } from './enclosure'
 import { happiness } from './happiness'
+import { bump } from './stats'
 import { chanceOver, random, randomInt } from './random'
 
 /** Naissances arrivées à terme, puis nouvelles conceptions. */
@@ -28,6 +29,8 @@ export function breedingStep(state: GameState, events: GameEvent[]): void {
       }
       state.animals.push(baby)
       events.push({ kind: 'naissance', at: now, animalId: baby.id, motherId: mother.id })
+      bump(state.stats, 'naissances')
+      state.stats.birthsBySpecies[baby.species] = (state.stats.birthsBySpecies[baby.species] ?? 0) + 1
     }
   }
 
@@ -47,6 +50,7 @@ export function breedingStep(state: GameState, events: GameEvent[]): void {
       if (random(state) < chance) {
         f.pregnantSince = now
         events.push({ kind: 'gestation', at: now, animalId: f.id })
+        bump(state.stats, 'gestations')
       }
     }
   }

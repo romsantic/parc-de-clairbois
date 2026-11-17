@@ -6,6 +6,7 @@ import { slotCanBuild } from '../sim/village'
 import { BUILDINGS, SLOTS } from '../data/economy'
 import { TUNING } from '../data/tuning'
 import { ICONS, iconButton } from './icons'
+import { guide } from './highlight'
 
 export interface BuildingBarContext {
   get(): GameState
@@ -65,6 +66,7 @@ export function buildBuildingBar(ctx: BuildingBarContext, slot: number, left: HT
       const locked = d.unlockLevel > s.village.level
       const label = locked ? `${d.name} (se débloque au niveau ${d.unlockLevel})` : `Construire ${d.withArticle}`
       const btn = iconButton(BUILD_ICON[t], label, { price: d.buildCost ?? 0, disabled: locked })
+      if (t === 'cafe') guide(btn, 'emplacementLibre')
       btn.addEventListener('click', () => ctx.dispatch({ type: 'batir', slot, building: t }, btn))
       actions.append(btn)
     }
@@ -84,6 +86,7 @@ export function buildBuildingBar(ctx: BuildingBarContext, slot: number, left: HT
     for (const [food, icon, label] of [['fourrage', ICONS.fourrage, 'Fourrage'], ['viande', ICONS.viande, 'Viande']] as const) {
       for (const n of [10, 50]) {
         const btn = withQty(iconButton(icon, `${label} ×${n}`, { price: rationCost(s, food, n) }), `×${n}`)
+        if (food === 'fourrage') guide(btn, 'ferme')
         btn.addEventListener('click', () => ctx.dispatch({ type: 'acheterRations', food, n }, btn))
         actions.append(btn)
       }

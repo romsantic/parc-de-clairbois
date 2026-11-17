@@ -11,6 +11,7 @@ export const ICONS = {
   cible: svg('M12 12m-8 0a8 8 0 1 0 16 0a8 8 0 1 0-16 0M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0-6 0'),
   marchand: svg('M3 7h11v9H3zM14 10h4l3 3v3h-7M7 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4M17 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4'),
   gazette: svg('M4 5h13v14H6a2 2 0 0 1-2-2zM17 9h3v8a2 2 0 0 1-2 2M8 9h5M8 13h5'),
+  cadeau: svg('M4 11h16v9H4zM3 7h18v4H3zM12 7v13M12 7c-2 0-4-1-4-2.5S10 3 12 7c2-4 4-3 4-1.5S14 7 12 7'),
   replier: svg('M6 9l6 6 6-6'),
   deplier: svg('M6 15l6-6 6 6'),
   fourrage: svg('M5 19c6 0 13-5 13-14-7 0-13 5-13 14zm0 0 7-7'),

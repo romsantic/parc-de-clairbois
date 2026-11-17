@@ -28,8 +28,8 @@ describe('newGame', () => {
   it('remplit un peu le garde-manger', () => {
     expect(g.pantry).toEqual({ fourrage: 30, viande: 0, capacity: 200 })
   })
-  it("crée directement l'état version 2", () => {
-    expect(g.version).toBe(2)
+  it("crée directement l'état version 3", () => {
+    expect(g.version).toBe(3)
     expect(g.ticketPrice).toBe(5)
     expect(g.reputation).toBe(1)
     expect(g.village).toEqual({ level: 1, clientsServed: 0 })
@@ -39,7 +39,35 @@ describe('newGame', () => {
     expect(g.totalVisitors).toBe(0)
     for (const a of g.animals) expect(a.lastBirthAt).toBeNull()
   })
+  it('démarre le premier des premiers pas', () => {
+    expect(g.missions.tutorial.current).toMatchObject({ id: 'pas-fiche', done: false, claimed: false })
+  })
   it('est déterministe', () => {
     expect(newGame(7, 1_000_000_000_123)).toEqual(g)
+  })
+})
+
+describe('premiers pas enchaînés dans une vraie nouvelle partie', () => {
+  it('les pas 1 à 4 passent tout de suite, sans avancer le temps (l\'enclos de départ est un peu sale)', async () => {
+    const { applyAction } = await import('../../src/sim/actions')
+    let s = newGame(7, 1_800_000_000_000)
+    const t0 = s.time
+    const encId = s.enclosures[0].id
+    const act = (a: Parameters<typeof applyAction>[1]) => {
+      const r = applyAction(s, a)
+      if (!r.ok) throw new Error(`${a.type} : ${r.reason}`)
+      s = r.state
+    }
+    const claim = (id: string) => {
+      expect(s.missions.tutorial.current?.id).toBe(id)
+      expect(s.missions.tutorial.current?.done).toBe(true)
+      act({ type: 'recuperer', track: 'tutoriel' })
+    }
+    act({ type: 'vu', what: 'ficheEnclos' }); claim('pas-fiche')
+    act({ type: 'acheterRations', food: 'fourrage', n: 20 }); claim('pas-fourrage')
+    act({ type: 'nettoyer', encId }); claim('pas-nettoyer')
+    act({ type: 'billet', price: 6 }); claim('pas-billet')
+    expect(s.missions.tutorial.step).toBe(4)
+    expect(s.time).toBe(t0)
   })
 })

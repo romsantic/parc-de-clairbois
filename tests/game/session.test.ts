@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { startSession } from '../../src/game/session'
+import { startSession, resume } from '../../src/game/session'
 import { saveGame, loadGame, SAVE_KEY, type Storage } from '../../src/save/save'
 import { newGame } from '../../src/sim/newGame'
 import { DAY_MS } from '../../src/data/tuning'
@@ -59,6 +59,22 @@ describe('startSession', () => {
     saveGame(m, newGame(5, NOW - 100 * DAY_MS), NOW - 100 * DAY_MS)
     expect(startSession(m, NOW).skippedMs).toBeGreaterThan(60 * DAY_MS)
   })
+  it("mesure l'absence depuis la dernière sauvegarde (0 pour une nouvelle partie)", () => {
+    expect(startSession(memory(), NOW).absentMs).toBe(0)
+    const m = memory()
+    saveGame(m, newGame(5, NOW - 5 * 3_600_000), NOW - 5 * 3_600_000)
+    expect(startSession(m, NOW).absentMs).toBe(5 * 3_600_000)
+  })
+  it("une mission réussie pendant l'absence figure dans le résumé", () => {
+    const m = memory()
+    const g = newGame(5, NOW - 5 * 3_600_000)
+    g.missions.tutorial = { step: 4, current: null, skipped: false } // « Construire le café » : le café existe déjà
+    g.buildings.push({ slot: 1, type: 'cafe', level: 1 })
+    saveGame(m, g, NOW - 5 * 3_600_000)
+    const r = startSession(m, NOW)
+    expect(r.state.missions.tutorial.current?.done).toBe(true)
+    expect(r.summary?.missions).toHaveLength(1)
+  })
   it('sauvegarde abîmée : nouvelle partie, problème signalé', () => {
     const r = startSession(memory({ [SAVE_KEY]: 'zut' }), NOW)
     expect(r.problem).toBe('illisible')
@@ -75,5 +91,26 @@ describe('relecture : marchand après migration', () => {
     expect(r.problem).toBeNull()
     expect(r.state.merchant.offers.length).toBeGreaterThan(0)
     expect(r.state.merchant.restocks).toBe(1)
+  })
+})
+
+describe('resume (onglet repris sans rechargement)', () => {
+  it('une longue pause : le résumé et la durée sont rendus', () => {
+    const g = newGame(5, NOW)
+    const r = resume(g, NOW + 5 * 3_600_000)
+    expect(r.state.time).toBe(g.time + 5 * 3_600_000)
+    expect(r.news).not.toBeNull()
+    expect(r.news!.absentMs).toBe(5 * 3_600_000)
+    expect(r.news!.summary.pieces).toBeGreaterThanOrEqual(0)
+  })
+  it('un simple pas de la boucle : pas de Gazette', () => {
+    const g = newGame(5, NOW)
+    const r = resume(g, NOW + 20 * 60_000)
+    expect(r.state.time).toBe(g.time + 20 * 60_000)
+    expect(r.news).toBeNull()
+  })
+  it("l'heure locale est remise à jour (changement d'heure)", () => {
+    const g = { ...newGame(5, NOW), utcOffsetMin: 12345 }
+    expect(resume(g, NOW + 60_000).state.utcOffsetMin).toBe(-new Date(NOW + 60_000).getTimezoneOffset())
   })
 })

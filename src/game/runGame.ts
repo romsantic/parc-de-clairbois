@@ -2,14 +2,20 @@ import type { GameState } from '../sim/types'
 import { advanceTo } from '../sim/advance'
 import { newGame } from '../sim/newGame'
 import { saveGame, SAVE_KEY, type Storage } from '../save/save'
-import { startSession } from './session'
+import { startSession, resume } from './session'
 import { mountDebugPanel } from '../ui/debugPanel'
 import { showError, showNotice } from '../ui/errorScreen'
 import { mountTopBar } from '../ui/topBar'
 import { toggleTicketPanel } from '../ui/ticketPanel'
 import { toggleVillagePanel } from '../ui/villagePanel'
+import { toggleAutonomyPanel } from '../ui/autonomyPanel'
+import { formatReward } from '../ui/format'
+import { openGazette } from '../ui/gazette'
+import { gazetteEdition, type GazetteEdition } from '../ui/gazetteModel'
+import { MISSIONS_TUNING } from '../data/missions'
 import { flash, toast } from '../ui/feedback'
 import { applyAction, type Action } from '../sim/actions'
+import { updateMissions } from '../sim/missions'
 import { BUILDINGS } from '../data/economy'
 import { SPECIES } from '../data/species'
 
@@ -24,6 +30,8 @@ export const RESET_BACKUP_KEY = `${SAVE_KEY}-avant-nouvelle-partie`
 export interface Game {
   get(): GameState
   dispatch(action: Action, from?: HTMLElement | null): boolean
+  /** Rouvre La Gazette (dernière édition de cette page, ou « Rien de neuf »). */
+  openGazette(): void
 }
 
 export function runGame(store: Storage, storageOk = true): Game | null {
@@ -42,11 +50,18 @@ export function runGame(store: Storage, storageOk = true): Game | null {
   if (!storageOk) showNotice('Ton navigateur bloque la sauvegarde : la partie ne sera pas conservée après fermeture.')
 
   let state = session.state
+  updateMissions(state, []) // la mission courante existe dès l'affichage (nouvelle partie : premier pas), sans attendre un pas de simulation
   const panelCtx = { get: () => state, dispatch: (a: Action, from?: HTMLElement | null) => dispatch(a, from) }
   const topBar = mountTopBar(() => state, {
     onTicket: () => toggleTicketPanel(panelCtx),
     onVillage: () => toggleVillagePanel(panelCtx),
+    onAutonomy: () => toggleAutonomyPanel(panelCtx),
   })
+  // La Gazette : dernière édition gardée en mémoire de la page ; elle s'ouvre seule après une vraie absence.
+  let news = session.summary && session.absentMs >= MISSIONS_TUNING.GAZETTE_MIN_ABSENCE_H * 3_600_000 ? { summary: session.summary, absentMs: session.absentMs } : null
+  // Recalculée à chaque ouverture : « à récupérer » et l'autonomie restent à jour.
+  const edition = (): GazetteEdition | null => (news ? gazetteEdition(news.summary, news.absentMs, state) : null)
+  if (news) openGazette(edition())
   let canSave = session.canSave
   let warnedError = false
   /** Avance de l'horloge du jeu sur l'heure réelle (boutons du panneau de test). */
@@ -68,10 +83,16 @@ export function runGame(store: Storage, storageOk = true): Game | null {
     }
   }
 
-  setInterval(() => { state = advanceTo(state, now()).state }, 1000)
+  // Chaque seconde, et dès que la page redevient visible : un long rattrapage (onglet gelé puis repris) ouvre La Gazette.
+  const tick = () => {
+    const r = resume(state, now())
+    state = r.state
+    if (r.news) { news = r.news; openGazette(edition()) }
+  }
+  setInterval(tick, 1000)
   setInterval(save, SAVE_EVERY_MS)
   window.addEventListener('pagehide', save)
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') save() })
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') save(); else tick() })
   // Un autre onglet vient de sauvegarder : on s'arrête tout de suite plutôt qu'au prochain essai.
   window.addEventListener('storage', (e) => { if (e.key === SAVE_KEY) save() })
 
@@ -96,7 +117,8 @@ export function runGame(store: Storage, storageOk = true): Game | null {
   function dispatch(action: Action, from?: HTMLElement | null): boolean {
     const before = state
     const r = applyAction(state, action)
-    flash(from, r.ok)
+    const silent = action.type === 'vu' || action.type === 'lireMission' // observation : ni éclair, ni message
+    if (!silent) flash(from, r.ok)
     if (!r.ok) { toast(r.reason, false); return false }
     state = r.state
     save()
@@ -107,11 +129,11 @@ export function runGame(store: Storage, storageOk = true): Game | null {
     const dv = state.pantry.viande - before.pantry.viande
     if (dv) topBar.pulse('viande', dv)
     if (state.village.level !== before.village.level) topBar.pulse('village', 1)
-    toast(successMessage(action, state, before), true)
+    if (!silent) toast(successMessage(action, state, before), true)
     return true
   }
 
-  return { get: () => state, dispatch }
+  return { get: () => state, dispatch, openGazette: () => openGazette(edition()) }
 }
 
 /** Message de réussite ; `s` est l'état après l'action, `before` celui d'avant. */
@@ -136,6 +158,15 @@ function successMessage(a: Action, s: GameState, before: GameState): string {
       return `${offer ? SPECIES[offer.species].name : 'Animal'} acheté`
     }
     case 'vendre': return `Animal vendu (+${s.coins - before.coins})`
+    case 'vu': case 'lireMission': return ''
+    case 'passerTutoriel': return 'Premiers pas passés'
+    case 'recuperer': return `Récompense récupérée : ${rewardText(s.coins - before.coins, s.pantry.fourrage - before.pantry.fourrage, s.pantry.viande - before.pantry.viande)}`
     case 'monterNiveau': return s.village.level === 3 ? 'Clairbois devient un bourg !' : 'Clairbois devient un village !'
   }
+}
+
+/** Texte d'une récompense reçue : « 150 pièces + 30 fourrages » (ce qui est vraiment arrivé, le surplus du garde-manger plein est perdu). */
+function rewardText(coins: number, fourrage: number, viande: number): string {
+  const text = formatReward({ coins: Math.round(coins), fourrage: Math.round(fourrage), viande: Math.round(viande) })
+  return text || 'rien de plus'
 }

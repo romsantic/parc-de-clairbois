@@ -2,10 +2,12 @@ import { SPECIES, type Food } from '../data/species'
 import { BUILDINGS, FARM, SLOTS } from '../data/economy'
 import { TUNING } from '../data/tuning'
 import type { BuildingType, GameState, Rect } from './types'
+import { bump } from './stats'
 import { fairPrice } from './economy'
 import { canLevelUp, farmLevel } from './village'
 import { animalsIn, capacity, cleanliness } from './enclosure'
 import { buyAnimal, restock, sellAnimal } from './merchant'
+import { claimMission, skipTutorial, updateMissions } from './missions'
 import { checkPlacement, enclosureCost, resizeCost, snapRect } from './placement'
 
 /** Résultat d'une action : nouvel état, ou raison du refus (en français, affichable telle quelle). */
@@ -227,10 +229,38 @@ export type Action =
   | { type: 'agrandirGardeManger' }
   | { type: 'billet'; price: number }
   | { type: 'monterNiveau' }
-  | { type: 'acheterAnimal'; offerId: number; encId: number }
+  | { type: 'acheterAnimal'; offerId: number; encId: number; useCoupon?: boolean }
   | { type: 'vendre'; animalId: number }
+  /** Observation silencieuse : le joueur a vu la fiche d'un enclos ou le volet Autonomie. */
+  | { type: 'vu'; what: 'ficheEnclos' | 'autonomie' }
+  /** Récupère la récompense d'une mission réussie (id : celle visée, utile pour les quotidiennes). */
+  | { type: 'recuperer'; track: 'tutoriel' | 'histoire' | 'quotidienne'; id?: string }
+  | { type: 'passerTutoriel' }
+  /** Le joueur a lu la nouvelle mission : le « ! » s'éteint (silencieux). */
+  | { type: 'lireMission' }
 
+/** Applique l'action ; si elle réussit, compte ce qui s'est passé (les missions s'en servent). Un refus ne change rien. */
 export function applyAction(state: GameState, a: Action): ActionResult {
+  const r = run(state, a)
+  if (!r.ok) return r
+  const s = r.state
+  switch (a.type) {
+    case 'nettoyer': bump(s.stats, 'nettoyages'); break
+    case 'acheterRations': bump(s.stats, a.food === 'fourrage' ? 'fourrageAchete' : 'viandeAchetee', a.n); break
+    case 'vendre': bump(s.stats, 'ventes'); break
+    case 'acheterAnimal': bump(s.stats, 'achatsAnimaux'); break
+    case 'soigner': bump(s.stats, 'soins'); break
+    case 'soignerTout': bump(s.stats, 'soins', state.animals.filter((x) => x.enclosureId === a.encId && x.health.status === 'malade').length); break
+    case 'billet': bump(s.stats, 'billetsRegles'); break
+    case 'ameliorer': bump(s.stats, 'ameliorations'); break
+    case 'vu': bump(s.stats, a.what === 'ficheEnclos' ? 'ficheEnclosVue' : 'autonomieVue'); break
+    default: break
+  }
+  updateMissions(s, []) // une mission peut être réussie par cette action : le retour est immédiat
+  return r
+}
+
+function run(state: GameState, a: Action): ActionResult {
   switch (a.type) {
     case 'nettoyer': return cleanEnclosure(state, a.encId)
     case 'soignerTout': return cureAllInEnclosure(state, a.encId)
@@ -244,7 +274,11 @@ export function applyAction(state: GameState, a: Action): ActionResult {
     case 'agrandirGardeManger': return upgradePantry(state)
     case 'billet': return setTicketPrice(state, a.price)
     case 'monterNiveau': return levelUp(state)
-    case 'acheterAnimal': return buyAnimal(state, a.offerId, a.encId)
+    case 'acheterAnimal': return buyAnimal(state, a.offerId, a.encId, a.useCoupon)
     case 'vendre': return sellAnimal(state, a.animalId)
+    case 'vu': return { ok: true, state: structuredClone(state) }
+    case 'recuperer': return claimMission(state, a.track, a.id)
+    case 'passerTutoriel': return skipTutorial(state)
+    case 'lireMission': { const s = structuredClone(state); s.missions.unread = false; return { ok: true, state: s } }
   }
 }

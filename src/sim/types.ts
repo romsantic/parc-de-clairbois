@@ -42,8 +42,24 @@ export interface Village { level: 1 | 2 | 3; clientsServed: number }
 
 export interface Pantry { fourrage: number; viande: number; capacity: number }
 
+/** Compteurs cumulés depuis le début de la partie : les missions en mesurent la différence. */
+export type StatKey = 'nettoyages' | 'fourrageAchete' | 'viandeAchetee' | 'ventes' | 'achatsAnimaux' | 'naissances' | 'gestations'
+  | 'visiteurs' | 'piecesGagnees' | 'soins' | 'billetsRegles' | 'ficheEnclosVue' | 'autonomieVue' | 'ameliorations'
+export interface Stats { counts: Record<StatKey, number>; birthsBySpecies: Partial<Record<SpeciesId, number>> }
+
+/** Avancée d'une mission : `base` = valeur du compteur au début ; `done` = réussie ; `claimed` = récompense récupérée. */
+export interface MissionProgress { id: string; base: number; done: boolean; claimed: boolean }
+export interface MissionsState {
+  /** step de 0 à 9 (9 = fini). */
+  tutorial: { step: number; current: MissionProgress | null; skipped: boolean }
+  story: { index: number; current: MissionProgress | null }
+  daily: { dayKey: number; list: MissionProgress[]; streak: number; lastFullDay: number | null; coupons: number }
+  /** Une nouvelle mission n'a pas encore été lue (« ! »). */
+  unread: boolean
+}
+
 export interface GameState {
-  version: 2
+  version: 3
   /** Heure du jeu (ms), toujours alignée sur le pas de 10 minutes. */
   time: number
   /** Graine du hasard, sauvegardée avec la partie. */
@@ -60,6 +76,10 @@ export interface GameState {
   buildings: Building[]
   merchant: Merchant
   totalVisitors: number
+  stats: Stats
+  missions: MissionsState
+  /** Décalage de l'heure locale par rapport à UTC, en minutes (réglé par la session au chargement). */
+  utcOffsetMin: number
 }
 
 export type GameEvent =
@@ -70,3 +90,7 @@ export type GameEvent =
   | { kind: 'repas'; at: number; fourrage: number; viande: number }
   | { kind: 'recettes'; at: number; visiteurs: number; billets: number; village: number }
   | { kind: 'stock'; at: number }
+  | { kind: 'mission'; at: number; track: 'tutoriel' | 'histoire' | 'quotidienne'; id: string }
+  | { kind: 'quotidiennes'; at: number }
+  /** Une quotidienne réussie et non récupérée a été versée d'office à minuit. */
+  | { kind: 'missionVersee'; at: number; id: string }

@@ -2,6 +2,7 @@ import { SPECIES, type Biome, type SpeciesId } from '../data/species'
 import { ANIMAL_NAMES } from '../data/names'
 import { ZONES } from '../data/zones'
 import { MERCHANT } from '../data/economy'
+import { MISSIONS_TUNING } from '../data/missions'
 import { HOUR_MS } from '../data/tuning'
 import type { Animal, Enclosure, GameEvent, GameState, Offer } from './types'
 import type { ActionResult } from './actions'
@@ -58,16 +59,24 @@ export function acceptsSpecies(state: GameState, enc: Enclosure, species: Specie
   return null
 }
 
+/** Prix réellement payé pour une offre : −25 % si le joueur choisit d'utiliser un bon et qu'il en reste. */
+export function offerPriceFor(state: GameState, offer: Offer, useCoupon = false): number {
+  return useCoupon && state.missions.daily.coupons > 0 ? Math.round(offer.price * (1 - MISSIONS_TUNING.COUPON_DISCOUNT)) : offer.price
+}
+
 /** Achète une offre et place l'animal dans un enclos. */
-export function buyAnimal(state: GameState, offerId: number, encId: number): ActionResult {
+export function buyAnimal(state: GameState, offerId: number, encId: number, useCoupon = false): ActionResult {
   const offer = state.merchant.offers.find((o) => o.id === offerId)
   const enc = state.enclosures.find((e) => e.id === encId)
   if (!offer || !enc) return { ok: false, reason: 'Introuvable.' }
   const refus = acceptsSpecies(state, enc, offer.species)
   if (refus) return { ok: false, reason: refus }
-  if (state.coins < offer.price) return noMoney(offer.price)
+  if (useCoupon && state.missions.daily.coupons <= 0) return { ok: false, reason: "Tu n'as pas de bon de réduction." }
+  const price = offerPriceFor(state, offer, useCoupon)
+  if (state.coins < price) return noMoney(price)
   const s = structuredClone(state)
-  s.coins -= offer.price
+  if (useCoupon) s.missions.daily.coupons--
+  s.coins -= price
   s.merchant.offers = s.merchant.offers.filter((o) => o.id !== offerId)
   const e = s.enclosures.find((x) => x.id === encId)!
   e.species = offer.species

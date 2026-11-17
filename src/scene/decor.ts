@@ -10,12 +10,20 @@ import { createRng } from '../core/rng'
 
 /** Pont et allée du zoo : à la hauteur du couloir de chemin des données (z = 10). */
 export const BRIDGE_Z = 10
+/** Hauteur du « ! » au-dessus du sol quand il désigne un point de la carte (enclos, bâtiment). */
+const MARKER_HEIGHT_OVER_GROUND = 5
 
 /**
  * Décor fixe : village, pont, chemins, marqueur de mission, arbres et rochers.
  * Les zones du zoo restent libres de toute décoration (on y pose les enclos).
  */
-export function buildDecor(world: World, rng: () => number): { update(dt: number): void; setPathLevel(level: number): void } {
+export function buildDecor(world: World, rng: () => number): {
+  update(dt: number): void
+  setPathLevel(level: number): void
+  /** Place le « ! » au-dessus d'un point de la carte ; null = au-dessus de la mairie. */
+  setMarker(pos: { x: number; z: number } | null): void
+  setMarkerVisible(v: boolean): void
+} {
   const { scene, models, groundHeight, riverDistance } = world
   const occupied: { x: number; z: number; r: number }[] = []
 
@@ -124,9 +132,19 @@ export function buildDecor(world: World, rng: () => number): { update(dt: number
   const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.16, 1.3, 8), gold)
   bar.position.y = 0.95
   marker.add(bar, new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 8), gold))
-  const markerBase = (mairie ? new THREE.Box3().setFromObject(mairie).max.y : 9) + 1.4
+  const mairieBase = (mairie ? new THREE.Box3().setFromObject(mairie).max.y : 9) + 1.4
+  let markerBase = mairieBase
   marker.position.set(17, markerBase, -3)
   scene.add(marker)
+  let markerAt: string | null = null
+  function setMarker(pos: { x: number; z: number } | null) {
+    const key = pos ? `${pos.x},${pos.z}` : null
+    if (key === markerAt) return
+    markerAt = key
+    const x = pos ? pos.x : 17, z = pos ? pos.z : -3
+    markerBase = pos ? groundHeight(x, z) + MARKER_HEIGHT_OVER_GROUND : mairieBase
+    marker.position.set(x, markerBase, z)
+  }
 
   // ---------- Nature, hors des zones du zoo ----------
   const trees: ModelKey[] = ['arbre1', 'arbre2', 'arbre3', 'bouleau', 'saule']
@@ -170,5 +188,7 @@ export function buildDecor(world: World, rng: () => number): { update(dt: number
       marker.rotation.y = t * 1.2
     },
     setPathLevel,
+    setMarker,
+    setMarkerVisible(v) { marker.visible = v },
   }
 }

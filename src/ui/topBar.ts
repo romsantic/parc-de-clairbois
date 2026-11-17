@@ -5,6 +5,7 @@ import { canLevelUp, population } from '../sim/village'
 import { ECONOMY } from '../data/economy'
 import { formatAutonomy, formatGameTime } from './format'
 import { flash, floatDelta } from './feedback'
+import { guide } from './highlight'
 
 export type Resource = 'coins' | 'fourrage' | 'viande' | 'village'
 
@@ -31,7 +32,7 @@ function cell(cls: string, icon: string, label: string): { root: HTMLSpanElement
 }
 
 /** Barre des ressources en haut de l'écran (spec §7). */
-export interface TopBarHandlers { onTicket(): void; onVillage(): void }
+export interface TopBarHandlers { onTicket(): void; onVillage(): void; onAutonomy(): void }
 
 export function mountTopBar(get: () => GameState, handlers: TopBarHandlers): { pulse(r: Resource, delta: number): void } {
   const bar = document.createElement('header')
@@ -40,7 +41,7 @@ export function mountTopBar(get: () => GameState, handlers: TopBarHandlers): { p
     coins: cell('pieces', ICON.coins, 'Pièces'),
     fourrage: cell('fourrage', ICON.fourrage, 'Fourrage'),
     viande: cell('viande', ICON.viande, 'Viande'),
-    auto: cell('autonomie', ICON.horloge, 'Autonomie du garde-manger'),
+    auto: cell('autonomie', ICON.horloge, 'Autonomie du garde-manger : touche pour voir le détail'),
     visiteurs: cell('visiteurs', ICON.visiteurs, 'Visiteurs par heure'),
     billet: cell('billet', ICON.billet, 'Prix du billet : touche pour le régler'),
     village: cell('village', ICON.village, 'Village : touche pour voir les habitants'),
@@ -49,7 +50,9 @@ export function mountTopBar(get: () => GameState, handlers: TopBarHandlers): { p
   time.className = 'heure'
   bar.append(...Object.values(cells).map((c) => c.root), time)
   document.body.append(bar)
-  for (const [c, fn] of [[cells.billet, handlers.onTicket], [cells.village, handlers.onVillage]] as const) {
+  guide(cells.billet.root, 'billet')
+  guide(cells.auto.root, 'autonomie')
+  for (const [c, fn] of [[cells.billet, handlers.onTicket], [cells.village, handlers.onVillage], [cells.auto, handlers.onAutonomy]] as const) {
     c.root.setAttribute('role', 'button')
     c.root.tabIndex = 0
     c.root.classList.add('cliquable')
