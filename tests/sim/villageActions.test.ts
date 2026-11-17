@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { emptyState } from './helpers'
+import { emptyState, storyAt } from './helpers'
 import {
   applyAction, buildBuilding, buyRations, rationCost, levelUp, setTicketPrice, upgradeBuilding, upgradePantry,
 } from '../../src/sim/actions'
@@ -45,7 +45,7 @@ describe('buildBuilding', () => {
 
 describe('levelUp', () => {
   it('passe au niveau 2 à 50 habitants', () => {
-    const r = levelUp(emptyState({ village: { level: 1, clientsServed: 30 * 40 } }))
+    const r = levelUp(emptyState({ village: { level: 1, clientsServed: 30 * 40 }, missions: storyAt(4) }))
     expect(r.ok && r.state.village.level).toBe(2)
   })
   it('refuse à 30 habitants avec la raison de canLevelUp', () => {
@@ -130,7 +130,7 @@ describe('applyAction (village)', () => {
     expect(applyAction(small(), { type: 'acheterRations', food: 'fourrage', n: 10 }).ok).toBe(true)
     expect(applyAction(small(), { type: 'agrandirGardeManger' }).ok).toBe(true)
     expect(applyAction(emptyState(), { type: 'billet', price: 3 }).ok).toBe(true)
-    expect(applyAction(emptyState({ village: { level: 1, clientsServed: 1200 } }), { type: 'monterNiveau' }).ok).toBe(true)
+    expect(applyAction(emptyState({ village: { level: 1, clientsServed: 1200 }, missions: storyAt(4) }), { type: 'monterNiveau' }).ok).toBe(true)
   })
 })
 
@@ -152,7 +152,7 @@ describe('relecture : Bourg et marchand', () => {
     }
   })
   it('le passage de niveau renouvelle aussitôt le stock du marchand', () => {
-    const before = levelUp(emptyState({ village: { level: 1, clientsServed: 30 * 40 } }))
+    const before = levelUp(emptyState({ village: { level: 1, clientsServed: 30 * 40 }, missions: storyAt(4) }))
     expect(before.ok).toBe(true)
     if (!before.ok) return
     expect(before.state.merchant.restocks).toBe(1)

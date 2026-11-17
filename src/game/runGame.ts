@@ -96,7 +96,7 @@ export function runGame(store: Storage, storageOk = true): Game | null {
   function dispatch(action: Action, from?: HTMLElement | null): boolean {
     const before = state
     const r = applyAction(state, action)
-    const silent = action.type === 'vu' // observation : ni éclair, ni message
+    const silent = action.type === 'vu' || action.type === 'lireMission' // observation : ni éclair, ni message
     if (!silent) flash(from, r.ok)
     if (!r.ok) { toast(r.reason, false); return false }
     state = r.state
@@ -137,7 +137,18 @@ function successMessage(a: Action, s: GameState, before: GameState): string {
       return `${offer ? SPECIES[offer.species].name : 'Animal'} acheté`
     }
     case 'vendre': return `Animal vendu (+${s.coins - before.coins})`
-    case 'vu': return ''
+    case 'vu': case 'lireMission': return ''
+    case 'passerTutoriel': return 'Premiers pas passés'
+    case 'recuperer': return `Récompense récupérée : ${rewardText(s.coins - before.coins, s.pantry.fourrage - before.pantry.fourrage, s.pantry.viande - before.pantry.viande)}`
     case 'monterNiveau': return s.village.level === 3 ? 'Clairbois devient un bourg !' : 'Clairbois devient un village !'
   }
+}
+
+/** Texte simple d'une récompense reçue (la tâche 4 fournira `formatReward`). */
+function rewardText(coins: number, fourrage: number, viande: number): string {
+  const parts: string[] = []
+  if (coins > 0) parts.push(`+${Math.round(coins)} pièces`)
+  if (fourrage > 0) parts.push(`+${Math.round(fourrage)} fourrage`)
+  if (viande > 0) parts.push(`+${Math.round(viande)} viande`)
+  return parts.length ? parts.join(', ') : 'rien de plus'
 }

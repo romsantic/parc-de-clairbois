@@ -7,6 +7,7 @@ import { fairPrice } from './economy'
 import { canLevelUp, farmLevel } from './village'
 import { animalsIn, capacity, cleanliness } from './enclosure'
 import { buyAnimal, restock, sellAnimal } from './merchant'
+import { claimMission, skipTutorial, updateMissions } from './missions'
 import { checkPlacement, enclosureCost, resizeCost, snapRect } from './placement'
 
 /** Résultat d'une action : nouvel état, ou raison du refus (en français, affichable telle quelle). */
@@ -232,6 +233,11 @@ export type Action =
   | { type: 'vendre'; animalId: number }
   /** Observation silencieuse : le joueur a vu la fiche d'un enclos ou le volet Autonomie. */
   | { type: 'vu'; what: 'ficheEnclos' | 'autonomie' }
+  /** Récupère la récompense d'une mission réussie (id : celle visée, utile pour les quotidiennes). */
+  | { type: 'recuperer'; track: 'tutoriel' | 'histoire' | 'quotidienne'; id?: string }
+  | { type: 'passerTutoriel' }
+  /** Le joueur a lu la nouvelle mission : le « ! » s'éteint (silencieux). */
+  | { type: 'lireMission' }
 
 /** Applique l'action ; si elle réussit, compte ce qui s'est passé (les missions s'en servent). Un refus ne change rien. */
 export function applyAction(state: GameState, a: Action): ActionResult {
@@ -250,6 +256,7 @@ export function applyAction(state: GameState, a: Action): ActionResult {
     case 'vu': bump(s.stats, a.what === 'ficheEnclos' ? 'ficheEnclosVue' : 'autonomieVue'); break
     default: break
   }
+  updateMissions(s, []) // une mission peut être réussie par cette action : le retour est immédiat
   return r
 }
 
@@ -270,5 +277,8 @@ function run(state: GameState, a: Action): ActionResult {
     case 'acheterAnimal': return buyAnimal(state, a.offerId, a.encId)
     case 'vendre': return sellAnimal(state, a.animalId)
     case 'vu': return { ok: true, state: structuredClone(state) }
+    case 'recuperer': return claimMission(state, a.track, a.id)
+    case 'passerTutoriel': return skipTutorial(state)
+    case 'lireMission': { const s = structuredClone(state); s.missions.unread = false; return { ok: true, state: s } }
   }
 }

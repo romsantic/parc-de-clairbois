@@ -29,6 +29,16 @@ export function emptyState(over: Partial<GameState> = {}): GameState {
   }
 }
 
+/** Missions avec l'histoire placée à l'index donné (4 = palier Village, 8 = palier Bourg : les portes sont ouvertes). */
+export function storyAt(index: number): GameState['missions'] {
+  return {
+    tutorial: { step: 9, current: null, skipped: false },
+    story: { index, current: null },
+    daily: { dayKey: -1, list: [], streak: 0, lastFullDay: null, coupons: 0 },
+    unread: false,
+  }
+}
+
 export function enclosure(id: number, species: SpeciesId | null, w = 12, d = 10, over: Partial<Enclosure> = {}): Enclosure {
   return { id, biome: species ? SPECIES[species].biome : 'prairie', species, rect: { x: 0, z: 0, w, d }, cleanedAt: T0, ...over }
 }

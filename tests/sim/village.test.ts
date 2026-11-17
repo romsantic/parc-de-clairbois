@@ -4,7 +4,7 @@ import { advanceTo } from '../../src/sim/advance'
 import { newGame } from '../../src/sim/newGame'
 import { summarize } from '../../src/sim/summary'
 import { DAY_MS, HOUR_MS } from '../../src/data/tuning'
-import { animal, emptyState, enclosure, T0 } from './helpers'
+import { animal, emptyState, enclosure, storyAt, T0 } from './helpers'
 
 /** Deux moutons heureux dans un enclos plein, propreté neutralisée, garde-manger rempli. */
 function happySheep(over = {}) {
@@ -26,12 +26,13 @@ describe('population et niveau', () => {
   })
   it('canLevelUp : seuils et raisons', () => {
     const at = (n: number, level: 1 | 2 | 3 = 1) =>
-      emptyState({ village: { level, clientsServed: (n - 15) * 30 } })
+      emptyState({ village: { level, clientsServed: (n - 15) * 30 }, missions: storyAt(level === 1 ? 4 : 8) })
     expect(canLevelUp(at(49))).toEqual({ ok: false, reason: 'Il faut 50 habitants (encore 1).' })
     expect(canLevelUp(at(50))).toEqual({ ok: true, level: 2 })
     expect(canLevelUp(at(150, 2))).toEqual({ ok: true, level: 3 })
     expect(canLevelUp(at(500, 3))).toEqual({ ok: false, reason: 'Clairbois est déjà un bourg.' })
-    expect(missionGateOk(emptyState(), 2)).toBe(true)
+    expect(missionGateOk(emptyState(), 2)).toBe(false)
+    expect(missionGateOk(emptyState({ missions: storyAt(4) }), 2)).toBe(true)
   })
   it('farmLevel', () => {
     expect(farmLevel(emptyState())).toBe(1)
