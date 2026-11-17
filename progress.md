@@ -82,7 +82,9 @@
 | 10 | Téléphone, perfs d'affichage et petits défauts gardés | agent · Sonnet | à faire |
 | 12 | Le « ! » doré reste sur l'endroit de la mission tant qu'elle n'est pas faite (aujourd'hui il revient sur la mairie quand on clique) ; clic sur la mission → caméra jusqu'au « ! » (demande de Romain) | agent · Sonnet | à faire |
 | 13 | Informations d'un bâtiment, de la mairie ou d'une maison au clic (demande de Romain) | agent · Sonnet | à faire |
-| 11 | *(après 12 et 13)* Vérification d'ensemble, textes relus par Romain, relecture et publication | chef (Opus) + relecture · Opus | à faire |
+| 14 | Choix des sons CC0 avec Romain (il télécharge), copie et crédits (demande de Romain) | chef (Opus) + agent · Haiku | à faire |
+| 15 | Musique, ambiance et effets ; volumes Musique / Effets et Couper dans les Options (demande de Romain) | agent · Sonnet | à faire |
+| 11 | *(après 12 à 15)* Vérification d'ensemble, textes relus par Romain, relecture et publication | chef (Opus) + relecture · Opus | à faire |
 
 ## Liens
 

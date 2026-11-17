@@ -29,6 +29,7 @@
 | D7 | **La nuit** | **Lanternes** (chemins pavés du Bourg) et **fenêtres des maisons** qui s'allument au crépuscule ; **étoiles et lune** dans le ciel ; les animaux **bougent moins** la nuit (ils marchent moins souvent, restent couchés plus longtemps). Passage du jour à la nuit en douceur. |
 | D9 | **Le « ! » doré** *(demande et choix de Romain, 17/11, précisé le même soir)* | Défaut actuel : un clic sur l'endroit marqué renvoie le « ! » sur la mairie. Le « ! » **reste au-dessus de l'endroit de la mission tant qu'elle n'est pas faite** ; un clic sur la mission emmène la caméra jusqu'à lui (tâche 12). |
 | D10 | **Informations des bâtiments** *(demande et choix de Romain, 17/11)* | Clic sur un bâtiment, la mairie ou une maison → sa fiche (tâche 13). |
+| D11 | **Son** *(demande de Romain, 17/11 ; proposition à valider)* | Musique calme folk/pastorale + ambiance nature, effets doux ; volumes **Musique** et **Effets** séparés, avec **Couper**, dans le volet Options ; fichiers CC0 choisis et téléchargés par Romain (tâches 14 et 15). |
 | D8 | **Petit défaut gardé** : premier pas « Ouvre la fiche de l'enclos des moutons » | N'importe quelle fiche d'enclos le valide. Proposition : **laisser ainsi** (au début, il n'y a qu'un enclos ; une ancienne partie peut ne plus avoir de moutons). |
 
 ## Contraintes globales
@@ -230,6 +231,30 @@
 - [ ] **Étape 4 : `npm test`, `npm run build`** → réussis.
 - [ ] **Étape 5 : vérifier à la main (chef)** — clic sur chaque bâtiment, la mairie et quelques maisons ; téléphone (volet ≤ 40 % de la hauteur).
 - [ ] **Étape 6 : commit** — `Informations des bâtiments au clic`
+
+### Task 14 : Choix et téléchargement des sons — *chef (Opus) avec Romain, puis agent · Haiku* (demande de Romain, 17/11 ; avant la tâche 11)
+
+- [ ] **Étape 1 (chef) :** proposer à Romain une courte liste de sons **CC0 uniquement** (OpenGameArt et Freesound filtrés CC0) avec leurs liens : 1 musique calme folk/pastorale (guitare, flûte, cordes douces) qui boucle, sa variante plus douce pour la nuit si elle existe, une ambiance nature (oiseaux le jour, grillons la nuit, rivière), et 5 effets courts (clic de bois, tintement de pièces, cloche de mission réussie, construction, petit cri d'animal). Romain écoute, choisit et télécharge dans `_telechargements/sons/`.
+- [ ] **Étape 2 (agent Haiku) :** vérifier la licence de chaque fichier, convertir ou garder en `.ogg`/`.mp3` léger (musique ≤ 1,5 Mo, effet ≤ 50 Ko), copier dans `public/sons/`, lister dans `src/assets/manifest.ts` et `CREDITS.md`.
+- [ ] **Étape 3 :** `npm test` → réussi ; commit — `Sons d'ambiance et effets (CC0)`
+
+### Task 15 : Musique, ambiance et effets, avec leurs réglages — *agent · Sonnet* (demande de Romain, 17/11 ; avant la tâche 11)
+
+**Proposition (D11, à valider avec Romain) :**
+- Dans le volet **Options** (roue ⚙) : deux réglages séparés, **Musique** et **Effets**, chacun avec un curseur de volume et un bouton **Couper**. Réglages gardés dans le navigateur (`localStorage`), hors de la sauvegarde de partie. Volume de départ bas : musique ≈ 40 %, effets ≈ 70 %.
+- Musique en boucle, plus douce la nuit ; ambiance nature discrète (oiseaux le jour, grillons la nuit) réglée avec la musique.
+- Effets : clic de bois à la sélection d'un enclos ou d'un bâtiment, tintement de pièces (Récupérer, ventes), cloche quand une mission est réussie, son de construction, petit cri quand on touche un animal.
+- Le navigateur bloque le son avant le premier toucher : la musique démarre au premier clic. Son coupé quand l'onglet est caché.
+
+**Fichiers :** créer `src/audio/sound.ts` (lecture, volumes, mise en sourdine, fondu jour/nuit) et `src/audio/settings.ts` (réglages purs + `localStorage` protégé par try/catch) ; modifier `src/ui/optionsPanel.ts`, `src/game/runGame.ts` (effets sur les actions réussies), `src/main.ts`, `src/data/` (volumes de départ, noms des fichiers)
+**Test :** `tests/audio/settings.test.ts` (volumes bornés 0..1, couper/rétablir garde le volume, lecture d'un réglage illisible → valeurs par défaut)
+
+- [ ] **Étape 1 : écrire les tests qui échouent.**
+- [ ] **Étape 2 : `npm test`** → ÉCHEC.
+- [ ] **Étape 3 : implémenter.**
+- [ ] **Étape 4 : `npm test`, `npm run build`** → réussis.
+- [ ] **Étape 5 : vérifier à la main (chef)** — premier clic → musique ; curseurs et Couper ; réglages gardés après rechargement ; jour/nuit ; onglet caché → silence ; téléphone.
+- [ ] **Étape 6 : commit** — `Musique d'ambiance et effets sonores, réglables dans les Options`
 
 ### Task 11 : Vérification d'ensemble, relecture et publication — *chef (Opus) + relecture · Opus*
 
