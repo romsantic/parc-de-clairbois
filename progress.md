@@ -57,7 +57,7 @@
 | # | Sous-tâche | Agent · modèle | État |
 |---|---|---|---|
 | 1 | État version 3, compteurs et migration | agent · Sonnet | faite (db790fb) — 355 tests |
-| 2 | Données des missions et moteur (premiers pas, histoire, passage de niveau) | agent · Sonnet | à faire |
+| 2 | Données des missions et moteur (premiers pas, histoire, passage de niveau) | agent · Sonnet | faite (9c1afd5) — 390 tests |
 | 3 | Missions quotidiennes, série et bon de réduction | agent · Sonnet | à faire |
 | 4 | Petits textes d'affichage (récompense, avancée, durée d'absence) | agent · Haiku | à faire |
 | 5 | Interface des missions (barre, volet, bannière, mise en évidence, autonomie) | agent · Sonnet | à faire |
