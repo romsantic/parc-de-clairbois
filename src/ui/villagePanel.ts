@@ -1,5 +1,6 @@
 import { ECONOMY } from '../data/economy'
 import { canLevelUp, population } from '../sim/village'
+import { levelBlockReason } from './missionModel'
 import { closeDrawer, isDrawerOpen, openDrawer } from './drawer'
 import type { PanelContext } from './ticketPanel'
 
@@ -40,7 +41,7 @@ export function toggleVillagePanel(ctx: PanelContext): void {
       go.textContent = `Passer au niveau ${name}`
       const c = canLevelUp(s)
       go.disabled = !c.ok
-      reason.textContent = c.ok ? '' : c.reason
+      reason.textContent = c.ok ? '' : levelBlockReason(s)
     }
     update()
     return update

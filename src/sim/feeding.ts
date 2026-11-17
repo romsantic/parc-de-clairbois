@@ -26,8 +26,8 @@ export function feedStep(state: GameState, events: GameEvent[]): void {
   if (eaten.fourrage || eaten.viande) events.push({ kind: 'repas', at: state.time, ...eaten })
 }
 
-/** Heures avant que le premier aliment consommé soit épuisé (Infinity si personne ne mange). */
-export function autonomyHours(state: GameState): number {
+/** Consommation par heure de chaque aliment (une femelle gestante compte aussi pour la portée moyenne). */
+export function consumptionPerHour(state: GameState): Record<Food, number> {
   const perHour: Record<Food, number> = { fourrage: 0, viande: 0 }
   for (const a of state.animals) {
     const sp = SPECIES[a.species]
@@ -36,6 +36,12 @@ export function autonomyHours(state: GameState): number {
     const heads = a.pregnantSince !== null ? 1 + (sp.litter[0] + sp.litter[1]) / 2 : 1
     perHour[food] += (heads * sp.rationsPerDay) / 24
   }
+  return perHour
+}
+
+/** Heures avant que le premier aliment consommé soit épuisé (Infinity si personne ne mange). */
+export function autonomyHours(state: GameState): number {
+  const perHour = consumptionPerHour(state)
   let hours = Infinity
   for (const f of ['fourrage', 'viande'] as const) {
     if (perHour[f] > 0) hours = Math.min(hours, state.pantry[f] / perHour[f])

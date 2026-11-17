@@ -178,7 +178,7 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .jauge i[data-niveau="bas"] { background: #c8553d; }
 .zone-actions { display: flex; gap: 4px; padding: 0 8px; border-left: 1px solid var(--bord); border-right: 1px solid var(--bord); }
 .zone-actions:empty { display: none; }
-.zone-mission { flex: 1; display: flex; align-items: center; gap: 6px; background: none; border: 0; padding: 4px 6px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #6f6852; }
+.zone-mission { flex: 1; display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; border-radius: 10px; }
 .zone-mission svg { width: 18px; height: 18px; flex: none; }
 .zone-droite { display: flex; gap: 4px; }
 button.icone { position: relative; width: 34px; height: 34px; padding: 0; display: grid; place-items: center; border-radius: 9px; transition: background .25s, color .25s, border-color .25s; }
@@ -209,7 +209,7 @@ button.icone:hover::after, button.icone:focus-visible::after { opacity: 1; }
 .volet .rouge { color: #b23a2a; font-weight: 600; }
 .volet .vert { color: #2f6a12; }
 @media (max-width: 640px) {
-  .zone-mission span { display: none; }
+  .zone-mission .recompense { display: none; }
   .barre-bas { gap: 6px; }
 }
 
@@ -258,4 +258,53 @@ button.icone .qte { position: absolute; top: -3px; left: -4px; font-style: norma
 @media (max-width: 640px) {
   .barre-haut { font-size: 13px; gap: 0 2px; }
   .ressource { padding: 2px 5px; }
+}
+
+/* ---------- Missions (étape 5) ---------- */
+.mission-ouvrir { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; background: none; border: 0; padding: 4px 6px; text-align: left; white-space: nowrap; overflow: hidden; color: #6f6852; }
+.mission-ouvrir .titre { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.mission-ouvrir .avancee, .mission-ouvrir .quot { flex: none; font-variant-numeric: tabular-nums; font-weight: 600; }
+.zone-mission.reussie { background: #d9efc8; }
+.zone-mission.reussie .mission-ouvrir { color: #2f6a12; font-weight: 600; }
+button.recuperer { flex: none; margin-right: 4px; padding: 3px 10px; font-size: 13px; white-space: nowrap; background: #6fa84a; color: #fff; border-color: #5a8f39; }
+button.recuperer:hover { background: #5f9a3c; }
+.volet h3 { margin: 10px 0 4px; font-size: 14px; }
+.volet .dialogue { font-style: italic; }
+.volet .avancee { font-variant-numeric: tabular-nums; font-weight: 600; }
+.volet .quotidienne { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 4px 0; border-bottom: 1px solid #e3d8bb; }
+.volet .quotidienne .titre { flex: 1 1 10em; }
+.volet .quotidienne .coche { color: #2f6a12; font-weight: 700; }
+.volet .mission-courante button { margin: 2px 8px 2px 0; }
+.volet button.passer { padding: 3px 10px; font-size: 13px; }
+.volet button.passer.confirmer { background: #f7d6cf; color: #8f2a1a; border-color: #e09484; }
+.volet .offre .prix .barre { color: #6f6852; }
+.volet .offre .prix .reduit { color: #2f6a12; }
+.volet .bon { color: #2f6a12; font-weight: 600; }
+
+/* Bannière « Nouvelle mission » : au-dessus de la barre du bas et du message, jamais sur la barre du haut. */
+.banniere-mission {
+  position: fixed; left: 50%; bottom: calc(100px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 8px); z-index: 8;
+  max-width: min(520px, calc(100vw - 32px)); padding: 8px 16px; border-radius: 12px; font-size: 14px; font-weight: 600; text-align: center;
+  background: #fff7e0; color: var(--encre); border: 1px solid #e0b64e; box-shadow: 0 4px 14px rgba(0, 0, 0, .22);
+  opacity: 0; transition: opacity .3s, transform .3s;
+}
+.banniere-mission.visible { opacity: 1; transform: translate(-50%, 0); }
+body:has(.volet) .banniere-mission { bottom: calc(40vh + 100px); }
+
+/* Mise en évidence : anneau doré qui pulse autour de ce que la mission demande de toucher. */
+body[data-highlight="detailsEnclos"] [data-guide="detailsEnclos"],
+body[data-highlight="nettoyer"] [data-guide="nettoyer"],
+body[data-highlight="billet"] [data-guide="billet"],
+body[data-highlight="autonomie"] [data-guide="autonomie"],
+body[data-highlight="marchand"] [data-guide="marchand"],
+body[data-highlight="ferme"] [data-guide="ferme"],
+body[data-highlight="emplacementLibre"] [data-guide="emplacementLibre"],
+body[data-highlight="prairie"] [data-guide="prairie"] {
+  box-shadow: 0 0 0 3px #f2b13a, 0 0 12px 4px rgba(242, 177, 58, .65);
+  animation: anneau 1.5s ease-in-out infinite;
+}
+@keyframes anneau { 50% { box-shadow: 0 0 0 5px #f2b13a, 0 0 18px 8px rgba(242, 177, 58, .35); } }
+@media (prefers-reduced-motion: reduce) {
+  [data-guide] { animation: none !important; }
+  .banniere-mission { transition: none; }
 }

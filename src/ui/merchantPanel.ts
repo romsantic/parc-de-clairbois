@@ -1,7 +1,8 @@
 import type { GameState, Offer } from '../sim/types'
 import type { Pick } from '../scene/picking'
 import { SPECIES } from '../data/species'
-import { acceptsSpecies, BIOME_NAMES } from '../sim/merchant'
+import { acceptsSpecies, BIOME_NAMES, offerPriceFor } from '../sim/merchant'
+import { MISSIONS_TUNING } from '../data/missions'
 import { closeDrawer, isDrawerOpen, openDrawer, refreshDrawer } from './drawer'
 import { formatCountdown } from './format'
 import type { PanelContext } from './ticketPanel'
@@ -32,6 +33,15 @@ export function enclosureLabel(s: GameState, encId: number): string {
   return `Enclos ${i + 1} (${enc?.species ? SPECIES[enc.species].name.toLowerCase() : 'vide'})`
 }
 
+/** Prix d'une offre : avec un bon, le prix normal barré puis le prix réduit. */
+function priceCell(normal: number, paid: number): HTMLElement {
+  const cell = document.createElement('span')
+  cell.className = 'prix'
+  if (paid !== normal) cell.append(text('s', `${normal}`, 'barre'), text('b', ` ${paid} pièces`, 'reduit'))
+  else cell.textContent = `${paid} pièces`
+  return cell
+}
+
 /** Volet du marchand d'animaux : stock, prix, enclos cible. */
 export function toggleMerchantPanel(ctx: MerchantContext): void {
   if (isDrawerOpen('marchand')) { closeDrawer(); return }
@@ -40,19 +50,21 @@ export function toggleMerchantPanel(ctx: MerchantContext): void {
     const countdown = text('p', '', 'gros')
     const list = document.createElement('div')
     list.className = 'offres'
-    body.append(countdown, list)
+    const coupon = text('p', `Bon −${Math.round(MISSIONS_TUNING.COUPON_DISCOUNT * 100)} % sur ce prochain achat`, 'bon')
+    body.append(countdown, coupon, list)
     let sig = ''
 
     function rows() {
       const s = ctx.get()
       list.replaceChildren()
+      coupon.hidden = s.missions.daily.coupons <= 0 || s.merchant.offers.length === 0
       buyBlockedUntil = performance.now() + BUY_DELAY_MS
       if (s.merchant.offers.length === 0) list.append(text('p', 'Plus rien en stock pour le moment.', 'discret'))
       for (const o of s.merchant.offers) {
         const row = document.createElement('div')
         row.className = 'offre'
         row.append(text('b', SPECIES[o.species].name), text('span', o.sex === 'F' ? '♀' : '♂'), text('span', o.stage),
-          text('span', `${o.price} pièces`, 'prix'))
+          priceCell(o.price, offerPriceFor(s, o)))
         const t = merchantTarget(s, ctx.selection(), o.species)
         const buy = document.createElement('button')
         buy.type = 'button'; buy.textContent = 'Acheter'
@@ -78,7 +90,7 @@ export function toggleMerchantPanel(ctx: MerchantContext): void {
       const s = ctx.get()
       countdown.textContent = `Nouveau stock dans ${formatCountdown(s.merchant.restockAt - s.time)}`
       // Les lignes ne sont refaites que si quelque chose a changé (offres, enclos cibles).
-      const k = JSON.stringify([s.merchant.offers.map((o) => [o.id, merchantTarget(s, ctx.selection(), o.species)]), s.enclosures.length])
+      const k = JSON.stringify([s.merchant.offers.map((o) => [o.id, merchantTarget(s, ctx.selection(), o.species)]), s.enclosures.length, s.missions.daily.coupons])
       if (k !== sig) { sig = k; rows() }
     }
     update()

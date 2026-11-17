@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { feedStep, autonomyHours } from '../../src/sim/feeding'
+import { feedStep, autonomyHours, consumptionPerHour } from '../../src/sim/feeding'
 import type { GameEvent } from '../../src/sim/types'
 import { animal, emptyState, enclosure, T0 } from './helpers'
 
@@ -57,5 +57,15 @@ describe('autonomyHours', () => {
   })
   it('infini sans animaux', () => {
     expect(autonomyHours(emptyState())).toBe(Infinity)
+  })
+})
+
+describe('consumptionPerHour', () => {
+  it('2 moutons dont une gestante → 3,5 rations par jour de fourrage, 0 de viande', () => {
+    const s = emptyState({ pantry: { fourrage: 30, viande: 0, capacity: 200 },
+      animals: [animal(1, 'mouton', 'F', 1, { pregnantSince: T0 }), animal(2, 'mouton', 'M', 1)] })
+    const c = consumptionPerHour(s)
+    expect(c.fourrage * 24).toBeCloseTo(3.5)
+    expect(c.viande).toBe(0)
   })
 })

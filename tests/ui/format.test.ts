@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatAbsence, formatAutonomy, formatCountdown, formatGameTime, formatPerHour, formatProgress, formatReward, reputationLabel } from '../../src/ui/format'
+import { formatAbsence, formatAmount, formatAutonomy, formatCountdown, formatGameTime, formatPerHour, formatProgress, formatReward, reputationLabel } from '../../src/ui/format'
 
 describe('formatAutonomy', () => {
   it('infini quand personne ne mange', () => {
@@ -111,5 +111,14 @@ describe('formatAbsence', () => {
     expect(formatAbsence(2 * D)).toBe('2 jours')
     expect(formatAbsence(D + 5 * H)).toBe('1 jour et 5 h')
     expect(formatAbsence(2 * D + 5 * H + 40 * M)).toBe('2 jours et 5 h')
+  })
+})
+
+describe('formatAmount', () => {
+  it('une décimale au plus, virgule française', () => {
+    expect(formatAmount(3.5)).toBe('3,5')
+    expect(formatAmount(12)).toBe('12')
+    expect(formatAmount(0.04)).toBe('0')
+    expect(formatAmount(2.26)).toBe('2,3')
   })
 })

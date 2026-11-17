@@ -18,6 +18,8 @@ import { closeDrawer } from './ui/drawer'
 import { createEnclosureEditor } from './scene/enclosureEditor'
 import { SPECIES_MODELS } from './data/speciesModels'
 import { createRng } from './core/rng'
+import { setHighlight } from './ui/highlight'
+import { highlightFor, markerPosition, markerVisible } from './ui/missionModel'
 
 /** Le stockage du navigateur, ou une mémoire temporaire s'il est bloqué. */
 function openStorage(): { store: Storage; ok: boolean } {
@@ -112,6 +114,16 @@ async function start(): Promise<void> {
     })
     picker.onPick((p) => { select(p); bottomBar.refresh(); closeDrawer() }) // un clic sur la carte ferme le volet
     mountCameraButtons(rig)
+    // Mission en cours : anneau doré sur le bon bouton, « ! » au-dessus de la cible sur la carte (ou de la mairie).
+    const guideTick = () => {
+      const s = getState()
+      const id = highlightFor(s)
+      setHighlight(id)
+      decor.setMarker(markerPosition(s, id, selection))
+      decor.setMarkerVisible(markerVisible(s))
+    }
+    guideTick()
+    setInterval(guideTick, 300)
     window.addEventListener('resize', () => world.resize())
     hideLoading()
     let last = performance.now()

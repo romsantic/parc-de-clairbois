@@ -76,3 +76,8 @@ export function formatAbsence(ms: number): string {
   const days = d === 1 ? '1 jour' : `${d} jours`
   return h ? `${days} et ${h} h` : days
 }
+
+/** Quantité arrondie à une décimale, virgule française : « 3,5 », « 12 ». */
+export function formatAmount(n: number): string {
+  return String(Math.round(n * 10) / 10).replace('.', ',')
+}

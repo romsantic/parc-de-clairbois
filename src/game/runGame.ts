@@ -8,8 +8,11 @@ import { showError, showNotice } from '../ui/errorScreen'
 import { mountTopBar } from '../ui/topBar'
 import { toggleTicketPanel } from '../ui/ticketPanel'
 import { toggleVillagePanel } from '../ui/villagePanel'
+import { toggleAutonomyPanel } from '../ui/autonomyPanel'
+import { formatReward } from '../ui/format'
 import { flash, toast } from '../ui/feedback'
 import { applyAction, type Action } from '../sim/actions'
+import { updateMissions } from '../sim/missions'
 import { BUILDINGS } from '../data/economy'
 import { SPECIES } from '../data/species'
 
@@ -42,10 +45,12 @@ export function runGame(store: Storage, storageOk = true): Game | null {
   if (!storageOk) showNotice('Ton navigateur bloque la sauvegarde : la partie ne sera pas conservée après fermeture.')
 
   let state = session.state
+  updateMissions(state, []) // la mission courante existe dès l'affichage (nouvelle partie : premier pas), sans attendre un pas de simulation
   const panelCtx = { get: () => state, dispatch: (a: Action, from?: HTMLElement | null) => dispatch(a, from) }
   const topBar = mountTopBar(() => state, {
     onTicket: () => toggleTicketPanel(panelCtx),
     onVillage: () => toggleVillagePanel(panelCtx),
+    onAutonomy: () => toggleAutonomyPanel(panelCtx),
   })
   let canSave = session.canSave
   let warnedError = false
@@ -144,11 +149,8 @@ function successMessage(a: Action, s: GameState, before: GameState): string {
   }
 }
 
-/** Texte simple d'une récompense reçue (la tâche 4 fournira `formatReward`). */
+/** Texte d'une récompense reçue : « 150 pièces + 30 fourrages » (ce qui est vraiment arrivé, le surplus du garde-manger plein est perdu). */
 function rewardText(coins: number, fourrage: number, viande: number): string {
-  const parts: string[] = []
-  if (coins > 0) parts.push(`+${Math.round(coins)} pièces`)
-  if (fourrage > 0) parts.push(`+${Math.round(fourrage)} fourrage`)
-  if (viande > 0) parts.push(`+${Math.round(viande)} viande`)
-  return parts.length ? parts.join(', ') : 'rien de plus'
+  const text = formatReward({ coins: Math.round(coins), fourrage: Math.round(fourrage), viande: Math.round(viande) })
+  return text || 'rien de plus'
 }
