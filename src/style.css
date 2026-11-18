@@ -261,6 +261,7 @@ button.icone .qte { position: absolute; top: -3px; left: -4px; font-style: norma
 }
 
 /* ---------- Missions (étape 5) ---------- */
+.volet .titre-mission { display: block; background: none; border: 0; padding: 0; margin: 0 0 4px; color: inherit; font: inherit; font-weight: 600; text-align: left; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
 .mission-ouvrir { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; background: none; border: 0; padding: 4px 6px; text-align: left; white-space: nowrap; overflow: hidden; color: #6f6852; }
 .mission-ouvrir .titre { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .mission-ouvrir .avancee, .mission-ouvrir .quot { flex: none; font-variant-numeric: tabular-nums; font-weight: 600; }
@@ -289,7 +290,7 @@ button.recuperer:hover { background: #5f9a3c; }
   opacity: 0; transition: opacity .3s, transform .3s;
 }
 .banniere-mission.visible { opacity: 1; transform: translate(-50%, 0); }
-body:has(.volet) .banniere-mission { bottom: calc(40vh + 100px); }
+body:has(.volet) .banniere-mission { bottom: calc(40vh + var(--barre-h, calc(48px + env(safe-area-inset-bottom, 0px))) + 52px); }
 
 /* Mise en évidence : anneau doré qui pulse autour de ce que la mission demande de toucher. */
 body[data-highlight="detailsEnclos"] [data-guide="detailsEnclos"],

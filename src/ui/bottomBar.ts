@@ -25,6 +25,8 @@ export interface BottomBarContext {
   startBuild(zone: Zone, point: { x: number; z: number }): void
   startResize(encId: number): void
   openGazette(): void
+  /** Glisse la caméra jusqu'au « ! » de la mission ; false s'il n'y en a pas. */
+  focusMission(): boolean
 }
 
 const AGE = { bebe: 'bébé', jeune: 'jeune', adulte: 'adulte' } as const
@@ -47,7 +49,7 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
   tab.setAttribute('aria-label', 'Déplier la barre'); tab.hidden = true
   document.body.append(bar, tab)
 
-  const panelCtx = { get: ctx.get, dispatch: ctx.dispatch }
+  const panelCtx = { get: ctx.get, dispatch: ctx.dispatch, focusMission: ctx.focusMission }
   mountMissionBanner(ctx.get, () => openMissionPanel(panelCtx))
 
   const marchand = guide(iconButton(ICONS.marchand, 'Marchand d’animaux'), 'marchand')
@@ -193,7 +195,7 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
       if (missionProgress) open.append(missionProgress)
       missionDaily = d ? text('span', '', 'quot') : null
       if (missionDaily) { missionDaily.title = 'Missions du jour réussies'; open.append(missionDaily) }
-      open.addEventListener('click', () => toggleMissionPanel(panelCtx))
+      open.addEventListener('click', () => { ctx.focusMission(); toggleMissionPanel(panelCtx) })
       mission.append(open)
       if (l?.done) { mission.append(claimButton(panelCtx, l, true, updateMission)); armClaimGuard() }
     }

@@ -24,7 +24,7 @@ import { createEnclosureEditor } from './scene/enclosureEditor'
 import { SPECIES_MODELS } from './data/speciesModels'
 import { createRng } from './core/rng'
 import { setHighlight } from './ui/highlight'
-import { highlightFor, markerPosition, markerVisible } from './ui/missionModel'
+import { highlightFor, markerPosition, markerSpot, markerVisible } from './ui/missionModel'
 
 /** Le stockage du navigateur, ou une mémoire temporaire s'il est bloqué. */
 function openStorage(): { store: Storage; ok: boolean } {
@@ -129,6 +129,11 @@ async function start(): Promise<void> {
       startBuild: (zone, point) => { closeDrawer(); editor.startBuild(zone, point) },
       startResize: (id) => { closeDrawer(); editor.startResize(id) },
       openGazette: game.openGazette,
+      focusMission: () => {
+        const spot = markerSpot(getState())
+        if (spot) rig.focusOn(spot.x, spot.z)
+        return !!spot
+      },
     })
     picker.onPick((p) => { select(p); effectsOnPick(p, getState(), audio.engine); bottomBar.refresh(); closeDrawer() }) // un clic sur la carte ferme le volet
     mountCameraButtons(rig)
@@ -137,7 +142,7 @@ async function start(): Promise<void> {
       const s = getState()
       const id = highlightFor(s)
       setHighlight(id)
-      decor.setMarker(markerPosition(s, id, selection))
+      decor.setMarker(markerPosition(s, id))
       decor.setMarkerVisible(markerVisible(s))
     }
     guideTick()

@@ -36,7 +36,23 @@ export function quarterTurn(azimuth: number, dir: 1 | -1): number {
   return base + next * step
 }
 
+/** Point visé ramené dans les bornes de la carte (comme la caméra le fait déjà pour le déplacement à la main). */
+export function clampFocus(x: number, z: number): { x: number; z: number } {
+  return { x: clamp(x, -MAP.halfX, MAP.halfX), z: clamp(z, -MAP.halfZ, MAP.halfZ) }
+}
+
+/** Durée de la glissade vers un point, en secondes. */
+export const FOCUS_SECONDS = 0.8
+
+/** Progression douce (0 → 1, ralentit à l'arrivée). */
+export function focusEase(t: number): number {
+  const u = clamp(t, 0, 1)
+  return 1 - (1 - u) ** 3
+}
+
 export interface CameraRig {
+  /** Fait glisser la vue (sans changer le zoom) pour centrer le point (x, z). */
+  focusOn(x: number, z: number): void
   rotateQuarter(dir: 1 | -1): void
   zoom(step: number): void
   update(dt: number): void
@@ -63,6 +79,9 @@ export function createCameraRig(world: World, canvas: HTMLCanvasElement): Camera
   camera.position.setFromSpherical(new THREE.Spherical(start.distance, start.polar, start.azimuth))
   controls.update()
 
+  let focus: { from: THREE.Vector3; to: THREE.Vector3; t: number } | null = null
+  // Toucher la caméra à la main interrompt la glissade.
+  controls.addEventListener('start', () => { focus = null })
   let turn: { from: number; to: number; t: number } | null = null
   const spherical = new THREE.Spherical()
   const offset = new THREE.Vector3()
@@ -80,6 +99,11 @@ export function createCameraRig(world: World, canvas: HTMLCanvasElement): Camera
       const from = controls.getAzimuthalAngle()
       turn = { from, to: quarterTurn(from, dir), t: 0 }
     },
+    focusOn(x, z) {
+      const p = clampFocus(x, z)
+      const from = controls.target.clone()
+      focus = { from, to: new THREE.Vector3(p.x, from.y, p.z), t: 0 }
+    },
     zoom(step) {
       offset.copy(camera.position).sub(controls.target)
       const d = clamp(offset.length() * (step > 0 ? 0.8 : 1.25), CAMERA_LIMITS.minDistance, CAMERA_LIMITS.maxDistance)
@@ -91,6 +115,14 @@ export function createCameraRig(world: World, canvas: HTMLCanvasElement): Camera
         const e = 1 - (1 - turn.t) ** 3
         setAzimuth(turn.from + (turn.to - turn.from) * e)
         if (turn.t >= 1) turn = null
+      }
+      if (focus) {
+        focus.t = Math.min(1, focus.t + dt / FOCUS_SECONDS)
+        const next = focus.from.clone().lerp(focus.to, focusEase(focus.t))
+        const dx = next.x - controls.target.x, dz = next.z - controls.target.z
+        controls.target.x += dx; controls.target.z += dz
+        camera.position.x += dx; camera.position.z += dz
+        if (focus.t >= 1) focus = null
       }
       // On ne sort pas du domaine en déplaçant la vue.
       const t = controls.target

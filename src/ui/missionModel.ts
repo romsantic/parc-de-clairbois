@@ -1,12 +1,12 @@
 /** Ce que l'interface affiche des missions : fonctions pures (testées), sans DOM. */
 import { ECONOMY, SLOTS } from '../data/economy'
 import { MISSIONS_TUNING, STORY, STORY_DONE_MESSAGE, TUTORIAL, type HighlightId, type MissionDef } from '../data/missions'
+import { MAIRIE } from '../data/village'
 import { DAY_MS } from '../data/tuning'
 import { ZONES } from '../data/zones'
 import { currentMission, dayKey, missionDef, progress, type MissionTrack } from '../sim/missions'
 import { canLevelUp, missionGateOk, population } from '../sim/village'
 import type { GameState, MissionProgress, Rect } from '../sim/types'
-import type { Pick } from '../scene/picking'
 import { formatProgress, formatReward } from './format'
 
 /** Une mission prête à être affichée. */
@@ -96,21 +96,21 @@ export function freeSlot(state: GameState): { x: number; z: number; id: number }
 }
 
 /**
- * Où mettre le « ! » : au-dessus de la cible si elle est sur la carte et pas déjà choisie ;
- * null = au-dessus de la mairie.
+ * Où mettre le « ! » : au-dessus de la cible tant que la mission n'est pas réussie, même si le
+ * joueur l'a déjà choisie ; null = au-dessus de la mairie.
  */
-export function markerPosition(state: GameState, id: HighlightId | null, sel: Pick): { x: number; z: number } | null {
+export function markerPosition(state: GameState, id: HighlightId | null): { x: number; z: number } | null {
   switch (id) {
     case 'detailsEnclos':
     case 'nettoyer': {
       const enc = state.enclosures.find((e) => e.species === 'mouton') ?? state.enclosures[0]
-      if (!enc || (sel.kind === 'enclos' && sel.id === enc.id)) return null
+      if (!enc) return null
       return center(enc.rect)
     }
     case 'ferme': {
       const ferme = state.buildings.find((b) => b.type === 'ferme')
       const slot = ferme && SLOTS.find((s) => s.id === ferme.slot)
-      if (!slot || (sel.kind === 'emplacement' && sel.slot === slot.id)) return null
+      if (!slot) return null
       return { x: slot.x, z: slot.z }
     }
     case 'emplacementLibre': {
@@ -155,4 +155,10 @@ export function bannerFor(
   if (!prev) return unread ? 'nouvelle' : null
   if (prev.id !== cur.id) return cur.done ? 'reussie' : 'nouvelle'
   return !prev.done && cur.done ? 'reussie' : null
+}
+
+/** Où se trouve le « ! » à l'écran (cible ou mairie) ; null s'il est caché. */
+export function markerSpot(state: GameState): { x: number; z: number } | null {
+  if (!markerVisible(state)) return null
+  return markerPosition(state, highlightFor(state)) ?? { x: MAIRIE.x, z: MAIRIE.z }
 }

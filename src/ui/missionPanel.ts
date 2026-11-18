@@ -57,6 +57,17 @@ export function openMissionPanel(ctx: PanelContext): void {
     const lineOf = (id: string) => (s: GameState) =>
       [currentLine(s), ...dailyLines(s)].find((l) => l?.id === id)?.progress ?? ''
 
+    /** Titre cliquable : la caméra glisse jusqu'au « ! ». Sur téléphone on ferme le volet pour voir la carte. */
+    function titleButton(title: string): HTMLElement {
+      const b = text('button', title, 'gros titre-mission') as HTMLButtonElement
+      b.type = 'button'
+      b.title = 'Voir sur la carte'
+      b.addEventListener('click', () => {
+        if (ctx.focusMission?.() && window.matchMedia('(max-width: 640px)').matches) closeDrawer()
+      })
+      return b
+    }
+
     function build(s: GameState) {
       body.replaceChildren()
       live.length = 0
@@ -68,7 +79,7 @@ export function openMissionPanel(ctx: PanelContext): void {
       head.className = 'mission-courante'
       if (cur) {
         if (inTutorial) head.append(text('p', `Étape ${m.tutorial.step + 1} sur ${TUTORIAL.length}`, 'discret'))
-        head.append(text('p', cur.title, 'gros'), text('p', `${cur.giver} : ${cur.text}`, 'dialogue'))
+        head.append(titleButton(cur.title), text('p', `${cur.giver} : ${cur.text}`, 'dialogue'))
         const row = document.createElement('p')
         row.append(document.createTextNode('Avancée : '), progressSpan(lineOf(cur.id)), text('span', ` · Récompense : ${cur.reward}`))
         head.append(row)
