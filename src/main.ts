@@ -5,6 +5,7 @@ import { loadModels, requestModel, AssetLoadError } from './scene/loadModels'
 import { hourFromLocation } from './scene/clock'
 import { createVisitorsView, WALKER_MODELS } from './scene/visitorsView'
 import { createWorld } from './scene/world'
+import { isPhone } from './core/device'
 import { showError, showLoading } from './ui/errorScreen'
 import { runGame } from './game/runGame'
 import { createAudioController, unlockOnFirstGesture } from './audio/sound'
@@ -104,7 +105,7 @@ async function start(): Promise<void> {
     // Promeneurs : leurs modèles (~7 Mo) se chargent en arrière-plan, un par un, sans bloquer le parc.
     const visitors = createVisitorsView(world, getState, {
       hour: () => hourFromLocation(location.search, new Date()).hour,
-      mobile: window.matchMedia('(pointer: coarse)').matches,
+      mobile: isPhone(),
     })
     void (async () => { for (const k of WALKER_MODELS) { try { await requestModel(world.models, k) } catch { /* sans ce modèle, tant pis */ } } })()
     let selection: Pick = { kind: 'rien' }

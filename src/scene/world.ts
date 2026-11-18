@@ -1,7 +1,8 @@
 import * as THREE from 'three'
 import { sunForHour, nightAmount } from './sun'
 import { setNightGlow } from './materials'
-import { NIGHT } from '../data/visuals'
+import { NIGHT, SUN_SHADOW, renderSettings } from '../data/visuals'
+import { isPhone } from '../core/device'
 import { moonDirection, skyDirection } from './nightSky'
 import { START_AZIMUTH } from './cameraRig'
 import { createRng } from '../core/rng'
@@ -177,7 +178,8 @@ function makeNightSky(): { group: THREE.Group; set: (night: number) => void } {
 
 export function createWorld(canvas: HTMLCanvasElement, models: Map<ModelKey, LoadedModel>): World {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
-  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio))
+  const display = renderSettings(isPhone(), window.devicePixelRatio)
+  renderer.setPixelRatio(display.pixelRatio)
   renderer.shadowMap.enabled = true
   renderer.shadowMap.type = THREE.PCFSoftShadowMap
   renderer.toneMapping = THREE.ACESFilmicToneMapping
@@ -197,8 +199,8 @@ export function createWorld(canvas: HTMLCanvasElement, models: Map<ModelKey, Loa
   scene.add(hemi)
   const sun = new THREE.DirectionalLight('#fff3dc', 2.4)
   sun.castShadow = true
-  sun.shadow.mapSize.set(2048, 2048)
-  Object.assign(sun.shadow.camera, { left: -45, right: 45, top: 40, bottom: -40, near: 1, far: 200 })
+  sun.shadow.mapSize.set(display.shadowMapSize, display.shadowMapSize)
+  Object.assign(sun.shadow.camera, { left: SUN_SHADOW.LEFT, right: SUN_SHADOW.RIGHT, top: SUN_SHADOW.TOP, bottom: SUN_SHADOW.BOTTOM, near: SUN_SHADOW.NEAR, far: SUN_SHADOW.FAR })
   sun.shadow.bias = -0.0004
   sun.shadow.normalBias = 0.03
   scene.add(sun, sun.target)

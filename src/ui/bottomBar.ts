@@ -239,6 +239,10 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
     }
   }
 
+  // Sur téléphone la barre peut prendre plusieurs lignes : les volets se posent au-dessus de sa hauteur réelle.
+  const syncHeight = () => document.documentElement.style.setProperty('--barre-h', bar.hidden ? '0px' : `${bar.offsetHeight}px`)
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(syncHeight).observe(bar)
+  syncHeight()
   update()
   setInterval(update, 500)
   return { refresh: update }

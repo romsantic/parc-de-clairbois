@@ -64,17 +64,19 @@ export function toggleMerchantPanel(ctx: MerchantContext): void {
       for (const o of s.merchant.offers) {
         const row = document.createElement('div')
         row.className = 'offre'
-        const useCoupon = hasCoupon && checked.has(o.id)
-        row.append(text('b', SPECIES[o.species].name), text('span', o.sex === 'F' ? '♀' : '♂'), text('span', o.stage),
-          priceCell(o.price, offerPriceFor(s, o, useCoupon)))
+        // Lu au moment du clic : cocher la case ne reconstruit rien, seul le prix change.
+        const useCoupon = () => hasCoupon && checked.has(o.id)
+        let price = priceCell(o.price, offerPriceFor(s, o, useCoupon()))
+        row.append(text('b', SPECIES[o.species].name), text('span', o.sex === 'F' ? '♀' : '♂'), text('span', o.stage), price)
         if (hasCoupon) {
           const label = document.createElement('label')
           label.className = 'bon'
           const box = document.createElement('input')
-          box.type = 'checkbox'; box.checked = useCoupon
+          box.type = 'checkbox'; box.checked = useCoupon()
           box.addEventListener('change', () => {
             if (box.checked) checked.add(o.id); else checked.delete(o.id)
-            sig = ''; update() // le prix suit la case ; les boutons ne sont refaits que sur ce changement
+            const next = priceCell(o.price, offerPriceFor(ctx.get(), o, useCoupon())) // le prix suit la case, le reste de la liste ne bouge pas
+            price.replaceWith(next); price = next
           })
           label.append(box, ` Utiliser mon bon (−${Math.round(MISSIONS_TUNING.COUPON_DISCOUNT * 100)} %)`)
           row.append(label)
@@ -86,8 +88,10 @@ export function toggleMerchantPanel(ctx: MerchantContext): void {
           row.append(text('span', `→ ${enclosureLabel(s, t.encId)}`, 'cible'))
           buy.addEventListener('click', () => {
             if (performance.now() < buyBlockedUntil) return
-            if (ctx.dispatch({ type: 'acheterAnimal', offerId: o.id, encId: t.encId, useCoupon }, buy)) {
+            if (ctx.dispatch({ type: 'acheterAnimal', offerId: o.id, encId: t.encId, useCoupon: useCoupon() }, buy)) {
               buyBlockedUntil = performance.now() + BUY_DELAY_MS
+              checked.clear() // les cases se décochent après un achat
+              sig = ''; update()
               refreshDrawer()
             }
           })

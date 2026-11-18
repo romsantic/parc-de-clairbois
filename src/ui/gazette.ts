@@ -1,3 +1,4 @@
+import { closeDrawer } from './drawer'
 import { formatDateFr, type GazetteEdition } from './gazetteModel'
 
 let overlay: HTMLElement | null = null
@@ -18,6 +19,7 @@ const el = (tag: string, cls: string, t = ''): HTMLElement => {
 
 /** Ouvre La Gazette de Clairbois par-dessus la carte. `edition` null : rien de neuf depuis l'arrivée. */
 export function openGazette(edition: GazetteEdition | null, nowMs = Date.now()): void {
+  closeDrawer() // un volet ouvert resterait caché sous la Gazette puis réapparaîtrait
   closeGazette()
   const back = el('div', 'gazette-fond')
   const paper = el('article', 'gazette')

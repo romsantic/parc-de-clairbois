@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import type { ModelKey } from '../assets/manifest'
 import { ZONES, PATHS, villagePaths } from '../data/zones'
 import { SLOTS } from '../data/economy'
+import { VILLAGE_PROPS, MAIRIE, MARKER } from '../data/village'
 import type { World } from './world'
 import { fitHeight } from './animalActor'
 import { prepareStatic } from './materials'
@@ -14,8 +15,6 @@ export const BRIDGE_Z = 10
 export const BRIDGE_DECK_Y = 0.36
 /** Demi-longueur du tablier (planches de bx − 3,3 à bx + 3,3). */
 export const BRIDGE_HALF_SPAN = 3.3
-/** Hauteur du « ! » au-dessus du sol quand il désigne un point de la carte (enclos, bâtiment). */
-const MARKER_HEIGHT_OVER_GROUND = 5
 
 /**
  * Décor fixe : village, pont, chemins, marqueur de mission, arbres et rochers.
@@ -54,14 +53,11 @@ export function buildDecor(world: World, rng: () => number): {
     occupied.every((o) => Math.hypot(o.x - x, o.z - z) > o.r + r)
 
   // ---------- Le village, de l'autre côté de la rivière ----------
-  const mairie = place('mairie', 17, -3, { height: 7, rot: -Math.PI / 2, r: 3.5 })
-  place('maison1', 18, -11.5, { height: 3.6, rot: 0.2, r: 3 })
-  place('maison3', 29.5, 3, { height: 3.6, rot: -Math.PI / 2, r: 3 })
-  place('maison2', 11, 16, { height: 3.6, rot: Math.PI + 0.4, r: 3 })
-  place('moulin', 31, -8, { height: 7, rot: -0.6, r: 3.5 })
-  place('puits', 13, 0, { height: 2.2, r: 1.2 })
-  place('charrette', 10, 4, { height: 1.8, rot: 0.8, r: 1.5 })
-  place('banc', 15, 3.5, { height: 0.9, rot: Math.PI, r: 0.8 })
+  let mairie: THREE.Object3D | undefined
+  for (const v of VILLAGE_PROPS) {
+    const obj = place(v.key, v.x, v.z, { height: v.height, rot: v.rot, r: v.r })
+    if (v === MAIRIE) mairie = obj
+  }
 
   // ---------- Pont de bois là où l'allée croise la rivière ----------
   for (const sl of SLOTS) occupied.push({ x: sl.x, z: sl.z, r: 3.4 })
@@ -136,17 +132,17 @@ export function buildDecor(world: World, rng: () => number): {
   const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.16, 1.3, 8), gold)
   bar.position.y = 0.95
   marker.add(bar, new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 8), gold))
-  const mairieBase = (mairie ? new THREE.Box3().setFromObject(mairie).max.y : 9) + 1.4
+  const mairieBase = (mairie ? new THREE.Box3().setFromObject(mairie).max.y : MARKER.FALLBACK_TOP_Y) + MARKER.OVER_MAIRIE
   let markerBase = mairieBase
-  marker.position.set(17, markerBase, -3)
+  marker.position.set(MAIRIE.x, markerBase, MAIRIE.z)
   scene.add(marker)
   let markerAt: string | null = null
   function setMarker(pos: { x: number; z: number } | null) {
     const key = pos ? `${pos.x},${pos.z}` : null
     if (key === markerAt) return
     markerAt = key
-    const x = pos ? pos.x : 17, z = pos ? pos.z : -3
-    markerBase = pos ? groundHeight(x, z) + MARKER_HEIGHT_OVER_GROUND : mairieBase
+    const x = pos ? pos.x : MAIRIE.x, z = pos ? pos.z : MAIRIE.z
+    markerBase = pos ? groundHeight(x, z) + MARKER.OVER_GROUND : mairieBase
     marker.position.set(x, markerBase, z)
   }
 

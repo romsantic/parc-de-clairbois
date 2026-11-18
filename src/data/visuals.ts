@@ -67,3 +67,22 @@ export const NIGHT = {
   REST_FACTOR: 3.5,
   WALK_SPEED_FACTOR: 0.7,
 } as const
+
+/** Réglages d'affichage selon l'appareil (purement visuel). Téléphone : image moins dense, ombres moins fines. */
+export const RENDER = {
+  PIXEL_RATIO_MAX_DESKTOP: 2,
+  PIXEL_RATIO_MAX_MOBILE: 1.5,
+  SHADOW_MAP_DESKTOP: 2048,
+  SHADOW_MAP_MOBILE: 1024,
+} as const
+
+export function renderSettings(mobile: boolean, devicePixelRatio: number): { pixelRatio: number; shadowMapSize: number } {
+  const max = mobile ? RENDER.PIXEL_RATIO_MAX_MOBILE : RENDER.PIXEL_RATIO_MAX_DESKTOP
+  return {
+    pixelRatio: Math.min(max, devicePixelRatio > 0 ? devicePixelRatio : 1),
+    shadowMapSize: mobile ? RENDER.SHADOW_MAP_MOBILE : RENDER.SHADOW_MAP_DESKTOP,
+  }
+}
+
+/** Lumière du soleil : zone couverte par la carte d'ombres (m) et profondeur. */
+export const SUN_SHADOW = { LEFT: -45, RIGHT: 45, TOP: 40, BOTTOM: -40, NEAR: 1, FAR: 200 } as const
