@@ -31,3 +31,15 @@ describe('brume : panneau', () => {
     expect(zoneSignText(zone('prairie'), 1)).toBe('Prairie')
   })
 })
+
+import { labelCanvasWidth, labelWorldWidth } from '../../src/scene/fog'
+describe('panneau : taille', () => {
+  it('le canevas contient toujours le texte avec marge', () => {
+    expect(labelCanvasWidth(600)).toBeGreaterThanOrEqual(600 + 2 * 44)
+    expect(labelCanvasWidth(10)).toBe(256)
+  })
+  it('garde les proportions du canevas', () => {
+    expect(labelWorldWidth(512, 2)).toBe(8)
+    expect(labelWorldWidth(768, 2)).toBe(12)
+  })
+})

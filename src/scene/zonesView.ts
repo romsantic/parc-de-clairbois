@@ -1,25 +1,27 @@
 import * as THREE from 'three'
 import { ZONES, type Zone } from '../data/zones'
-import { FOG_DISSOLVE_S, fogOpacity, zoneSignText } from './fog'
+import { FOG_DISSOLVE_S, fogOpacity, labelCanvasWidth, labelWorldWidth, zoneSignText } from './fog'
 import type { World } from './world'
 
 const TINT: Record<Zone['id'], string> = { prairie: '#b6dc7a', foret: '#5f8f4a', montagne: '#a99a82' }
 
 /** Panneau de texte toujours tourné vers la caméra. */
-export function label(text: string): THREE.Sprite {
+export function label(text: string, height = 2): THREE.Sprite {
   const c = document.createElement('canvas')
-  c.width = 512; c.height = 128
+  const font = '600 46px system-ui, sans-serif'
   const g = c.getContext('2d')!
+  g.font = font
+  c.width = labelCanvasWidth(g.measureText(text).width); c.height = 128 // redimensionner efface le contexte : on le redéfinit ensuite
   g.fillStyle = 'rgba(246,240,225,0.92)'
-  g.beginPath(); g.roundRect(8, 16, 496, 96, 28); g.fill()
+  g.beginPath(); g.roundRect(8, 16, c.width - 16, 96, 28); g.fill()
   g.fillStyle = '#4a4434'
-  g.font = '600 46px system-ui, sans-serif'
+  g.font = font
   g.textAlign = 'center'; g.textBaseline = 'middle'
-  g.fillText(text, 256, 66)
+  g.fillText(text, c.width / 2, 66)
   const tex = new THREE.CanvasTexture(c)
   tex.colorSpace = THREE.SRGBColorSpace
   const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false }))
-  s.scale.set(8, 2, 1)
+  s.scale.set(labelWorldWidth(c.width, height), height, 1)
   s.renderOrder = 5
   return s
 }
@@ -127,11 +129,10 @@ export function createZonesView(world: World): { setLevel(level: number): void; 
         mesh.receiveShadow = true
         mesh.name = `zone:${z.id}`
         add(mesh)
-        const s = label(zoneSignText(z, villageLevel))
+        const s = label(zoneSignText(z, villageLevel), locked ? 2.4 : 1.25)
         // Zone ouverte : nom discret sur son bord nord, pour ne pas gêner les enclos.
         const lz = locked ? r.z + r.d / 2 : r.z + 1.2
         s.position.set(r.x + r.w / 2, world.groundHeight(r.x + r.w / 2, lz) + (locked ? 3 : 1.6), lz)
-        s.scale.set(locked ? 11 : 5, locked ? 2.75 : 1.25, 1)
         add(s)
       }
     },

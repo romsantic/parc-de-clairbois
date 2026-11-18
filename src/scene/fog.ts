@@ -19,3 +19,13 @@ export function zoneSignText(zone: Zone, villageLevel: number): string {
   if (zone.unlockLevel <= villageLevel) return zone.name
   return `${zone.hiddenName ?? zone.name} · s'ouvre au ${ECONOMY.LEVEL_NAMES[zone.unlockLevel - 1]}`
 }
+
+/** Largeur (px) du canevas d'un panneau : texte mesuré + marge de chaque côté, jamais moins que `min`. */
+export function labelCanvasWidth(textWidth: number, pad = 44, min = 256): number {
+  return Math.max(min, Math.ceil(textWidth + 2 * pad))
+}
+
+/** Largeur monde d'un panneau de hauteur `height` (le canevas fait 128 px de haut). */
+export function labelWorldWidth(canvasWidth: number, height: number): number {
+  return (canvasWidth / 128) * height
+}
