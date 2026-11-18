@@ -22,7 +22,9 @@ export const ECONOMY = {
   REPUTATION_GAIN_PER_H: 0.01,
   /** Nouveaux venus (réglage de l'étape 6, choix de Romain 17/11) : un habitant pour CLIENTS_PER_NEWCOMER clients servis jusqu'à NEWCOMER_FAST_CLIENTS clients, puis un pour CLIENTS_PER_NEWCOMER_LATE. */
   CLIENTS_PER_NEWCOMER: 30,
+  /** Clients servis jusqu'auxquels les nouveaux venus arrivent vite (2400 / 30 = 80 habitants). */
   NEWCOMER_FAST_CLIENTS: 2400,
+  /** Au-delà de NEWCOMER_FAST_CLIENTS : clients servis pour un nouvel habitant. */
   CLIENTS_PER_NEWCOMER_LATE: 350,
   BASE_POPULATION: 10,
   RESIDENTS_PER_LEVEL: 5,

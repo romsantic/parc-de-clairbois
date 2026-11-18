@@ -1,14 +1,64 @@
 import { describe, it, expect } from 'vitest'
-import { startSession, resume } from '../../src/game/session'
+import { startSession, resume, adjustTicketAfterLoad } from '../../src/game/session'
 import { saveGame, loadGame, SAVE_KEY, type Storage } from '../../src/save/save'
 import { newGame } from '../../src/sim/newGame'
 import { DAY_MS } from '../../src/data/tuning'
+import { fairPrice } from '../../src/sim/economy'
+import { population } from '../../src/sim/village'
+import { updateMissions } from '../../src/sim/missions'
+import { STORY } from '../../src/data/missions'
 
 function memory(init: Record<string, string> = {}): Storage & { data: Record<string, string> } {
   const data = { ...init }
   return { data, getItem: (k) => (k in data ? data[k] : null), setItem: (k, v) => { data[k] = v } }
 }
 const NOW = 1_800_000_000_000
+
+describe('billet après le rééquilibrage', () => {
+  it('niveau 2 à 14 pièces : remis au prix juste, avec message', () => {
+    const g = newGame(5, NOW)
+    g.village.level = 2
+    g.ticketPrice = 14
+    const fair = fairPrice(g)
+    expect(adjustTicketAfterLoad(g)).toBe(fair)
+    expect(g.ticketPrice).toBe(fair)
+    const m = memory()
+    const old = newGame(5, NOW); old.village.level = 2; old.ticketPrice = 14
+    saveGame(m, old, NOW)
+    const r = startSession(m, NOW)
+    expect(r.state.ticketPrice).toBe(fairPrice(r.state))
+    expect(r.priceNotice).toContain('prix juste')
+  })
+  it('dans 1,5 x le prix juste : intouché ; partie neuve : intouchée', () => {
+    const g = newGame(5, NOW)
+    g.ticketPrice = Math.floor(1.5 * fairPrice(g))
+    const before = g.ticketPrice
+    expect(adjustTicketAfterLoad(g)).toBeNull()
+    expect(g.ticketPrice).toBe(before)
+    const f = newGame(7, NOW)
+    expect(adjustTicketAfterLoad(f)).toBeNull()
+    const m = memory()
+    expect(startSession(m, NOW).priceNotice).toBeNull()
+  })
+  it('ancienne partie niveau 2, 10 000 clients, porte faite : reste niveau 2, mission faite, habitants avec la nouvelle règle', () => {
+    const g = newGame(5, NOW)
+    g.village = { level: 2, clientsServed: 10_000 }
+    const gate = STORY.findIndex((x) => x.gate === 3)
+    g.missions.story = { index: gate, current: { id: STORY[gate].id, base: 0, done: true, claimed: false } }
+    const oldPop = 10 + 5 * g.buildings.reduce((s, b) => s + b.level, 0) + Math.floor(10_000 / 30)
+    const m = memory()
+    saveGame(m, g, NOW)
+    const r = startSession(m, NOW)
+    expect(r.state.village.level).toBe(2)
+    expect(r.state.missions.story.index).toBe(gate)
+    expect(r.state.missions.story.current?.done).toBe(true)
+    updateMissions(r.state, [])
+    expect(r.state.missions.story.current?.done).toBe(true)
+    const pop = population(r.state)
+    expect(pop).toBeGreaterThan(0)
+    expect(pop).toBeLessThan(oldPop)
+  })
+})
 
 describe('startSession', () => {
   it('sans sauvegarde : nouvelle partie, aussitôt sauvegardée', () => {

@@ -2,6 +2,8 @@ import type { GameState } from '../sim/types'
 import { newGame } from '../sim/newGame'
 import { advanceTo } from '../sim/advance'
 import { restock } from '../sim/merchant'
+import { fairPrice } from '../sim/economy'
+import { ECONOMY } from '../data/economy'
 import { summarize, type Summary } from '../sim/summary'
 import { MISSIONS_TUNING } from '../data/missions'
 import { HOUR_MS } from '../data/tuning'
@@ -21,6 +23,8 @@ export interface Session {
   problem: 'illisible' | 'trop-recente' | 'migration-impossible' | null
   /** Faux si sauvegarder écraserait une partie qu'on ne sait pas lire, ou si le stockage manque. */
   canSave: boolean
+  /** Message à montrer une fois si le billet d'une ancienne partie a été remis au prix juste. */
+  priceNotice: string | null
   /** Identifiant de cet onglet : seul lui sauvegarde tant qu'aucun autre n'a repris la partie. */
   owner: string
 }
@@ -42,10 +46,21 @@ export function restartState(store: Storage, nowMs: number, replaced?: GameState
 }
 const newSeed = () => Math.floor(Math.random() * 2 ** 32)
 
+/**
+ * Après le rééquilibrage de l'étape 6 : un billet réglé sur les anciens prix peut valoir plusieurs fois le nouveau prix juste
+ * (plus aucun visiteur). S'il dépasse 1,5 x le prix juste, il y est remis (modifie `state`) ; rend le nouveau prix, sinon null.
+ */
+export function adjustTicketAfterLoad(state: GameState): number | null {
+  const fair = fairPrice(state)
+  if (state.ticketPrice <= ECONOMY.REPUTATION_DROP_ABOVE * fair) return null
+  state.ticketPrice = fair
+  return fair
+}
+
 /** Charge la partie (ou en crée une), rattrape le temps d'absence et prend la main sur la sauvegarde. */
 export function startSession(store: Storage, nowMs: number, storageOk = true): Session {
   const owner = newOwner()
-  const base = { summary: null, skippedMs: 0, absentMs: 0, owner }
+  const base = { summary: null, skippedMs: 0, absentMs: 0, owner, priceNotice: null as string | null }
   if (!storageOk) return { ...base, state: freshGame(nowMs), problem: null, canSave: false }
   const loaded = loadGame(store, undefined, nowMs)
   if (loaded.kind === 'trop-recente' || loaded.kind === 'migration-impossible') {
@@ -58,6 +73,7 @@ export function startSession(store: Storage, nowMs: number, storageOk = true): S
   }
   const start = structuredClone(loaded.state)
   start.utcOffsetMin = localOffset(nowMs) // l'heure locale, avant le rattrapage
+  const fair = adjustTicketAfterLoad(start) // avant le rattrapage : l'absence ne se passe pas à un prix démesuré
   const r = advanceTo(start, nowMs)
   if (r.state.merchant.restocks === 0 && r.state.merchant.offers.length === 0) {
     // Partie migrée de la v1 chargée avant le premier pas : le marchand a déjà son premier stock.
@@ -65,7 +81,7 @@ export function startSession(store: Storage, nowMs: number, storageOk = true): S
     restock(r.state)
   }
   const canSave = saveGame(store, r.state, nowMs, owner) === 'ok'
-  return { ...base, state: r.state, summary: summarize(r.events, r.state), skippedMs: r.skippedMs, absentMs: loaded.savedAt === undefined ? 0 : Math.max(0, nowMs - loaded.savedAt), problem: null, canSave }
+  return { ...base, state: r.state, summary: summarize(r.events, r.state), skippedMs: r.skippedMs, absentMs: loaded.savedAt === undefined ? 0 : Math.max(0, nowMs - loaded.savedAt), problem: null, canSave, priceNotice: fair === null ? null : `Les prix ont changé : ton billet est revenu au prix juste (${fair} pièces).` }
 }
 
 /**
