@@ -2,7 +2,7 @@ import type { Animal, Building, Enclosure } from '../sim/types'
 import { SLOTS } from '../data/economy'
 import { villagePaths } from '../data/zones'
 import { WALKERS } from '../data/visuals'
-import { BRIDGE_Z } from './decor'
+import { BRIDGE_Z, BRIDGE_DECK_Y, BRIDGE_HALF_SPAN } from './decor'
 
 /** Point d'un trajet. Avec `faceX/faceZ` : arrêt possible, en regardant ce point. */
 export interface RoutePoint { x: number; z: number; faceX?: number; faceZ?: number; always?: boolean }
@@ -84,4 +84,15 @@ export function buildRoute(bx: number, alley: RoutePoint[], cafe: RoutePoint[] |
   ]
   const back = out.slice(0, -1).reverse().map((p) => ({ x: p.x, z: p.z }))
   return [...out, ...back]
+}
+
+/** Longueur de la rampe entre la berge et le tablier (m). */
+const DECK_RAMP = 1
+
+/** Hauteur des pieds : celle du sol, ou celle du tablier sur le pont (rampe douce depuis chaque berge). */
+export function walkHeight(x: number, z: number, bx: number, ground: (x: number, z: number) => number): number {
+  const g = Math.max(ground(x, z), -0.05)
+  if (Math.abs(z - BRIDGE_Z) > 1.4) return g
+  const t = Math.max(0, Math.min(1, (BRIDGE_HALF_SPAN - Math.abs(x - bx)) / DECK_RAMP))
+  return g + (BRIDGE_DECK_Y - g) * t
 }

@@ -6,7 +6,7 @@ import { WALKERS, visitorsShown } from '../data/visuals'
 import type { ModelKey } from '../assets/manifest'
 import type { World } from './world'
 import { fitHeight } from './animalActor'
-import { alleyStops, bridgeX, buildRoute, cafeRoute, type RoutePoint } from './visitorRoutes'
+import { alleyStops, bridgeX, buildRoute, cafeRoute, walkHeight, type RoutePoint } from './visitorRoutes'
 
 /** Les six modèles de promeneurs, chargés en arrière-plan après l'affichage du parc. */
 export const WALKER_MODELS: ModelKey[] = [
@@ -34,6 +34,7 @@ class Walker {
   constructor(
     source: { scene: THREE.Object3D; animations: THREE.AnimationClip[] },
     private world: World,
+    private bx: number,
     private rng: () => number,
     castShadow: boolean,
   ) {
@@ -77,7 +78,7 @@ class Walker {
   }
 
   private place(x: number, z: number): void {
-    this.object.position.set(x, Math.max(this.world.groundHeight(x, z), -0.05), z)
+    this.object.position.set(x, walkHeight(x, z, this.bx, this.world.groundHeight), z)
   }
 
   private setScale(): void {
@@ -173,7 +174,7 @@ export function createVisitorsView(
     const ready = WALKER_MODELS.filter((k) => world.models.has(k))
     if (ready.length === 0 || walkers.length >= max) return undefined
     const key = ready[walkers.length % ready.length] // les modèles se répartissent, au fil de leur arrivée
-    const w = new Walker(world.models.get(key)!, world, rng, !opts.mobile)
+    const w = new Walker(world.models.get(key)!, world, bx, rng, !opts.mobile)
     group.add(w.object)
     walkers.push(w)
     return w
@@ -186,12 +187,14 @@ export function createVisitorsView(
       spawn -= dt
       let active = 0
       for (const w of walkers) { w.update(dt); if (w.phase !== 'off' && w.phase !== 'out') active++ }
-      if (active < target && spawn <= 0) {
-        const w = walkers.find((x) => x.phase === 'off') ?? grow()
+      if (spawn > 0) return
+      if (active < target) {
+        let w: Walker | undefined
+        for (const x of walkers) if (x.phase === 'off') { w = x; break }
+        w = w ?? grow()
         if (w) { w.start(route); spawn = WALKERS.SPAWN_EVERY_S }
       } else if (active > target) {
-        const w = walkers.find((x) => x.phase === 'walk' || x.phase === 'stop' || x.phase === 'in')
-        if (w) w.leave()
+        for (const x of walkers) if (x.phase === 'walk' || x.phase === 'stop' || x.phase === 'in') { x.leave(); spawn = WALKERS.SPAWN_EVERY_S; break }
       }
     },
     dispose(): void { for (const w of walkers) w.dispose(); group.removeFromParent() },

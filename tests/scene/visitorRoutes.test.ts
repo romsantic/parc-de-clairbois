@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { alleyStops, bridgeX, buildRoute, cafeRoute, ROUTE_START_X, type RoutePoint } from '../../src/scene/visitorRoutes'
+import { alleyStops, bridgeX, buildRoute, cafeRoute, walkHeight, ROUTE_START_X, type RoutePoint } from '../../src/scene/visitorRoutes'
 import { visitorsShown, WALKERS } from '../../src/data/visuals'
 import { riverDistance } from '../../src/scene/world'
-import { BRIDGE_Z } from '../../src/scene/decor'
+import { BRIDGE_Z, BRIDGE_DECK_Y } from '../../src/scene/decor'
 import { villagePaths } from '../../src/data/zones'
 import type { Animal, Building, Enclosure } from '../../src/sim/types'
 
@@ -81,8 +81,32 @@ describe('visitorsShown', () => {
   it('limite plus bas sur téléphone', () => {
     expect(visitorsShown(500, 14, true)).toBe(WALKERS.MAX_MOBILE)
   })
+  it('baisse aux heures de transition (7 h, 21 h)', () => {
+    for (const h of [7, 21]) {
+      expect(visitorsShown(500, h, false)).toBeLessThan(visitorsShown(500, 14, false))
+      expect(visitorsShown(500, h, false)).toBeGreaterThan(visitorsShown(500, 23, false))
+    }
+  })
   it('est presque nul la nuit (22 h – 6 h)', () => {
     for (const h of [22, 23, 0, 3, 5.9]) expect(visitorsShown(500, h, false)).toBeLessThanOrEqual(1)
     expect(visitorsShown(500, 14, false)).toBeGreaterThan(visitorsShown(500, 23, false))
+  })
+})
+
+describe('walkHeight', () => {
+  const flat = () => -0.3
+  it('marche sur le dessus des planches au milieu du pont', () => {
+    expect(walkHeight(bx, BRIDGE_Z, bx, flat)).toBeCloseTo(BRIDGE_DECK_Y)
+    expect(walkHeight(bx + 2, BRIDGE_Z, bx, flat)).toBeCloseTo(BRIDGE_DECK_Y)
+  })
+  it('monte en douceur depuis la berge', () => {
+    const a = walkHeight(bx - 3.3, BRIDGE_Z, bx, flat), b = walkHeight(bx - 3.8, BRIDGE_Z, bx, flat)
+    expect(a).toBeCloseTo(-0.05) // sol borné à -0,05
+    expect(b).toBeCloseTo(-0.05)
+    const mid = walkHeight(bx - 2.8, BRIDGE_Z, bx, () => 0)
+    expect(mid).toBeGreaterThan(0); expect(mid).toBeLessThan(BRIDGE_DECK_Y)
+  })
+  it('suit le sol loin du pont', () => {
+    expect(walkHeight(-20, BRIDGE_Z, bx, () => 0.2)).toBeCloseTo(0.2)
   })
 })

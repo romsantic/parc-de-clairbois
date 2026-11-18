@@ -10,6 +10,10 @@ import { createRng } from '../core/rng'
 
 /** Pont et allée du zoo : à la hauteur du couloir de chemin des données (z = 10). */
 export const BRIDGE_Z = 10
+/** Dessus des planches du pont (les promeneurs y posent les pieds). */
+export const BRIDGE_DECK_Y = 0.36
+/** Demi-longueur du tablier (planches de bx − 3,3 à bx + 3,3). */
+export const BRIDGE_HALF_SPAN = 3.3
 /** Hauteur du « ! » au-dessus du sol quand il désigne un point de la carte (enclos, bâtiment). */
 const MARKER_HEIGHT_OVER_GROUND = 5
 
@@ -68,7 +72,7 @@ export function buildDecor(world: World, rng: () => number): {
   const woodLight = new THREE.MeshStandardMaterial({ color: '#9c6a45', roughness: 0.9, flatShading: true })
   for (let i = 0; i < 13; i++) {
     const plank = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.16, 2.6), i % 2 ? wood : woodLight)
-    plank.position.set(bx - 3.3 + i * 0.55, 0.28 + (i % 3) * 0.015, BZ)
+    plank.position.set(bx - 3.3 + i * 0.55, BRIDGE_DECK_Y - 0.08 + (i % 3) * 0.015, BZ)
     plank.castShadow = plank.receiveShadow = true
     scene.add(plank)
   }
