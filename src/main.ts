@@ -139,6 +139,7 @@ async function start(): Promise<void> {
         park.update(dt)
         const level = getState().village.level
         if (level !== zonesLevel) { zonesLevel = level; zones.setLevel(level); decor.setPathLevel(level) }
+        zones.update(dt)
         villageView.update()
         world.renderer.render(world.scene, world.camera)
       } catch (e) {
