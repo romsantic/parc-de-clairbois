@@ -30,7 +30,7 @@ describe('newGame', () => {
   })
   it("crée directement l'état version 3", () => {
     expect(g.version).toBe(3)
-    expect(g.ticketPrice).toBe(5)
+    expect(g.ticketPrice).toBe(2)
     expect(g.reputation).toBe(1)
     expect(g.village).toEqual({ level: 1, clientsServed: 0 })
     expect(g.buildings).toEqual([{ slot: 0, type: 'ferme', level: 1 }])

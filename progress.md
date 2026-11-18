@@ -1,6 +1,6 @@
 # Le Parc de Clairbois — où on en est
 
-*Mis à jour le 16/11/2026. Ce fichier sert de point de départ à chaque nouvelle session de travail : le lire en premier.*
+*Mis à jour le 17/11/2026. Ce fichier sert de point de départ à chaque nouvelle session de travail : le lire en premier.*
 
 ## Le joueur et la façon de travailler
 
@@ -66,7 +66,25 @@
 
 **Sous-tâche 7 (17/11/2026)** — relecture Opus : 0 critique, 5 importants, quelques mineurs, tous corrigés en 6ceae07 (enclos de départ un peu sale pour que « Nettoie l'enclos » marche tout de suite ; Gazette aussi quand l'onglet est repris sans rechargement ; validation complète des sauvegardes v3 ; minuit qui ne recule pas ; quotidiennes versées d'office signalées « (récompense versée) » ; seuils d'autonomie dans `TUNING`). Deux nouveaux choix de Romain en 2af73bf : missions d'habitants **150** (porte du Bourg) et **250** (finale V1) ; bon −25 % **au choix** (case « Utiliser mon bon » par offre). Vérifié dans le navigateur (en lisant la page, panneau masqué) : les 9 premiers pas, Passer, quotidiennes, refus du village, sauvegarde v2, Gazette après 5 jours, bon de réduction, téléphone. Pas vu à l'œil : le « ! » doré qui se déplace sur la carte.
 
-Étape suivante (6 Finition V1) : ses sous-tâches seront ajoutées ici quand son plan sera écrit.
+**V1 — étape 6 : finition** (branche `etape-6-finition`, plan `docs/superpowers/plans/2026-11-17-etape-6-finition-v1.md`) — **plan écrit et validé par Romain le 17/11/2026** (décisions D1 à D8 acceptées telles quelles, promeneurs Quaternius)
+
+| # | Sous-tâche | Agent · modèle | État |
+|---|---|---|---|
+| 1 | Bouton « Recommencer à zéro » (volet Options ⚙) | agent · Sonnet | faite (a95b961 → d07ba25) — relue, vérifiée dans le navigateur (ordinateur et téléphone, double-clic rapide ignoré) — 502 tests |
+| 2 | Perfs de la simulation (grand parc, 30 jours < 2 s) et compteur d'images | agent · Sonnet | faite (2961545 + f0ad802) — 30 jours d'absence d'un grand parc : 2–3 s → ≈ 1 s ; `bigPark()` réaliste et `crowdedPark()` de stress — 507 tests |
+| 3 | Joueur automatique et rapport d'équilibrage | agent · Sonnet | faite (a1590a3 + 18de4b1) — relu ; rythme actuel : Village jour 3, Bourg jour 5, fin de la V1 jour 6 à 10 (cible 21), 100 000 pièces au jour 5 : économie trop généreuse (réglage en sous-tâche 5) — 514 tests |
+| 4 | Missions du jour qui grandissent avec le parc | agent · Sonnet | faite (6385362) — relue ; cibles ≈ 3 h d'activité / ½ journée de rations / nombre d'enclos, récompense ≈ 1 h de recettes ; pas de sauvegarde v4 (champs facultatifs, anciennes quotidiennes lues) — 535 tests |
+| 5 | Réglage de l'équilibre (chiffres choisis avec Romain) | chef (Opus) + agent · Sonnet | faite (e73f700 + 2bd7df7) — choix de Romain « B + recettes réduites » : habitants 1 pour 30 clients jusqu'à 2 400 puis 1 pour 350, Village à 40 habitants, prix juste 2 + 1/niveau + 0,05/attrait, commerces ×½ ; joueur automatique : Village jour 2-3, Bourg 6-7, fin 18-19 ; ancienne partie : billet remis au prix juste au chargement — 541 tests |
+| 6 | Brume des zones fermées | agent · Sonnet | faite (76ded49 + d372414) — relue, vue dans le navigateur (panneaux « Bois sombre » / « Falaises » entiers, forêt ouverte au Village) ; dissipation pas vue en mouvement (panneau masqué) — 549 tests |
+| 7 | Modèles des promeneurs (6 personnages Quaternius choisis par Romain) | agent · Sonnet (au lieu de Haiku : il faut alléger les fichiers par un petit script) | faite (7fe7da5) — 6 fichiers .glb de 1,1 à 1,25 Mo (au lieu de 3 Mo), marche + attente seulement, crédits ajoutés — 555 tests |
+| 8 | Promeneurs sur les chemins | agent · Sonnet | faite (5815498 + 88a482e) — relue ; chargés en arrière-plan après l'ouverture du parc, sur le tablier du pont, moins nombreux la nuit ; vus marcher dans le navigateur (allée, pont, village) — 570 tests |
+| 9 | La nuit (lanternes, fenêtres, étoiles, animaux calmes) | agent · Sonnet | faite (3fc7011 + 28644c6) — relue, vue dans le navigateur à 23 h (lune, étoiles près de l'horizon, fenêtres allumées) ; la caméra peut s'incliner un peu plus vers l'horizon — 575+ tests |
+| 10 | Téléphone, perfs d'affichage et petits défauts gardés | agent · Sonnet | faite (ba4fc92) — relue, vue en 375×812 : avec une sélection, la barre du bas passe sur 3 lignes lisibles (~145 px) ; image allégée sur téléphone ; three.js dans un fichier à part ; Gazette et bon du marchand corrigés — 624 tests |
+| 12 | Le « ! » doré reste sur l'endroit de la mission tant qu'elle n'est pas faite (aujourd'hui il revient sur la mairie quand on clique) ; clic sur la mission → caméra jusqu'au « ! » (demande de Romain) | agent · Sonnet | faite (8e9e9e1) — relue, vérifiée dans le navigateur (la caméra glisse jusqu'au « ! », qui reste sur l'enclos sélectionné) ; reste la hauteur de la bannière « Nouvelle mission » (à corriger à la fin) — 629 tests |
+| 13 | Informations d'un bâtiment, de la mairie ou d'une maison au clic (demande de Romain) | agent · Sonnet | faite (a858625) — relue, vérifiée dans le navigateur (mairie, maison, ferme) — 640 tests |
+| 14 | Choix des sons CC0 avec Romain (il télécharge), copie et crédits (demande de Romain) | chef (Opus) + agent · Sonnet (conversion des fichiers) | faite (8e5d31c) — 14 sons en mp3 (2,1 Mo en tout), crédits ; à écouter par Romain (clic, pièces, mission ; le « loup » est un aboiement faute de hurlement CC0) — 595 tests |
+| 15 | Musique, ambiance et effets ; volumes Musique / Effets et Couper dans les Options (demande de Romain) | agent · Sonnet | faite (388cfdc + 63be383) — relue ; vérifiée dans le navigateur (volet, Couper/Remettre, réglages gardés, seuls les sons utiles chargés) ; **pas écoutée** (à faire par Romain) — 620 tests |
+| 11 | *(après 12 à 15)* Vérification d'ensemble, textes relus par Romain, relecture et publication | chef (Opus) + relecture · Opus | relecture finale faite (Opus : 0 critique, 4 importants corrigés en e546f54) + choix de Romain en d28cd82 (billet jamais changé tout seul ; 2 textes de Margaux réécrits) — 646 tests ; **en attente de l'accord de Romain pour fusionner** |
 
 ## Liens
 
@@ -84,7 +102,7 @@
 | 3. Carte jouable (zones, pose/redimensionnement d'enclos, sélection, barres, retour visuel) | ✅ fusionnée — vérifiée sur le téléphone de Romain |
 | 4. Économie et village (visiteurs, attrait, billet réglable, bâtiments, niveaux du village, marchand, ferme et rations, chemins qui évoluent avec le niveau) | ✅ fusionnée le 17/11/2026 |
 | 5. Missions (Premiers pas avec Margaux, histoire, quotidiennes, résumé d'absence/Gazette) | ✅ fusionnée le 17/11/2026 |
-| **6. Finition V1** (équilibrage, téléphone, brume des zones, visiteurs sur les chemins, jour/nuit, perfs, **bouton « Recommencer à zéro »**) | **à faire — prochaine** |
+| **6. Finition V1** (équilibrage, téléphone, brume des zones, visiteurs sur les chemins, jour/nuit, perfs, **bouton « Recommencer à zéro »**, son, fiches des bâtiments) | **construite et relue — en attente de l'accord de Romain pour fusionner** |
 
 Après la V1 : V2 à V5 décrites en fin de spec (personnel et centre vétérinaire, routes à construire contre de l'argent, expéditions, musée, labo, saisons…).
 
@@ -101,6 +119,24 @@ Après la V1 : V2 à V5 décrites en fin de spec (personnel et centre vétérina
 
 - **Bouton « Recommencer à zéro »** accessible en jeu (pas seulement dans `?debug`) : efface la partie en cours et relance une nouvelle partie depuis le début. Confirmation en deux clics (comme la vente), avec un texte clair « Tout ton parc sera effacé ». Pas d'écran d'accueil ni de parties multiples : le jeu continue de s'ouvrir directement sur le parc.
 - **Missions du jour de plus en plus difficiles** : la quantité demandée **et** la récompense de chaque quotidienne doivent suivre l'avancement réel du parc, pas seulement le niveau du village (aujourd'hui seules « visiteurs » et « pièces » voient leur cible grandir ; les récompenses sont × niveau). Exemple de Romain : « Acheter 30 rations » n'a plus d'intérêt avec un parc complet. Piste : régler chaque cible sur l'état du parc (consommation par jour, visiteurs par heure, recettes, nombre d'animaux…) et la récompense sur l'effort demandé. Fichiers : `src/data/missions.ts` (`DAILY_POOL`) et le tirage dans `src/sim/`.
+
+## Décisions de l'étape 6 (en plus de la spec)
+
+- **Équilibrage (choix de Romain « B + recettes réduites »)** : un habitant pour 30 clients jusqu'à 2 400 clients, puis un pour 350 ; Village à 40 habitants (150 et 250 inchangés) ; prix juste = 2 + 1 × (niveau − 1) + 0,05 × attrait ; dépense par client du café, de la boutique et de l'auberge divisée par 2. Joueur automatique : Village jour 2-3, Bourg 6-7, fin de la V1 jour 18-19.
+- **Billet (Romain, 18/11)** : le jeu met un prix de base au début ; ensuite c'est le joueur qui décide, le prix n'est **jamais** changé automatiquement (même pour une ancienne partie).
+- Ancienne partie : un message unique explique que le nombre d'habitants a été recalculé (niveau et missions gardés) ; repère `parc-clairbois:sauvegarde-reglages-etape6` dans le navigateur. Pas de sauvegarde v4 (champs facultatifs).
+- Missions du jour : cible ≈ 3 h d'activité (visiteurs, pièces), ½ journée de rations, nombre d'enclos (2 à 6) ; récompense ≈ 1 h de recettes (≥ 30 pièces).
+- Promeneurs : 6 personnages Quaternius habillés (Ultimate Modular Men / Women), chargés après l'ouverture du parc ; au plus 12 (8 sur téléphone), presque personne la nuit.
+- Nuit : lune et étoiles près de l'horizon (la caméra peut s'incliner un peu plus), fenêtres et lanternes allumées, animaux plus calmes.
+- Téléphone : avec une sélection, la barre du bas passe sur 3 lignes lisibles (~145 px) au lieu d'une ligne serrée (à confirmer par Romain en jouant).
+- Son : musique de jour « A Small Fire Will Do », de nuit `night_tune3` (sans doute « Lonely Night », à confirmer), oiseaux / grillons, clics Kenney, pièces, marteau, cris (mouton, âne, cochon, cheval, taureau, loup = aboiement faute de hurlement CC0) ; Musique 40 % / Effets 70 % par défaut, réglages dans le navigateur. Renard, cerf, alpaga et lama sans cri.
+- Demandes ajoutées en cours d'étape (Romain) : le « ! » reste sur l'endroit de la mission et un clic sur la mission y emmène la caméra ; fiches au clic pour les bâtiments, la mairie et les maisons ; musique et effets réglables.
+
+## À regarder par Romain après la publication
+
+- Écouter les sons (clic, pièces, mission, cris) et dire s'ils plaisent ; volume par défaut.
+- La barre du bas sur 3 lignes au téléphone quand un bâtiment ou un enclos est sélectionné.
+- La brume qui se dissipe au passage de niveau (pas vue en mouvement pendant les vérifications).
 
 ## Décisions de l'étape 5 (en plus de la spec)
 
@@ -138,7 +174,7 @@ Après la V1 : V2 à V5 décrites en fin de spec (personnel et centre vétérina
 - `src/game/` session + boucle (`runGame` : horloge, sauvegarde, `dispatch` avec retour visuel).
 - `src/scene/` 3D : monde, décor, zones, vue du parc pilotée par l'état (`parkView`), éditeur d'enclos, sélection, caméra.
 - `src/ui/` barres, volet, retour visuel, panneau de test.
-- Tests : `tests/` (Vitest), 493 au 17/11/2026 (étape 5).
+- Tests : `tests/` (Vitest), 646 au 18/11/2026 (étape 6) ; `tests/balance/` = joueur automatique (rythme de la V1).
 
 ## Mémo technique (pièges déjà rencontrés)
 

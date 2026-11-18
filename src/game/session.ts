@@ -5,7 +5,16 @@ import { restock } from '../sim/merchant'
 import { summarize, type Summary } from '../sim/summary'
 import { MISSIONS_TUNING } from '../data/missions'
 import { HOUR_MS } from '../data/tuning'
-import { loadGame, saveGame, type Storage } from '../save/save'
+import { population, newcomers } from '../sim/village'
+import { loadGame, saveGame, SAVE_KEY, type Storage } from '../save/save'
+
+/** Copie de la partie effacée par « Recommencer à zéro ». */
+export const RESET_BACKUP_KEY = `${SAVE_KEY}-avant-nouvelle-partie`
+
+/** Marqué une fois les réglages de l'étape 6 (billet, habitants) appliqués à une partie : ils ne se rejouent pas à chaque chargement. */
+export const STEP6_MARKER_KEY = `${SAVE_KEY}-reglages-etape6`
+/** Ancienne règle des nouveaux venus (avant l'étape 6) : un habitant pour 30 clients servis. Figée ici, sert à comparer. */
+const OLD_CLIENTS_PER_NEWCOMER = 30
 
 export interface Session {
   state: GameState
@@ -18,6 +27,8 @@ export interface Session {
   problem: 'illisible' | 'trop-recente' | 'migration-impossible' | null
   /** Faux si sauvegarder écraserait une partie qu'on ne sait pas lire, ou si le stockage manque. */
   canSave: boolean
+  /** Message à montrer une fois (habitants recomptés avec la nouvelle règle) ; null sinon. */
+  priceNotice: string | null
   /** Identifiant de cet onglet : seul lui sauvegarde tant qu'aucun autre n'a repris la partie. */
   owner: string
 }
@@ -25,12 +36,42 @@ export interface Session {
 const newOwner = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
 const localOffset = (nowMs: number): number => -new Date(nowMs).getTimezoneOffset()
 const freshGame = (nowMs: number): GameState => ({ ...newGame(newSeed(), nowMs), utcOffsetMin: localOffset(nowMs) })
+/** Vrai si le joueur a dépassé le tout début : premiers pas entamés, passés, ou une mission récupérée. */
+export function hasProgressed(s: GameState): boolean {
+  const m = s.missions
+  return m.tutorial.step > 0 || m.tutorial.skipped || m.story.index > 0 || m.tutorial.current?.claimed === true
+}
+/** Recommencer à zéro : garde une copie de la partie actuelle puis rend une partie neuve (à sauvegarder par l'appelant). */
+export function restartState(store: Storage, nowMs: number, replaced?: GameState): GameState {
+  const previous = store.getItem(SAVE_KEY)
+  // Une partie qui n'a pas avancé ne remplace pas la copie : on ne perd pas le vrai parc en recommençant deux fois.
+  if (previous !== null && (!replaced || hasProgressed(replaced) || store.getItem(RESET_BACKUP_KEY) === null)) { try { store.setItem(RESET_BACKUP_KEY, previous) } catch { /* rien */ } }
+  markStep6(store)
+  return freshGame(nowMs)
+}
 const newSeed = () => Math.floor(Math.random() * 2 ** 32)
+
+const markStep6 = (store: Storage): void => { try { store.setItem(STEP6_MARKER_KEY, '1') } catch { /* rien */ } }
+const step6Done = (store: Storage): boolean => { try { return store.getItem(STEP6_MARKER_KEY) !== null } catch { return false } }
+
+/**
+ * Après le rééquilibrage de l'étape 6, une seule fois par partie (repère dans le stockage) : message si les habitants baissent
+ * avec la nouvelle règle. Le prix du billet n'est JAMAIS changé au chargement : c'est le joueur qui le décide.
+ */
+export function applyStep6Adjustments(store: Storage, state: GameState): string | null {
+  if (step6Done(store)) return null
+  const oldPop = population(state) - newcomers(state.village.clientsServed) + Math.floor(state.village.clientsServed / OLD_CLIENTS_PER_NEWCOMER)
+  const newPop = population(state)
+  markStep6(store)
+  const parts: string[] = []
+  if (oldPop > newPop) parts.push(`Clairbois s'est réorganisé : le village compte maintenant ${newPop} habitants (au lieu de ${oldPop}). Ton niveau et tes missions réussies sont gardés.`)
+  return parts.length ? parts.join(' ') : null
+}
 
 /** Charge la partie (ou en crée une), rattrape le temps d'absence et prend la main sur la sauvegarde. */
 export function startSession(store: Storage, nowMs: number, storageOk = true): Session {
   const owner = newOwner()
-  const base = { summary: null, skippedMs: 0, absentMs: 0, owner }
+  const base = { summary: null, skippedMs: 0, absentMs: 0, owner, priceNotice: null as string | null }
   if (!storageOk) return { ...base, state: freshGame(nowMs), problem: null, canSave: false }
   const loaded = loadGame(store, undefined, nowMs)
   if (loaded.kind === 'trop-recente' || loaded.kind === 'migration-impossible') {
@@ -39,10 +80,12 @@ export function startSession(store: Storage, nowMs: number, storageOk = true): S
   if (loaded.kind !== 'ok') {
     const state = freshGame(nowMs)
     const canSave = saveGame(store, state, nowMs, owner) === 'ok'
+    if (canSave) markStep6(store)
     return { ...base, state, problem: loaded.kind === 'illisible' ? 'illisible' : null, canSave }
   }
   const start = structuredClone(loaded.state)
   start.utcOffsetMin = localOffset(nowMs) // l'heure locale, avant le rattrapage
+  const notice = applyStep6Adjustments(store, start) // avant le rattrapage : l'absence ne se passe pas à un prix démesuré
   const r = advanceTo(start, nowMs)
   if (r.state.merchant.restocks === 0 && r.state.merchant.offers.length === 0) {
     // Partie migrée de la v1 chargée avant le premier pas : le marchand a déjà son premier stock.
@@ -50,7 +93,7 @@ export function startSession(store: Storage, nowMs: number, storageOk = true): S
     restock(r.state)
   }
   const canSave = saveGame(store, r.state, nowMs, owner) === 'ok'
-  return { ...base, state: r.state, summary: summarize(r.events, r.state), skippedMs: r.skippedMs, absentMs: loaded.savedAt === undefined ? 0 : Math.max(0, nowMs - loaded.savedAt), problem: null, canSave }
+  return { ...base, state: r.state, summary: summarize(r.events, r.state), skippedMs: r.skippedMs, absentMs: loaded.savedAt === undefined ? 0 : Math.max(0, nowMs - loaded.savedAt), problem: null, canSave, priceNotice: notice }
 }
 
 /**

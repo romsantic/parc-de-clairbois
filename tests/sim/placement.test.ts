@@ -83,3 +83,10 @@ describe('zones', () => {
     expect(zoneAt(R(-20, -12, 10, 8))).toBeNull()
   })
 })
+
+describe('allée parcourue par les promeneurs', () => {
+  it("aucun enclos ne peut la traverser, ni à l'ouest des zones ni vers le pont", () => {
+    for (const x of [-40, -34.5, -5, -3, 0])
+      expect(checkPlacement(emptyState(), { x, z: 8.5, w: 6, d: 3 }).ok).toBe(false)
+  })
+})

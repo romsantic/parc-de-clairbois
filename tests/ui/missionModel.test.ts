@@ -1,14 +1,14 @@
 import { describe, it, expect } from 'vitest'
 import { emptyState } from '../sim/helpers'
 import { newGame } from '../../src/sim/newGame'
+import { MAIRIE } from '../../src/data/village'
 import { SLOTS } from '../../src/data/economy'
 import { STORY, TUTORIAL } from '../../src/data/missions'
-import { bannerFor, currentLine, dailyCount, freeSlot, highlightFor, levelBlockReason, markerPosition, markerVisible,
+import { bannerFor, currentLine, dailyCount, freeSlot, highlightFor, levelBlockReason, markerPosition, markerSpot, markerVisible,
   msUntilNextDay, prairieSpot, streakText } from '../../src/ui/missionModel'
 import { updateMissions } from '../../src/sim/missions'
 import type { GameState } from '../../src/sim/types'
 
-const NONE = { kind: 'rien' } as const
 const fresh = (): GameState => {
   const s = newGame(1, Date.UTC(2026, 10, 17, 12))
   updateMissions(s, [])
@@ -33,23 +33,22 @@ describe('currentLine / highlightFor', () => {
 })
 
 describe('markerPosition', () => {
-  it("détails/nettoyer : au-dessus de l'enclos des moutons tant qu'il n'est pas sélectionné", () => {
+  it("détails/nettoyer : au-dessus de l'enclos des moutons même quand il est sélectionné", () => {
     const s = fresh()
     const enc = s.enclosures[0]
-    expect(markerPosition(s, 'detailsEnclos', NONE)).toEqual({ x: enc.rect.x + enc.rect.w / 2, z: enc.rect.z + enc.rect.d / 2 })
-    expect(markerPosition(s, 'nettoyer', { kind: 'enclos', id: enc.id })).toBeNull()
+    expect(markerPosition(s, 'detailsEnclos')).toEqual({ x: enc.rect.x + enc.rect.w / 2, z: enc.rect.z + enc.rect.d / 2 })
+    expect(markerPosition(s, 'nettoyer')).toEqual({ x: enc.rect.x + enc.rect.w / 2, z: enc.rect.z + enc.rect.d / 2 })
   })
-  it("ferme : sur son emplacement sauf s'il est sélectionné", () => {
+  it("ferme : sur son emplacement même s'il est sélectionné", () => {
     const s = emptyState({ buildings: [{ slot: 1, type: 'ferme', level: 1 }] })
     const slot = SLOTS.find((x) => x.id === 1)!
-    expect(markerPosition(s, 'ferme', NONE)).toEqual({ x: slot.x, z: slot.z })
-    expect(markerPosition(s, 'ferme', { kind: 'emplacement', slot: 1 })).toBeNull()
-    expect(markerPosition(emptyState({ buildings: [] }), 'ferme', NONE)).toBeNull()
+    expect(markerPosition(s, 'ferme')).toEqual({ x: slot.x, z: slot.z })
+    expect(markerPosition(emptyState({ buildings: [] }), 'ferme')).toBeNull()
   })
   it('emplacement libre : le premier débloqué sans bâtiment', () => {
     const s = emptyState({ buildings: [{ slot: 0, type: 'ferme', level: 1 }] })
     expect(freeSlot(s)!.id).toBe(1)
-    expect(markerPosition(s, 'emplacementLibre', NONE)).toEqual({ x: SLOTS[1].x, z: SLOTS[1].z })
+    expect(markerPosition(s, 'emplacementLibre')).toEqual({ x: SLOTS[1].x, z: SLOTS[1].z })
   })
   it('prairie : un point de la prairie hors des enclos', () => {
     const s = fresh()
@@ -58,10 +57,31 @@ describe('markerPosition', () => {
     expect(p.z).toBeGreaterThanOrEqual(-8); expect(p.z).toBeLessThanOrEqual(10)
     const e = s.enclosures[0].rect
     expect(p.x > e.x && p.x < e.x + e.w && p.z > e.z && p.z < e.z + e.d).toBe(false)
-    expect(markerPosition(s, 'prairie', NONE)).toEqual(p)
+    expect(markerPosition(s, 'prairie')).toEqual(p)
   })
   it('les autres cibles laissent le « ! » sur la mairie', () => {
-    for (const id of ['billet', 'marchand', 'autonomie', null] as const) expect(markerPosition(fresh(), id, NONE)).toBeNull()
+    for (const id of ['billet', 'marchand', 'autonomie', null] as const) expect(markerPosition(fresh(), id)).toBeNull()
+  })
+})
+
+describe('« ! » et mission réussie', () => {
+  it('mission réussie : plus de cible, le « ! » retourne sur la mairie (null)', () => {
+    const s = fresh()
+    s.missions.tutorial.current!.done = true
+    expect(markerPosition(s, highlightFor(s))).toBeNull()
+  })
+})
+
+describe('markerSpot', () => {
+  it("cible de la mission tant qu'elle n'est pas réussie, mairie ensuite, rien si le « ! » est caché", () => {
+    const s = fresh()
+    const enc = s.enclosures[0]
+    expect(markerSpot(s)).toEqual({ x: enc.rect.x + enc.rect.w / 2, z: enc.rect.z + enc.rect.d / 2 })
+    s.missions.tutorial.current!.done = true
+    expect(markerSpot(s)).toEqual({ x: MAIRIE.x, z: MAIRIE.z })
+    s.missions.tutorial.step = TUTORIAL.length
+    s.missions.unread = false
+    expect(markerSpot(s)).toBeNull()
   })
 })
 

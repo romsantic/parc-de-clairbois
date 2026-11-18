@@ -261,6 +261,7 @@ button.icone .qte { position: absolute; top: -3px; left: -4px; font-style: norma
 }
 
 /* ---------- Missions (étape 5) ---------- */
+.volet .titre-mission { display: block; background: none; border: 0; padding: 0; margin: 0 0 4px; color: inherit; font: inherit; font-weight: 600; text-align: left; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
 .mission-ouvrir { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; background: none; border: 0; padding: 4px 6px; text-align: left; white-space: nowrap; overflow: hidden; color: #6f6852; }
 .mission-ouvrir .titre { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .mission-ouvrir .avancee, .mission-ouvrir .quot { flex: none; font-variant-numeric: tabular-nums; font-weight: 600; }
@@ -283,13 +284,13 @@ button.recuperer:hover { background: #5f9a3c; }
 
 /* Bannière « Nouvelle mission » : au-dessus de la barre du bas et du message, jamais sur la barre du haut. */
 .banniere-mission {
-  position: fixed; left: 50%; bottom: calc(100px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 8px); z-index: 8;
+  position: fixed; left: 50%; bottom: calc(var(--barre-h, calc(48px + env(safe-area-inset-bottom, 0px))) + 52px); transform: translate(-50%, 8px); z-index: 8;
   max-width: min(520px, calc(100vw - 32px)); padding: 8px 16px; border-radius: 12px; font-size: 14px; font-weight: 600; text-align: center;
   background: #fff7e0; color: var(--encre); border: 1px solid #e0b64e; box-shadow: 0 4px 14px rgba(0, 0, 0, .22);
   opacity: 0; transition: opacity .3s, transform .3s;
 }
 .banniere-mission.visible { opacity: 1; transform: translate(-50%, 0); }
-body:has(.volet) .banniere-mission { bottom: calc(40vh + 100px); }
+body:has(.volet) .banniere-mission { bottom: calc(40vh + var(--barre-h, calc(48px + env(safe-area-inset-bottom, 0px))) + 52px); }
 
 /* Mise en évidence : anneau doré qui pulse autour de ce que la mission demande de toucher. */
 body[data-highlight="detailsEnclos"] [data-guide="detailsEnclos"],
@@ -346,4 +347,50 @@ button.recuperer .cadeau svg { width: 18px; height: 18px; display: block; }
   .gazette { padding: 14px 14px 16px; }
   .gazette-titre { font-size: 26px; }
   .gazette-une { font-size: 19px; }
+}
+
+/* ---------- Options ---------- */
+.volet button.vendre.confirmer { white-space: normal; text-align: left; }
+.roue-options { flex: none; margin-left: 6px; padding: 2px 8px; font-size: 16px; line-height: 1.2; background: none; border: 1px solid transparent; color: #6f6852; cursor: pointer; }
+.roue-options:hover { border-color: var(--bord); }
+@media (pointer: coarse) { .roue-options { min-width: 40px; min-height: 40px; margin: -10px -4px -10px 0; padding: 0; } }
+
+/* Réglages du son (volet Options) : curseurs assez hauts pour le doigt */
+.reglages-son { margin-bottom: 14px; }
+.reglage-son { margin-bottom: 10px; }
+.reglage-son-tete { display: flex; align-items: center; gap: 8px; }
+.reglage-son-tete label { font-weight: 600; flex: 1; }
+.volet button.couper { min-height: 40px; min-width: 88px; font-size: 14px; }
+.volet input.curseur-son { display: block; width: 100%; max-width: 100%; min-height: 40px; margin: 0; padding: 0; border: 0; background: none; accent-color: #6fa84a; cursor: pointer; }
+.volet input.curseur-son:disabled { opacity: .45; cursor: not-allowed; }
+
+/* ---------- Téléphone : doigts et barre du bas (étape 6) ---------- */
+/* Hauteur réelle de la barre (posée par le script) : volets et messages restent au-dessus d'elle. */
+.volet { bottom: calc(var(--barre-h, calc(48px + env(safe-area-inset-bottom, 0px))) + 6px); }
+.message-action, .editeur-enclos { bottom: calc(var(--barre-h, calc(48px + env(safe-area-inset-bottom, 0px))) + 12px); }
+@media (max-width: 640px) {
+  button.icone { width: 40px; height: 40px; }
+  .barre-bas { flex-wrap: wrap; max-height: none; min-height: 52px; padding-top: 6px; padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px)); row-gap: 6px; }
+  /* Avec une sélection : 1re ligne = nom et boutons fixes, 2e = actions (2 lignes au besoin, sans défiler), 3e = mission en pleine largeur. */
+  .barre-bas:has(.zone-actions:not(:empty)) .zone-selection { order: 1; flex: 1 1 0; max-width: none; }
+  .barre-bas:has(.zone-actions:not(:empty)) .zone-droite { order: 2; }
+  .barre-bas:has(.zone-actions:not(:empty)) .zone-actions { order: 3; flex: 1 1 100%; flex-wrap: wrap; overflow: visible; border: 0; padding: 0; }
+  .barre-bas:has(.zone-actions:not(:empty)) .zone-mission { order: 4; flex: 1 1 100%; }
+  .zone-mission { min-height: 40px; }
+  button.recuperer { min-height: 36px; }
+}
+/* Tous les boutons : au moins 40 px de côté au doigt */
+@media (pointer: coarse), (max-width: 640px) {
+  .volet .fermer, .volet button, .gazette-retour, .editeur-enclos button, .languette, button.recuperer, .mission-ouvrir { min-height: 40px; min-width: 40px; }
+  .volet label.bon { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; }
+  .volet label.bon input { width: 22px; height: 22px; }
+}
+
+/* Fiche d'un bâtiment (volet de la barre du bas) */
+.volet dl.fiche { display: grid; grid-template-columns: max-content 1fr; gap: 3px 12px; margin: 6px 0; font-variant-numeric: tabular-nums; }
+.volet dl.fiche dt { color: #6f6852; }
+.volet dl.fiche dd { margin: 0; font-weight: 600; }
+@media (max-width: 640px) {
+  .volet dl.fiche { grid-template-columns: 1fr; gap: 0; }
+  .volet dl.fiche dd { margin-bottom: 4px; }
 }

@@ -74,6 +74,13 @@ describe('sauvegarde v2 abîmée (relecture)', () => {
     'quotidienne : base non finie': (g) => { g.missions.daily.list = [{ id: 'a#1', base: null, done: false, claimed: false }] },
     'quotidienne : claimed absent': (g) => { g.missions.daily.list = [{ id: 'a#1', base: 0, done: false }] },
     'quotidienne : élément nul': (g) => { g.missions.daily.list = [null] },
+    'quotidienne : cible nulle': (g) => { g.missions.daily.list = [{ id: 'quot-pieces', base: 0, done: false, claimed: false, n: 0, reward: { coins: 30 } }] },
+    'quotidienne : cible non finie': (g) => { g.missions.daily.list = [{ id: 'quot-pieces', base: 0, done: false, claimed: false, n: 'beaucoup', reward: { coins: 30 } }] },
+    'quotidienne neuve : cible absente': (g) => { g.missions.daily.list = [{ id: 'quot-pieces', base: 0, done: false, claimed: false, reward: { coins: 30 } }] },
+    'quotidienne neuve : récompense absente': (g) => { g.missions.daily.list = [{ id: 'quot-pieces', base: 0, done: false, claimed: false, n: 150 }] },
+    'quotidienne : récompense non objet': (g) => { g.missions.daily.list = [{ id: 'quot-pieces', base: 0, done: false, claimed: false, n: 150, reward: 30 }] },
+    'quotidienne : récompense négative': (g) => { g.missions.daily.list = [{ id: 'quot-pieces', base: 0, done: false, claimed: false, n: 150, reward: { coins: -5 } }] },
+    'quotidienne : récompense inconnue': (g) => { g.missions.daily.list = [{ id: 'quot-pieces', base: 0, done: false, claimed: false, n: 150, reward: { diamants: 5 } }] },
     'jour des quotidiennes non fini': (g) => { g.missions.daily.dayKey = null },
     'série non finie': (g) => { g.missions.daily.streak = 'x' },
     'bons non finis': (g) => { g.missions.daily.coupons = undefined },
@@ -94,6 +101,14 @@ describe('sauvegarde v2 abîmée (relecture)', () => {
     g.missions.daily.list = [{ id: 'quot-pieces#1', base: 4, done: false, claimed: false }]
     const m = memory({ [SAVE_KEY]: JSON.stringify({ version: 3, savedAt: 1, state: g }) })
     expect(loadGame(m).kind).toBe('ok')
+  })
+  it('une quotidienne tirée (cible et récompense gardées) reste lisible', () => {
+    const g = structuredClone(g0) as any // eslint-disable-line @typescript-eslint/no-explicit-any
+    g.missions.daily.list = [{ id: 'quot-pieces', base: 4, done: false, claimed: false, n: 1350, reward: { coins: 450, fourrage: 25 } }]
+    const m = memory({ [SAVE_KEY]: JSON.stringify({ version: 3, savedAt: 1, state: g }) })
+    const r = loadGame(m)
+    expect(r.kind).toBe('ok')
+    if (r.kind === 'ok') expect(r.state.missions.daily.list[0]).toMatchObject({ n: 1350, reward: { coins: 450, fourrage: 25 } })
   })
   it('une partie neuve reste lisible', () => {
     const m = memory({ [SAVE_KEY]: JSON.stringify({ version: 3, savedAt: 1, state: g0 }) })

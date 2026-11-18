@@ -82,3 +82,9 @@ export function formatAbsence(ms: number): string {
 export function formatAmount(n: number): string {
   return String(Math.round(n * 10) / 10).replace('.', ',')
 }
+
+/** Pièces arrondies, accord compris : « 1 pièce », « 1 200 pièces ». */
+export function formatCoins(n: number): string {
+  const r = Math.round(n)
+  return `${formatThousands(r)} pièce${r > 1 ? 's' : ''}`
+}

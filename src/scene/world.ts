@@ -1,5 +1,11 @@
 import * as THREE from 'three'
-import { sunForHour } from './sun'
+import { sunForHour, nightAmount } from './sun'
+import { setNightGlow } from './materials'
+import { NIGHT, SUN_SHADOW, renderSettings } from '../data/visuals'
+import { isPhone } from '../core/device'
+import { moonDirection, skyDirection } from './nightSky'
+import { START_AZIMUTH } from './cameraRig'
+import { createRng } from '../core/rng'
 import { hourFromLocation } from './clock'
 import type { LoadedModel } from './loadModels'
 import type { ModelKey } from '../assets/manifest'
@@ -17,6 +23,10 @@ export interface World {
   /** Distance au centre de la rivière (pour ne rien planter dedans). */
   riverDistance(x: number, z: number): number
   setHour(hour: number): void
+  /** Nuit actuelle, 0 (jour) à 1 (pleine nuit). */
+  night: number
+  /** Appelle `cb` tout de suite puis à chaque changement d'heure (au plus une fois par minute) avec la nuit 0..1. */
+  onNight(cb: (night: number) => void): void
   update(dt: number): void
   resize(): void
 }
@@ -43,7 +53,7 @@ const RIVER = new THREE.CatmullRomCurve3([
 const RIVER_POINTS = RIVER.getSpacedPoints(500)
 const RIVER_HALF_WIDTH = 2.2
 
-function riverDistance(x: number, z: number): number {
+export function riverDistance(x: number, z: number): number {
   let best = Infinity
   for (const p of RIVER_POINTS) best = Math.min(best, (p.x - x) ** 2 + (p.z - z) ** 2)
   return Math.sqrt(best)
@@ -135,9 +145,41 @@ function makeSky(): { mesh: THREE.Mesh; set: (top: string, bottom: string) => vo
   return { mesh, set: (t, b) => { uniforms.top.value.set(t); uniforms.bottom.value.set(b) } }
 }
 
+/** Étoiles (un seul nuage de points) et lune, sur la voûte du ciel ; invisibles le jour. */
+function makeNightSky(): { group: THREE.Group; set: (night: number) => void } {
+  const rng = createRng(77)
+  const pos = new Float32Array(NIGHT.STAR_COUNT * 3)
+  for (let i = 0; i < NIGHT.STAR_COUNT; i++) {
+    const d = skyDirection(rng() * Math.PI * 2, rng() * NIGHT.STAR_MAX_ELEV) // bande près de l'horizon, tout autour
+    pos.set([d[0] * NIGHT.STAR_RADIUS, d[1] * NIGHT.STAR_RADIUS, d[2] * NIGHT.STAR_RADIUS], i * 3)
+  }
+  const geo = new THREE.BufferGeometry()
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
+  const starMat = new THREE.PointsMaterial({ color: NIGHT.STAR_COLOR, size: NIGHT.STAR_SIZE, sizeAttenuation: false, transparent: true, opacity: 0, fog: false, depthWrite: false })
+  const stars = new THREE.Points(geo, starMat)
+  stars.frustumCulled = false
+  const moonMat = new THREE.MeshBasicMaterial({ color: NIGHT.MOON_COLOR, transparent: true, opacity: 0, fog: false, depthWrite: false })
+  const moon = new THREE.Mesh(new THREE.CircleGeometry(NIGHT.MOON_RADIUS, 24), moonMat)
+  const group = new THREE.Group()
+  group.add(stars, moon)
+  group.visible = false
+  const md = moonDirection(START_AZIMUTH)
+  moon.position.set(md[0], md[1], md[2]).multiplyScalar(NIGHT.MOON_DISTANCE)
+  moon.lookAt(0, 0, 0) // le groupe suit la caméra : le ciel ne bouge pas quand on se déplace
+  return {
+    group,
+    set(night) {
+      group.visible = night > 0.01
+      starMat.opacity = night
+      moonMat.opacity = night
+    },
+  }
+}
+
 export function createWorld(canvas: HTMLCanvasElement, models: Map<ModelKey, LoadedModel>): World {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
-  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio))
+  const display = renderSettings(isPhone(), window.devicePixelRatio)
+  renderer.setPixelRatio(display.pixelRatio)
   renderer.shadowMap.enabled = true
   renderer.shadowMap.type = THREE.PCFSoftShadowMap
   renderer.toneMapping = THREE.ACESFilmicToneMapping
@@ -149,14 +191,16 @@ export function createWorld(canvas: HTMLCanvasElement, models: Map<ModelKey, Loa
 
   const sky = makeSky()
   scene.add(sky.mesh)
+  const nightSky = makeNightSky()
+  scene.add(nightSky.group)
   scene.fog = new THREE.Fog('#d6ecf8', 60, 140)
 
   const hemi = new THREE.HemisphereLight('#dcefff', '#5d7a3c', 1)
   scene.add(hemi)
   const sun = new THREE.DirectionalLight('#fff3dc', 2.4)
   sun.castShadow = true
-  sun.shadow.mapSize.set(2048, 2048)
-  Object.assign(sun.shadow.camera, { left: -45, right: 45, top: 40, bottom: -40, near: 1, far: 200 })
+  sun.shadow.mapSize.set(display.shadowMapSize, display.shadowMapSize)
+  Object.assign(sun.shadow.camera, { left: SUN_SHADOW.LEFT, right: SUN_SHADOW.RIGHT, top: SUN_SHADOW.TOP, bottom: SUN_SHADOW.BOTTOM, near: SUN_SHADOW.NEAR, far: SUN_SHADOW.FAR })
   sun.shadow.bias = -0.0004
   sun.shadow.normalBias = 0.03
   scene.add(sun, sun.target)
@@ -166,8 +210,10 @@ export function createWorld(canvas: HTMLCanvasElement, models: Map<ModelKey, Loa
   scene.add(river.mesh)
 
   let time = 0, sinceClock = 0
+  const nightListeners: ((n: number) => void)[] = []
   const world: World = {
-    scene, camera, renderer, models, groundHeight, riverDistance,
+    scene, camera, renderer, models, groundHeight, riverDistance, night: 0,
+    onNight(cb) { nightListeners.push(cb); cb(world.night) },
     setHour(hour) {
       const s = sunForHour(hour)
       const el = THREE.MathUtils.degToRad(Math.max(s.elevation, 12)) // la nuit, la lune éclaire d'en haut
@@ -179,10 +225,17 @@ export function createWorld(canvas: HTMLCanvasElement, models: Map<ModelKey, Loa
       hemi.intensity = 0.35 + 0.75 * s.intensity
       sky.set(s.skyTop, s.skyBottom)
       ;(scene.fog as THREE.Fog).color.set(s.skyBottom)
+      // La nuit : fenêtres et lanternes brillent, étoiles et lune apparaissent (une fois par minute, pas à chaque image).
+      const n = nightAmount(hour)
+      world.night = n
+      setNightGlow(n)
+      nightSky.set(n)
+      for (const cb of nightListeners) cb(n)
     },
     update(dt) {
       time += dt
       river.update(time)
+      nightSky.group.position.copy(camera.position)
       // La lumière suit l'heure réelle : on la recalcule une fois par minute.
       sinceClock += dt
       if (sinceClock >= 60) {

@@ -1,8 +1,7 @@
 import type { GameState } from '../sim/types'
 import { advanceTo } from '../sim/advance'
-import { newGame } from '../sim/newGame'
 import { saveGame, SAVE_KEY, type Storage } from '../save/save'
-import { startSession, resume } from './session'
+import { startSession, resume, restartState, RESET_BACKUP_KEY } from './session'
 import { mountDebugPanel } from '../ui/debugPanel'
 import { showError, showNotice } from '../ui/errorScreen'
 import { mountTopBar } from '../ui/topBar'
@@ -10,7 +9,10 @@ import { toggleTicketPanel } from '../ui/ticketPanel'
 import { toggleVillagePanel } from '../ui/villagePanel'
 import { toggleAutonomyPanel } from '../ui/autonomyPanel'
 import { formatReward } from '../ui/format'
-import { openGazette } from '../ui/gazette'
+import { openGazette, closeGazette } from '../ui/gazette'
+import { closeDrawer } from '../ui/drawer'
+import { toggleOptionsPanel } from '../ui/optionsPanel'
+import { resetMissionBanner } from '../ui/missionBanner'
 import { gazetteEdition, type GazetteEdition } from '../ui/gazetteModel'
 import { MISSIONS_TUNING } from '../data/missions'
 import { flash, toast } from '../ui/feedback'
@@ -18,9 +20,11 @@ import { applyAction, type Action } from '../sim/actions'
 import { updateMissions } from '../sim/missions'
 import { BUILDINGS } from '../data/economy'
 import { SPECIES } from '../data/species'
+import { silentAudio, type AudioController } from '../audio/sound'
+import { effectForAction, FAILED_EFFECT, doneMissionIds, missionJustDone } from '../audio/events'
 
 const SAVE_EVERY_MS = 30_000
-export const RESET_BACKUP_KEY = `${SAVE_KEY}-avant-nouvelle-partie`
+export { RESET_BACKUP_KEY }
 
 /**
  * Démarre la partie : chargement + rattrapage, horloge du jeu chaque seconde,
@@ -32,9 +36,11 @@ export interface Game {
   dispatch(action: Action, from?: HTMLElement | null): boolean
   /** Rouvre La Gazette (dernière édition de cette page, ou « Rien de neuf »). */
   openGazette(): void
+  /** Appelé après « Recommencer à zéro » : l'affichage (sélection…) doit repartir à neuf. */
+  onRestart(fn: () => void): void
 }
 
-export function runGame(store: Storage, storageOk = true): Game | null {
+export function runGame(store: Storage, storageOk = true, audio: AudioController = silentAudio): Game | null {
   const session = startSession(store, Date.now(), storageOk)
   if (session.problem === 'trop-recente') {
     showError("Cette sauvegarde vient d'une version plus récente du jeu. Recharge la page pour obtenir la dernière version.")
@@ -47,6 +53,7 @@ export function runGame(store: Storage, storageOk = true): Game | null {
   if (session.problem === 'illisible') {
     showNotice('Ta sauvegarde était abîmée ; une copie a été mise de côté et une nouvelle partie commence.')
   }
+  if (session.priceNotice) showNotice(session.priceNotice)
   if (!storageOk) showNotice('Ton navigateur bloque la sauvegarde : la partie ne sera pas conservée après fermeture.')
 
   let state = session.state
@@ -56,6 +63,7 @@ export function runGame(store: Storage, storageOk = true): Game | null {
     onTicket: () => toggleTicketPanel(panelCtx),
     onVillage: () => toggleVillagePanel(panelCtx),
     onAutonomy: () => toggleAutonomyPanel(panelCtx),
+    onOptions: () => toggleOptionsPanel({ restart: () => restartGame(), audio }),
   })
   // La Gazette : dernière édition gardée en mémoire de la page ; elle s'ouvre seule après une vraie absence.
   let news = session.summary && session.absentMs >= MISSIONS_TUNING.GAZETTE_MIN_ABSENCE_H * 3_600_000 ? { summary: session.summary, absentMs: session.absentMs } : null
@@ -63,10 +71,19 @@ export function runGame(store: Storage, storageOk = true): Game | null {
   const edition = (): GazetteEdition | null => (news ? gazetteEdition(news.summary, news.absentMs, state) : null)
   if (news) openGazette(edition())
   let canSave = session.canSave
+  const restartListeners: Array<() => void> = []
   let warnedError = false
   /** Avance de l'horloge du jeu sur l'heure réelle (boutons du panneau de test). */
   let testOffset = 0
   const now = () => Date.now() + testOffset
+
+  /** Cloche quand une mission vient d'être réussie (au pas de simulation ou juste après une action). */
+  let doneIds = doneMissionIds(state)
+  function checkMissionSound(): void {
+    const now = doneMissionIds(state)
+    if (missionJustDone(doneIds, now)) audio.engine.playEffect('mission')
+    doneIds = now
+  }
 
   const save = () => {
     if (!canSave) return
@@ -88,6 +105,7 @@ export function runGame(store: Storage, storageOk = true): Game | null {
     const r = resume(state, now())
     state = r.state
     if (r.news) { news = r.news; openGazette(edition()) }
+    checkMissionSound()
   }
   setInterval(tick, 1000)
   setInterval(save, SAVE_EVERY_MS)
@@ -100,16 +118,24 @@ export function runGame(store: Storage, storageOk = true): Game | null {
     get: () => state,
     set: (s) => { state = s; save() },
     advanceBy: (ms) => { testOffset += ms; state = advanceTo(state, now()).state; save() },
-    reset: () => {
-      const previous = store.getItem(SAVE_KEY)
-      if (previous !== null) { try { store.setItem(RESET_BACKUP_KEY, previous) } catch { /* rien */ } }
-      testOffset = 0
-      state = newGame(Math.floor(Math.random() * 2 ** 32), Date.now())
-      save()
-    },
+    reset: () => restartGame(),
     summary: session.summary,
     skippedMs: session.skippedMs,
   })
+  /** Recommencer à zéro (volet Options et panneau de test) : copie de secours, partie neuve, affichage remis à neuf. */
+  function restartGame(): void {
+    if (!canSave) { toast("Ton parc est ouvert dans un autre onglet : impossible de recommencer ici.", false); return }
+    testOffset = 0
+    state = restartState(store, Date.now(), state)
+    doneIds = doneMissionIds(state)
+    updateMissions(state, [])
+    news = null
+    save()
+    closeGazette()
+    closeDrawer()
+    resetMissionBanner()
+    for (const fn of restartListeners) fn()
+  }
   /**
    * Toutes les actions du joueur passent par ici : on applique, on sauvegarde, et on le montre
    * (bouton vert ou rouge, ressources qui s'allument, message court).
@@ -119,7 +145,7 @@ export function runGame(store: Storage, storageOk = true): Game | null {
     const r = applyAction(state, action)
     const silent = action.type === 'vu' || action.type === 'lireMission' // observation : ni éclair, ni message
     if (!silent) flash(from, r.ok)
-    if (!r.ok) { toast(r.reason, false); return false }
+    if (!r.ok) { toast(r.reason, false); audio.engine.playEffect(FAILED_EFFECT.key, FAILED_EFFECT.gain); return false }
     state = r.state
     save()
     const dc = state.coins - before.coins
@@ -130,10 +156,13 @@ export function runGame(store: Storage, storageOk = true): Game | null {
     if (dv) topBar.pulse('viande', dv)
     if (state.village.level !== before.village.level) topBar.pulse('village', 1)
     if (!silent) toast(successMessage(action, state, before), true)
+    const fx = effectForAction(action)
+    if (fx) audio.engine.playEffect(fx.key, fx.gain)
+    checkMissionSound()
     return true
   }
 
-  return { get: () => state, dispatch, openGazette: () => openGazette(edition()) }
+  return { get: () => state, dispatch, openGazette: () => openGazette(edition()), onRestart: (fn) => { restartListeners.push(fn) } }
 }
 
 /** Message de réussite ; `s` est l'état après l'action, `before` celui d'avant. */

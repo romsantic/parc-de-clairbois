@@ -2,11 +2,25 @@ import { BUILDINGS, ECONOMY, SLOTS } from '../data/economy'
 import { STORY } from '../data/missions'
 import type { BuildingType, GameState } from './types'
 
+/** Nouveaux venus pour un nombre de clients servis : vite au début, plus lentement ensuite. */
+export function newcomers(clients: number): number {
+  const { CLIENTS_PER_NEWCOMER: fast, NEWCOMER_FAST_CLIENTS: limit, CLIENTS_PER_NEWCOMER_LATE: late } = ECONOMY
+  if (clients <= limit) return Math.floor(clients / fast)
+  return Math.floor(limit / fast) + Math.floor((clients - limit) / late)
+}
+
+/** Clients servis qu'il faut au minimum pour avoir `n` nouveaux venus. */
+export function clientsForNewcomers(n: number): number {
+  const { CLIENTS_PER_NEWCOMER: fast, NEWCOMER_FAST_CLIENTS: limit, CLIENTS_PER_NEWCOMER_LATE: late } = ECONOMY
+  const fastCount = Math.floor(limit / fast)
+  return n <= fastCount ? n * fast : limit + (n - fastCount) * late
+}
+
 /** Habitants : base + RESIDENTS_PER_LEVEL par niveau de chaque bâtiment + un nouvel habitant par groupe de clients servis. */
 export function population(state: GameState): number {
   const niveaux = state.buildings.reduce((s, b) => s + b.level, 0)
   return ECONOMY.BASE_POPULATION + ECONOMY.RESIDENTS_PER_LEVEL * niveaux
-    + Math.floor(state.village.clientsServed / ECONOMY.CLIENTS_PER_NEWCOMER)
+    + newcomers(state.village.clientsServed)
 }
 
 /** Mission du palier : la mission d'histoire marquée `gate: level` est réussie (même pas encore récupérée), ou l'histoire est déjà au-delà. */

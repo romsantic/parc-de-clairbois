@@ -4,12 +4,12 @@ import type { ActionResult } from '../sim/actions'
 import { cleanEnclosure, cureAnimal, addRations, cureCost } from '../sim/actions'
 import { SPECIES } from '../data/species'
 import { TUTORIAL } from '../data/missions'
-import { ECONOMY } from '../data/economy'
 import { DAY_MS, HOUR_MS, TUNING } from '../data/tuning'
 import { ageStage, satiety } from '../sim/animal'
 import { animalsIn, capacity, cleanliness } from '../sim/enclosure'
 import { happiness } from '../sim/happiness'
 import { autonomyHours } from '../sim/feeding'
+import { clientsForNewcomers, newcomers } from '../sim/village'
 import { msUntilNextDay } from './missionModel'
 
 /** Ce que le panneau de test peut faire sur la partie en cours. */
@@ -49,6 +49,7 @@ export function mountDebugPanel(ctl: DebugController): void {
   document.body.append(panel)
   let message = ''
   let confirmReset = false
+  const fps = el('p', 'Images par seconde : …') // hors de render() : mis à jour une fois par seconde, sans tout redessiner
 
   const act = (r: ActionResult) => {
     if (r.ok) { ctl.set(r.state); message = '' } else message = r.reason
@@ -69,7 +70,7 @@ export function mountDebugPanel(ctl: DebugController): void {
   function render() {
     const s = ctl.get()
     panel.replaceChildren()
-    panel.append(el('h2', 'Panneau de test'))
+    panel.append(el('h2', 'Panneau de test'), fps)
     const auto = autonomyHours(s)
     panel.append(el('p', `Heure du jeu : ${new Date(s.time).toLocaleString('fr-FR')}`))
     panel.append(el('p', `Pièces : ${Math.floor(s.coins)}`))
@@ -91,7 +92,7 @@ export function mountDebugPanel(ctl: DebugController): void {
       button('+3 jours', () => { ctl.advanceBy(3 * DAY_MS); render() }),
       button('+20 fourrage', () => act(addRations(ctl.get(), 'fourrage', 20))),
       button('+20 viande', () => act(addRations(ctl.get(), 'viande', 20))),
-      button('+20 habitants', () => { const n = structuredClone(ctl.get()); n.village.clientsServed += 20 * ECONOMY.CLIENTS_PER_NEWCOMER; ctl.set(n); render() }),
+      button('+20 habitants', () => { const n = structuredClone(ctl.get()); n.village.clientsServed = Math.max(n.village.clientsServed, clientsForNewcomers(newcomers(n.village.clientsServed) + 20)); ctl.set(n); render() }),
       button('Finir la mission', () => finishMission()),
       button('Jour suivant', () => { const t = ctl.get(); ctl.advanceBy(msUntilNextDay(t.time, t.utcOffsetMin) + TUNING.STEP_MS); render() }),
       button('Niveau suivant', () => { const n = structuredClone(ctl.get()); n.village.level = Math.min(3, n.village.level + 1) as 1 | 2 | 3; ctl.set(n); render() }),
@@ -135,10 +136,29 @@ export function mountDebugPanel(ctl: DebugController): void {
   }
 
   render()
+
+  // Compteur d'images par seconde, mesuré sur les vraies images dessinées et affiché 1 fois par seconde.
+  let frames = 0, since = performance.now()
+  const countFrame = (t: number) => {
+    frames++
+    if (t - since >= 1000) {
+      fps.textContent = `Images par seconde : ${Math.round((frames * 1000) / (t - since))}`
+      frames = 0
+      since = t
+    }
+    requestAnimationFrame(countFrame)
+  }
+  requestAnimationFrame(countFrame)
+
   // Ne redessine que si la partie a changé : sinon les boutons seraient recréés sous le clic.
-  let lastSeen = JSON.stringify(ctl.get())
+  // Signature légère (pas de JSON.stringify de toute la partie chaque seconde, trop lourd avec un grand parc) :
+  // toute action remplace la partie ou fait avancer l'horloge.
+  // Le rendu repose sur le changement de référence de la partie (g !== lastGame) ; la signature rattrape l'horloge qui avance en place.
+  const signature = (g: GameState) => `${g.time}|${g.coins}|${g.animals.length}|${g.enclosures.length}|${g.pantry.fourrage}|${g.pantry.viande}`
+  let lastGame = ctl.get(), lastSeen = signature(lastGame)
   setInterval(() => {
-    const now = JSON.stringify(ctl.get())
-    if (now !== lastSeen) { lastSeen = now; render() }
+    const g = ctl.get()
+    const now = signature(g)
+    if (g !== lastGame || now !== lastSeen) { lastGame = g; lastSeen = now; render() }
   }, 1000)
 }

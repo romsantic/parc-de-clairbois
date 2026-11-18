@@ -5,6 +5,7 @@ import {
 } from '../../src/sim/actions'
 import type { ActionResult } from '../../src/sim/actions'
 import type { GameState } from '../../src/sim/types'
+import { clientsForNewcomers } from '../../src/sim/village'
 
 const ok = (r: ActionResult): GameState => {
   if (!r.ok) throw new Error(r.reason)
@@ -44,13 +45,13 @@ describe('buildBuilding', () => {
 })
 
 describe('levelUp', () => {
-  it('passe au niveau 2 à 50 habitants', () => {
-    const r = levelUp(emptyState({ village: { level: 1, clientsServed: 30 * 40 }, missions: storyAt(4) }))
+  it('passe au niveau 2 à 40 habitants', () => {
+    const r = levelUp(emptyState({ village: { level: 1, clientsServed: clientsForNewcomers(25) }, missions: storyAt(4) }))
     expect(r.ok && r.state.village.level).toBe(2)
   })
   it('refuse à 30 habitants avec la raison de canLevelUp', () => {
-    expect(levelUp(emptyState({ village: { level: 1, clientsServed: 30 * 20 } })))
-      .toEqual({ ok: false, reason: 'Il faut 50 habitants (encore 15).' })
+    expect(levelUp(emptyState({ village: { level: 1, clientsServed: clientsForNewcomers(15) } })))
+      .toEqual({ ok: false, reason: 'Il faut 40 habitants (encore 10).' })
   })
 })
 
@@ -113,10 +114,10 @@ describe('upgradePantry', () => {
 })
 
 describe('setTicketPrice', () => {
-  it('accepte de 0 à 3 × prix juste (sans animal : 4, donc 12), entier seulement', () => {
-    expect(ok(setTicketPrice(emptyState(), 7)).ticketPrice).toBe(7)
+  it('accepte de 0 à 3 × prix juste (sans animal : 2, donc 6), entier seulement', () => {
+    expect(ok(setTicketPrice(emptyState(), 5)).ticketPrice).toBe(5)
     expect(ok(setTicketPrice(emptyState(), 0)).ticketPrice).toBe(0)
-    expect(setTicketPrice(emptyState(), 13)).toEqual({ ok: false, reason: 'Le prix doit être entre 0 et 12 pièces.' })
+    expect(setTicketPrice(emptyState(), 7)).toEqual({ ok: false, reason: 'Le prix doit être entre 0 et 6 pièces.' })
     expect(setTicketPrice(emptyState(), -1).ok).toBe(false)
     expect(setTicketPrice(emptyState(), 2.5).ok).toBe(false)
   })

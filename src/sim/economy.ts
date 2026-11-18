@@ -5,6 +5,8 @@ import { SPECIES } from '../data/species'
 import type { SpeciesId } from '../data/species'
 import { bump } from './stats'
 import { happiness } from './happiness'
+import { buildRoster } from './enclosure'
+import type { ParkPace } from '../data/missions'
 import type { BuildingType, GameEvent, GameState } from './types'
 
 /** Attrait : par espèce présente, base × (1 + 0,5 × √(n − 1)), n = nombre d'animaux de l'espèce. */
@@ -21,7 +23,8 @@ export function appeal(state: GameState): number {
 /** Bonheur moyen de tous les animaux (0 sans animal). */
 export function averageHappiness(state: GameState): number {
   if (state.animals.length === 0) return 0
-  return state.animals.reduce((s, a) => s + happiness(state, a), 0) / state.animals.length
+  const roster = buildRoster(state)
+  return state.animals.reduce((s, a) => s + happiness(state, a, roster), 0) / state.animals.length
 }
 
 /** Prix juste du billet : entier, au moins 1. */
@@ -54,15 +57,20 @@ export function visitorsPerHour(state: GameState, price: number = state.ticketPr
     * reputation * auberge * ECONOMY.VISITORS_PER_APPEAL
 }
 
+/** Dépense d'un client dans un bâtiment (boutique : selon le nombre d'espèces du parc). */
+export function spendPerClient(type: BuildingType, level: 1 | 2 | 3, especes: number): number {
+  const data = BUILDINGS[type]
+  return type === 'boutique'
+    ? (ECONOMY.BOUTIQUE_BASE + ECONOMY.BOUTIQUE_PER_SPECIES * especes) * data.spend[level - 1]
+    : data.spend[level - 1]
+}
+
 /** Clients et recettes par heure d'un bâtiment, pour un nombre de visiteurs et d'espèces donnés. */
 function buildingFlow(b: { type: BuildingType; level: 1 | 2 | 3 }, visiteurs: number, especes: number): { clients: number; pieces: number } {
   const data = BUILDINGS[b.type]
   const i = b.level - 1
   const clients = Math.min(visiteurs * data.share, data.maxClientsPerH[i])
-  const depense = b.type === 'boutique'
-    ? (ECONOMY.BOUTIQUE_BASE + ECONOMY.BOUTIQUE_PER_SPECIES * especes) * data.spend[i]
-    : data.spend[i]
-  return { clients, pieces: clients * depense }
+  return { clients, pieces: clients * spendPerClient(b.type, b.level, especes) }
 }
 
 /** Estimation d'un bâtiment (clients/h et pièces/h) ; zéro si l'emplacement est libre. */
@@ -85,6 +93,18 @@ export function incomePerHour(state: GameState, price: number = state.ticketPric
     village += f.pieces
   }
   return { visiteurs, billets: visiteurs * price, village, clients }
+}
+
+/** L'avancement du parc à cet instant : de quoi régler les missions du jour. */
+export function parkPace(state: GameState): ParkPace {
+  const inc = incomePerHour(state)
+  return {
+    visitorsPerH: inc.visiteurs,
+    coinsPerH: inc.billets + inc.village,
+    rationsPerDay: state.animals.reduce((n, a) => n + SPECIES[a.species].rationsPerDay, 0),
+    enclosures: state.enclosures.length,
+    animals: state.animals.length,
+  }
 }
 
 /** Un pas (1/6 h) : recettes, clients, réputation et fourrage gratuit de la ferme. */

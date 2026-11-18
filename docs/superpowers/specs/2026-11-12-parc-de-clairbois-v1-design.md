@@ -119,7 +119,7 @@ Passage de niveau : population atteinte **et** mission d'histoire du palier term
 | Niveau | Condition | Débloque |
 |---|---|---|
 | 1. Hameau | départ | zone **prairie**, 2 emplacements village, ferme, café |
-| 2. Village | 50 habitants + mission | zone **forêt**, +2 emplacements village, boutique, auberge, catalogue marchand élargi |
+| 2. Village | 40 habitants + mission | zone **forêt**, +2 emplacements village, boutique, auberge, catalogue marchand élargi |
 | 3. Bourg | 150 habitants + mission | zone **montagne**, +2 emplacements village, grand garde-manger, dernières espèces |
 
 Fin de V1 : 3 zones de zoo (enclos libres à l'intérieur), 6 emplacements de village (fixes).
@@ -140,6 +140,8 @@ Le changement est automatique au passage de niveau, sur tous les chemins existan
 - Réglable avec un curseur. Le jeu calcule un **prix juste** selon le niveau du village et l'attrait du zoo.
 - Effet sur l'affluence : moitié prix +30 % ; prix juste 100 % ; 1,5× −40 % ; 2× −75 % et baisse lente de la réputation.
 - Le meilleur revenu immédiat est un peu au-dessus du prix juste ; un prix bas remplit les bâtiments du village et fait croître la population plus vite.
+- Réglage de l'étape 6 (choix de Romain 17/11) : prix juste = 2 + 1 par niveau au-dessus du premier + 0,05 par point d'attrait ; café, boutique et auberge rapportent par client moitié moins qu'avant.
+- Nouveaux venus (réglage de l'étape 6, choix de Romain 17/11) : 1 habitant pour 30 clients servis jusqu'à 2 400 clients (80 habitants), puis 1 pour 350 clients.
 - Estimation en direct pendant le réglage (« ≈ 42 visiteurs/h · 380 pièces/h »).
 
 ## 6. Marchand et missions
@@ -169,7 +171,7 @@ Une seule à la fois, présentée par un habitant, avec récompense : pièces, r
 | Palier | Missions |
 |---|---|
 | Hameau | Construire le café · Première naissance · Posséder 3 espèces (débloque le redimensionnement des enclos existants) · 20 visiteurs/h |
-| Village | Construire l'auberge · 2 espèces de forêt · 2 jours d'autonomie · 50 habitants |
+| Village | Construire l'auberge · 2 espèces de forêt · 2 jours d'autonomie · 40 habitants |
 | Bourg | Faire naître un loup ou un taureau · Posséder les 10 espèces · 150 habitants → fin de la V1 |
 
 ### Missions quotidiennes

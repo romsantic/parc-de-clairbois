@@ -1,12 +1,12 @@
 /** Ce que l'interface affiche des missions : fonctions pures (testées), sans DOM. */
 import { ECONOMY, SLOTS } from '../data/economy'
 import { MISSIONS_TUNING, STORY, STORY_DONE_MESSAGE, TUTORIAL, type HighlightId, type MissionDef } from '../data/missions'
+import { MAIRIE } from '../data/village'
 import { DAY_MS } from '../data/tuning'
 import { ZONES } from '../data/zones'
 import { currentMission, dayKey, missionDef, progress, type MissionTrack } from '../sim/missions'
 import { canLevelUp, missionGateOk, population } from '../sim/village'
 import type { GameState, MissionProgress, Rect } from '../sim/types'
-import type { Pick } from '../scene/picking'
 import { formatProgress, formatReward } from './format'
 
 /** Une mission prête à être affichée. */
@@ -41,7 +41,7 @@ export function currentLine(state: GameState): MissionLine | null {
 export function dailyLines(state: GameState): MissionLine[] {
   const out: MissionLine[] = []
   for (const mp of state.missions.daily.list) {
-    const def = missionDef('quotidienne', mp.id)
+    const def = missionDef('quotidienne', mp.id, mp)
     if (def) out.push(line(state, 'quotidienne', def, mp))
   }
   return out
@@ -96,21 +96,21 @@ export function freeSlot(state: GameState): { x: number; z: number; id: number }
 }
 
 /**
- * Où mettre le « ! » : au-dessus de la cible si elle est sur la carte et pas déjà choisie ;
- * null = au-dessus de la mairie.
+ * Où mettre le « ! » : au-dessus de la cible tant que la mission n'est pas réussie, même si le
+ * joueur l'a déjà choisie ; null = au-dessus de la mairie.
  */
-export function markerPosition(state: GameState, id: HighlightId | null, sel: Pick): { x: number; z: number } | null {
+export function markerPosition(state: GameState, id: HighlightId | null): { x: number; z: number } | null {
   switch (id) {
     case 'detailsEnclos':
     case 'nettoyer': {
       const enc = state.enclosures.find((e) => e.species === 'mouton') ?? state.enclosures[0]
-      if (!enc || (sel.kind === 'enclos' && sel.id === enc.id)) return null
+      if (!enc) return null
       return center(enc.rect)
     }
     case 'ferme': {
       const ferme = state.buildings.find((b) => b.type === 'ferme')
       const slot = ferme && SLOTS.find((s) => s.id === ferme.slot)
-      if (!slot || (sel.kind === 'emplacement' && sel.slot === slot.id)) return null
+      if (!slot) return null
       return { x: slot.x, z: slot.z }
     }
     case 'emplacementLibre': {
@@ -122,14 +122,20 @@ export function markerPosition(state: GameState, id: HighlightId | null, sel: Pi
   }
 }
 
+/** « Il faut d'abord terminer la mission : … » pour le palier ; vide si ce palier n'a pas de mission. */
+export function gateMissionText(level: 2 | 3): string {
+  const gate = STORY.find((m) => m.gate === level)
+  return gate ? `Il faut d'abord terminer la mission : ${gate.title}` : ''
+}
+
 /** Raison affichée quand le village ne peut pas monter de niveau ; vide s'il le peut. */
 export function levelBlockReason(state: GameState): string {
   const c = canLevelUp(state)
   if (c.ok) return ''
   const level = (state.village.level + 1) as 2 | 3
   if (population(state) >= ECONOMY.LEVEL_POPULATION[level] && !missionGateOk(state, level)) {
-    const gate = STORY.find((m) => m.gate === level)
-    if (gate) return `Il faut d'abord terminer la mission : ${gate.title}`
+    const text = gateMissionText(level)
+    if (text) return text
   }
   return c.reason
 }
@@ -155,4 +161,10 @@ export function bannerFor(
   if (!prev) return unread ? 'nouvelle' : null
   if (prev.id !== cur.id) return cur.done ? 'reussie' : 'nouvelle'
   return !prev.done && cur.done ? 'reussie' : null
+}
+
+/** Où se trouve le « ! » à l'écran (cible ou mairie) ; null s'il est caché. */
+export function markerSpot(state: GameState): { x: number; z: number } | null {
+  if (!markerVisible(state)) return null
+  return markerPosition(state, highlightFor(state)) ?? { x: MAIRIE.x, z: MAIRIE.z }
 }

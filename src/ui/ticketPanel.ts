@@ -8,6 +8,8 @@ import { formatPerHour, reputationLabel } from './format'
 export interface PanelContext {
   get(): GameState
   dispatch(action: Action, from?: HTMLElement | null): boolean
+  /** Glisse la caméra jusqu'au « ! » ; false s'il n'y en a pas. */
+  focusMission?(): boolean
 }
 
 const text = (tag: string, t: string, cls = '') => { const e = document.createElement(tag); e.textContent = t; if (cls) e.className = cls; return e }

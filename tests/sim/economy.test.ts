@@ -31,16 +31,16 @@ describe('attrait', () => {
     s.animals.push(animal(9, 'ane', 'F', 2))
     expect(appeal(s)).toBeCloseTo(3.5)
   })
-  it('aucun animal : attrait 0, 0 visiteur, prix juste 4', () => {
+  it('aucun animal : attrait 0, 0 visiteur, prix juste 2', () => {
     const s = emptyState()
     expect(appeal(s)).toBe(0)
     expect(visitorsPerHour(s)).toBe(0)
-    expect(fairPrice(s)).toBe(4)
+    expect(fairPrice(s)).toBe(2)
   })
 })
 
 describe('prix juste et courbe', () => {
-  it('départ : 5', () => expect(fairPrice(moutons(2))).toBe(5))
+  it('départ : 2', () => expect(fairPrice(moutons(2))).toBe(2))
   it('priceMultiplier', () => {
     expect(priceMultiplier(0)).toBeCloseTo(1.3)
     expect(priceMultiplier(0.5)).toBeCloseTo(1.3)
@@ -54,58 +54,58 @@ describe('prix juste et courbe', () => {
 
 describe('visiteurs', () => {
   it('2 moutons heureux au prix juste = 6', () => {
-    expect(visitorsPerHour(moutons(2), 5)).toBeCloseTo(6)
+    expect(visitorsPerHour(moutons(2), 2)).toBeCloseTo(6)
   })
   it('avec une auberge : 7,2', () => {
     const s = moutons(2)
     s.buildings.push({ slot: 1, type: 'auberge', level: 1 })
-    expect(visitorsPerHour(s, 5)).toBeCloseTo(7.2)
+    expect(visitorsPerHour(s, 2)).toBeCloseTo(7.2)
   })
   it('réputation 0 : la moitié', () => {
     const s = moutons(2)
     s.reputation = 0
-    expect(visitorsPerHour(s, 5)).toBeCloseTo(3)
+    expect(visitorsPerHour(s, 2)).toBeCloseTo(3)
   })
 })
 
 describe('revenus', () => {
-  it('café niveau 1, 6 visiteurs/h : 2,4 clients x 3 = 7,2', () => {
+  it('café niveau 1, 6 visiteurs/h : 2,4 clients x 1,5 = 3,6', () => {
     const s = moutons(2)
     s.buildings.push({ slot: 1, type: 'cafe', level: 1 })
-    const r = incomePerHour(s, 5)
+    const r = incomePerHour(s, 2)
     expect(r.visiteurs).toBeCloseTo(6)
     expect(r.clients).toBeCloseTo(2.4)
-    expect(r.village).toBeCloseTo(7.2)
-    expect(r.billets).toBeCloseTo(30)
+    expect(r.village).toBeCloseTo(3.6)
+    expect(r.billets).toBeCloseTo(12)
   })
   it('café plafonné à 10 clients/h avec beaucoup de visiteurs', () => {
     const s = withAnimals(['mouton', 'cochon', 'ane', 'alpaga', 'renard', 'cerf', 'cheval', 'lama', 'taureau', 'loup'])
     s.buildings.push({ slot: 1, type: 'cafe', level: 1 })
-    const r = incomePerHour(s, 5)
+    const r = incomePerHour(s, 2)
     expect(r.visiteurs).toBeGreaterThan(80)
     expect(r.clients).toBeCloseTo(10)
-    expect(r.village).toBeCloseTo(30)
+    expect(r.village).toBeCloseTo(15)
   })
   it('prix 0 : aucune recette de billet', () => {
     expect(incomePerHour(moutons(2), 0).billets).toBe(0)
   })
-  it('boutique avec 3 espèces : (1 + 1,5) x 1 = 2,5 par client', () => {
+  it('boutique avec 3 espèces : (1 + 1,5) x 0,5 = 1,25 par client', () => {
     const s = withAnimals(['mouton', 'cochon', 'ane'])
     s.buildings = [{ slot: 1, type: 'boutique', level: 1 }]
-    const r = incomePerHour(s, 5)
+    const r = incomePerHour(s, 2)
     expect(r.clients).toBeGreaterThan(0)
-    expect(r.village / r.clients).toBeCloseTo(2.5)
+    expect(r.village / r.clients).toBeCloseTo(1.25)
   })
 })
 
 describe('buildingIncomePerHour', () => {
-  it('café niveau 1 avec 2 moutons : 2,4 clients/h et 7,2 pièces/h', () => {
+  it('café niveau 1 avec 2 moutons : 2,4 clients/h et 3,6 pièces/h', () => {
     const s = moutons(2)
-    s.ticketPrice = 5
+    s.ticketPrice = 2
     s.buildings.push({ slot: 1, type: 'cafe', level: 1 })
     const r = buildingIncomePerHour(s, 1)
     expect(r.clients).toBeCloseTo(2.4)
-    expect(r.pieces).toBeCloseTo(7.2)
+    expect(r.pieces).toBeCloseTo(3.6)
   })
   it('emplacement libre : zéro', () => {
     expect(buildingIncomePerHour(moutons(2), 3)).toEqual({ clients: 0, pieces: 0 })

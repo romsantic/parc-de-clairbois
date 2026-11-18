@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import type { LoadedModel } from './loadModels'
-import { pickWanderTarget, stepToward, type Bounds, type Point } from './wander'
+import { pickWanderTarget, stepToward, restDuration, walkSpeedFactor, type Bounds, type Point } from './wander'
 
 /** Un animal qui se promène dans son enclos : marche, s'arrête, broute ou se repose. */
 export class AnimalActor {
@@ -16,6 +16,7 @@ export class AnimalActor {
   private ageScale = 1
   private canWalk: boolean
   private t = 0
+  private night = 0
 
   constructor(
     model: LoadedModel,
@@ -40,6 +41,9 @@ export class AnimalActor {
     this.play(this.restClip())
     this.mixer.update(rng() * 3) // désynchronise les animaux
   }
+
+  /** Nuit 0..1 : pauses plus longues, marche plus lente. */
+  setNight(n: number): void { this.night = n }
 
   /** Taille selon l'âge (bébé, jeune, adulte). */
   setScale(k: number): void {
@@ -89,7 +93,7 @@ export class AnimalActor {
       return
     }
     const p = this.object.position
-    const step = stepToward({ x: p.x, z: p.z }, this.target, this.speed, dt)
+    const step = stepToward({ x: p.x, z: p.z }, this.target, this.speed * walkSpeedFactor(this.night), dt)
     const dx = step.x - p.x, dz = step.z - p.z
     if (dx || dz) {
       const want = Math.atan2(dx, dz)
@@ -100,7 +104,7 @@ export class AnimalActor {
     // Modèles sans animation de marche : petit balancement pour ne pas « glisser ».
     const bob = this.canWalk ? 0 : Math.abs(Math.sin(this.t * 9)) * 0.07 * this.ageScale
     p.set(step.x, this.ground(step.x, step.z) + bob, step.z)
-    if (step.arrived) { this.pause = 2 + this.rng() * 4; this.play(this.restClip()) }
+    if (step.arrived) { this.pause = restDuration(this.rng, this.night); this.play(this.restClip()) }
   }
 }
 

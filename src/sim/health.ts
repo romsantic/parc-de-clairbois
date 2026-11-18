@@ -13,6 +13,7 @@ import { random, chanceOver } from './random'
 export function healthStep(state: GameState, events: GameEvent[]): void {
   const now = state.time
   const dirtyChance = chanceOver(TUNING.DIRTY_SICK_PER_DAY, TUNING.STEP_MS / DAY_MS)
+  const enclosureById = new Map(state.enclosures.map((e) => [e.id, e]))
   const survivors = []
   for (const a of state.animals) {
     if (a.health.status === 'malade' && now - a.health.since >= TUNING.DEATH_AFTER_SICK_H * HOUR_MS) {
@@ -24,7 +25,7 @@ export function healthStep(state: GameState, events: GameEvent[]): void {
         a.health = { status: 'malade', since: now }
         events.push({ kind: 'malade', at: now, animalId: a.id, cause: 'faim' })
       } else {
-        const enc = state.enclosures.find((e) => e.id === a.enclosureId)
+        const enc = enclosureById.get(a.enclosureId)
         if (enc && cleanliness(enc, now) === 0 && random(state) < dirtyChance) {
           a.health = { status: 'malade', since: now }
           events.push({ kind: 'malade', at: now, animalId: a.id, cause: 'saleté' })

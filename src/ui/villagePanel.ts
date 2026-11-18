@@ -1,5 +1,5 @@
 import { ECONOMY } from '../data/economy'
-import { canLevelUp, population } from '../sim/village'
+import { canLevelUp, newcomers, population } from '../sim/village'
 import { levelBlockReason } from './missionModel'
 import { closeDrawer, isDrawerOpen, openDrawer } from './drawer'
 import type { PanelContext } from './ticketPanel'
@@ -26,8 +26,8 @@ export function toggleVillagePanel(ctx: PanelContext): void {
       const level = s.village.level
       pop.textContent = `${ECONOMY.LEVEL_NAMES[level - 1]} · ${p} habitants`
       const niveaux = s.buildings.reduce((t, b) => t + b.level, 0)
-      const venus = Math.floor(s.village.clientsServed / ECONOMY.CLIENTS_PER_NEWCOMER)
-      sources.textContent = `Les habitants viennent de : ${ECONOMY.BASE_POPULATION} de départ, ${ECONOMY.RESIDENTS_PER_LEVEL * niveaux} grâce aux bâtiments (${ECONOMY.RESIDENTS_PER_LEVEL} par niveau), ${venus} nouveaux venus (1 pour ${ECONOMY.CLIENTS_PER_NEWCOMER} clients servis).`
+      const venus = newcomers(s.village.clientsServed)
+      sources.textContent = `Les habitants viennent de : ${ECONOMY.BASE_POPULATION} de départ, ${ECONOMY.RESIDENTS_PER_LEVEL * niveaux} grâce aux bâtiments (${ECONOMY.RESIDENTS_PER_LEVEL} par niveau), ${venus} nouveaux venus (1 pour ${ECONOMY.CLIENTS_PER_NEWCOMER} clients servis au début, puis 1 pour ${ECONOMY.CLIENTS_PER_NEWCOMER_LATE} une fois ${ECONOMY.NEWCOMER_FAST_CLIENTS} clients servis).`
       if (level >= 3) {
         next.textContent = 'Clairbois est un bourg : le niveau maximum.'
         go.hidden = true; reason.textContent = ''

@@ -30,8 +30,8 @@ export function summarize(events: GameEvent[], state?: GameState): Summary {
     else if (e.kind === 'repas') { s.fourrage += e.fourrage; s.viande += e.viande }
     else if (e.kind === 'recettes') { s.pieces += e.billets + e.village; s.visiteurs += e.visiteurs }
     else if (e.kind === 'quotidiennes') s.quotidiennesRenouvelees = true
-    else if (e.kind === 'missionVersee') s.missionsVersees.push(missionDef('quotidienne', e.id)?.title ?? e.id)
-    else if (e.kind === 'mission') s.missions.push(missionDef(e.track, e.id)?.title ?? e.id)
+    else if (e.kind === 'missionVersee') s.missionsVersees.push(e.title ?? missionDef('quotidienne', e.id)?.title ?? e.id)
+    else if (e.kind === 'mission') s.missions.push(e.title ?? missionDef(e.track, e.id)?.title ?? e.id)
   }
   return s
 }

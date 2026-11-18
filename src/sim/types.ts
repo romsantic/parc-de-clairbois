@@ -48,7 +48,12 @@ export type StatKey = 'nettoyages' | 'fourrageAchete' | 'viandeAchetee' | 'vente
 export interface Stats { counts: Record<StatKey, number>; birthsBySpecies: Partial<Record<SpeciesId, number>> }
 
 /** Avancée d'une mission : `base` = valeur du compteur au début ; `done` = réussie ; `claimed` = récompense récupérée. */
-export interface MissionProgress { id: string; base: number; done: boolean; claimed: boolean }
+export interface MissionProgress {
+  id: string; base: number; done: boolean; claimed: boolean
+  /** Quotidienne : cible et récompense tirées à minuit (absentes dans les anciennes parties, dont l'id porte « #niveau »). */
+  n?: number
+  reward?: { coins?: number; fourrage?: number; viande?: number }
+}
 export interface MissionsState {
   /** step de 0 à 9 (9 = fini). */
   tutorial: { step: number; current: MissionProgress | null; skipped: boolean }
@@ -90,7 +95,7 @@ export type GameEvent =
   | { kind: 'repas'; at: number; fourrage: number; viande: number }
   | { kind: 'recettes'; at: number; visiteurs: number; billets: number; village: number }
   | { kind: 'stock'; at: number }
-  | { kind: 'mission'; at: number; track: 'tutoriel' | 'histoire' | 'quotidienne'; id: string }
+  | { kind: 'mission'; at: number; track: 'tutoriel' | 'histoire' | 'quotidienne'; id: string; title?: string }
   | { kind: 'quotidiennes'; at: number }
   /** Une quotidienne réussie et non récupérée a été versée d'office à minuit. */
-  | { kind: 'missionVersee'; at: number; id: string }
+  | { kind: 'missionVersee'; at: number; id: string; title?: string }

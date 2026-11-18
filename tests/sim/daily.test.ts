@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { animal, emptyState, enclosure, storyAt, T0 } from './helpers'
+import { animal, bigPark, crowdedPark, emptyState, enclosure, storyAt, T0 } from './helpers'
 import { applyAction, type Action } from '../../src/sim/actions'
 import { advanceTo, step } from '../../src/sim/advance'
 import { claimMission, dayKey, missionDef, updateMissions } from '../../src/sim/missions'
 import { summarize } from '../../src/sim/summary'
-import { DAILY_POOL, MISSIONS_TUNING } from '../../src/data/missions'
+import { DAILY_POOL, DAILY_TUNING, MISSIONS_TUNING, niceRound, type ParkPace } from '../../src/data/missions'
+import { parkPace } from '../../src/sim/economy'
+import { newGame } from '../../src/sim/newGame'
+import { loadGame, SAVE_KEY } from '../../src/save/save'
 import { DAY_MS, HOUR_MS } from '../../src/data/tuning'
 import type { GameEvent, GameState } from '../../src/sim/types'
 
@@ -59,20 +62,23 @@ describe('tirage', () => {
     expect(s.missions.daily.dayKey).toBe(dayKey(s.time, 0))
     expect(s.missions.daily.streak).toBe(0)
   })
-  it('chaque quotidienne retrouve sa définition (récompense × niveau)', () => {
+  it('chaque quotidienne retrouve sa définition : cible et récompense tirées', () => {
     const s = withDaily({ village: { level: 2, clientsServed: 0 } })
     for (const mp of s.missions.daily.list) {
-      const def = missionDef('quotidienne', mp.id)!
-      const pool = DAILY_POOL.find((p) => p.id === poolId(mp.id))!
+      const def = missionDef('quotidienne', mp.id, mp)!
       expect(def.title).toBeTruthy()
-      expect(def.reward.coins ?? 0).toBe((pool.reward.coins ?? 0) * 2)
+      expect(def.title).not.toMatch(/[{}#]/)
+      expect(mp.n).toBeGreaterThan(0)
+      expect(def.reward).toEqual(mp.reward)
     }
   })
-  it('la définition ne change pas si le village monte de niveau en cours de journée', () => {
-    const s = withDaily({ village: { level: 1, clientsServed: 0 } })
-    const avant = s.missions.daily.list.map((m) => JSON.stringify(missionDef('quotidienne', m.id)))
-    s.village.level = 2
-    expect(s.missions.daily.list.map((m) => JSON.stringify(missionDef('quotidienne', m.id)))).toEqual(avant)
+  it('la définition ne change pas quand le parc grandit en cours de journée', () => {
+    const s = withDaily()
+    const avant = s.missions.daily.list.map((m) => JSON.stringify(missionDef('quotidienne', m.id, m)))
+    Object.assign(s, bigPark(), { missions: s.missions })
+    s.village.level = 3
+    updateMissions(s, [])
+    expect(s.missions.daily.list.map((m) => JSON.stringify(missionDef('quotidienne', m.id, m)))).toEqual(avant)
   })
   it('un pas qui franchit minuit renouvelle une seule fois', () => {
     const s = withDaily()
@@ -129,6 +135,7 @@ describe('tirage', () => {
 
 describe('mesure et récupération', () => {
   const find = (s: GameState, pool: string) => s.missions.daily.list.find((m) => poolId(m.id) === pool)!
+  const targetOf = (s: GameState, pool: string) => find(s, pool).n!
   const withMission = (pool: string): GameState => {
     for (let rng = 1; rng < 300; rng++) {
       const s = withDaily({ rng, enclosures: [enclosure(1, 'mouton')], animals: [animal(1, 'mouton', 'F', 1), animal(2, 'mouton', 'M', 1)] })
@@ -148,11 +155,12 @@ describe('mesure et récupération', () => {
     expect(find(s, 'quot-nettoyer').claimed).toBe(false)
     expect(s.coins).toBeLessThan(avant) // seul le coût du nettoyage est retiré
   })
-  it('« Acheter 30 rations » compte fourrage et viande ensemble', () => {
+  it('« Acheter des rations » compte fourrage et viande ensemble', () => {
     let s = withMission('quot-rations')
+    const n = targetOf(s, 'quot-rations')
     s = ok(s, { type: 'acheterRations', food: 'fourrage', n: 10 })
     expect(find(s, 'quot-rations').done).toBe(false)
-    s = ok(s, { type: 'acheterRations', food: 'viande', n: 20 })
+    s = ok(s, { type: 'acheterRations', food: 'viande', n: n - 10 })
     expect(find(s, 'quot-rations').done).toBe(true)
   })
   it('recuperer verse une seule fois', () => {
@@ -161,7 +169,7 @@ describe('mesure et récupération', () => {
     find(s, 'quot-achat').done = true
     const coins = s.coins
     s = ok(s, { type: 'recuperer', track: 'quotidienne', id })
-    expect(s.coins).toBe(coins + (missionDef('quotidienne', id)!.reward.coins ?? 0))
+    expect(s.coins).toBe(coins + (find(s, 'quot-achat').reward!.coins ?? 0))
     expect(find(s, 'quot-achat').claimed).toBe(true)
     expect(applyAction(s, { type: 'recuperer', track: 'quotidienne', id })).toEqual({ ok: false, reason: 'Récompense déjà récupérée.' })
   })
@@ -195,7 +203,7 @@ describe('série et bon de réduction', () => {
     const s = withDaily({ ticketPrice: 0, reputation: 0 })
     const mp = s.missions.daily.list[0]
     mp.done = true
-    const def = missionDef('quotidienne', mp.id)!
+    const def = missionDef('quotidienne', mp.id, mp)!
     const avant = { c: s.coins, f: s.pantry.fourrage }
     const r = toMidnight(s).state
     const gagne = r.coins - avant.c
@@ -232,8 +240,10 @@ describe('série et bon de réduction', () => {
     s.missions.daily.list[1].claimed = true
     const r = toMidnight(s)
     const versees = r.events.filter((e) => e.kind === 'missionVersee')
-    expect(versees).toEqual([{ kind: 'missionVersee', at: expect.any(Number), id: s.missions.daily.list[0].id }])
-    expect(summarize(r.events, r.state).missionsVersees).toEqual([missionDef('quotidienne', s.missions.daily.list[0].id)!.title])
+    const mp0 = s.missions.daily.list[0]
+    const titre = missionDef('quotidienne', mp0.id, mp0)!.title
+    expect(versees).toEqual([{ kind: 'missionVersee', at: expect.any(Number), id: mp0.id, title: titre }])
+    expect(summarize(r.events, r.state).missionsVersees).toEqual([titre])
     expect(summarize([]).missionsVersees).toEqual([])
   })
   it('jour suivant non terminé puis minuit → série 0', () => {
@@ -291,5 +301,154 @@ describe('summary', () => {
     expect(sum.serie).toBe(r.state.missions.daily.streak)
     expect(summarize([]).quotidiennesRenouvelees).toBe(false)
     expect(summarize([]).serie).toBe(0)
+  })
+})
+
+describe('chiffres ronds', () => {
+  it('arrondit selon la taille du nombre', () => {
+    expect(niceRound(147)).toBe(150)
+    expect(niceRound(1234)).toBe(1250)
+    expect(niceRound(42)).toBe(40)
+    expect(niceRound(7345)).toBe(7300)
+    expect(niceRound(23456)).toBe(23500)
+  })
+  it('jamais 0, même pour 0, un négatif ou NaN', () => {
+    for (const x of [0, -50, NaN, 0.4]) expect(niceRound(x)).toBeGreaterThan(0)
+  })
+  it('un résultat arrondi reste rond (idempotent)', () => {
+    for (const x of [3, 33, 147, 480, 777, 1999, 4321, 12345]) expect(niceRound(niceRound(x))).toBe(niceRound(x))
+  })
+})
+
+describe('quotidiennes réglées sur le parc', () => {
+  const pace = (over: Partial<ParkPace> = {}): ParkPace => ({ visitorsPerH: 0, coinsPerH: 0, rationsPerDay: 0, enclosures: 0, animals: 0, ...over })
+  const entry = (id: string) => DAILY_POOL.find((p) => p.id === id)!
+  const drawn = (s: GameState, id: string) => {
+    const p = parkPace(s), d = entry(id), n = d.target(p), reward = d.reward(p, n)
+    return { n, reward, title: missionDef('quotidienne', id, { id, base: 0, done: false, claimed: false, n, reward })!.title }
+  }
+  const start = (): GameState => ({ ...newGame(1, T0), missions: storyAt(0) })
+
+  it('parc de départ : proche de ce que le jeu proposait', () => {
+    const s = start()
+    expect(drawn(s, 'quot-nettoyer').n).toBe(2)
+    expect(drawn(s, 'quot-visiteurs').n).toBe(50)
+    expect(drawn(s, 'quot-rations').n).toBe(30)
+    expect(drawn(s, 'quot-vendre').n).toBe(1)
+    expect(drawn(s, 'quot-pieces').n).toBe(300)
+  })
+  it('gros parc : tout grandit, rations et nettoyages compris', () => {
+    const p0 = parkPace(start()), p1 = parkPace(bigPark()), p2 = parkPace(crowdedPark())
+    for (const id of ['quot-visiteurs', 'quot-pieces', 'quot-rations']) {
+      expect(entry(id).target(p1)).toBeGreaterThan(entry(id).target(p0))
+      expect(entry(id).target(p2)).toBeGreaterThanOrEqual(entry(id).target(p1))
+    }
+    expect(entry('quot-visiteurs').target(p1)).toBeGreaterThan(5 * entry('quot-visiteurs').target(p0))
+    expect(entry('quot-pieces').target(p1)).toBeGreaterThan(5 * entry('quot-pieces').target(p0))
+    // une demi-journée de ce que mangent les animaux
+    expect(Math.abs(entry('quot-rations').target(p1) - DAILY_TUNING.RATIONS_DAY_SHARE * p1.rationsPerDay)).toBeLessThanOrEqual(5)
+    expect(entry('quot-rations').target(p2)).toBeGreaterThanOrEqual(150) // parc bondé : ~390 rations par jour
+    expect(entry('quot-nettoyer').target(p1)).toBe(DAILY_TUNING.CLEAN_MAX)
+    expect(entry('quot-vendre').target(p1)).toBe(DAILY_TUNING.TRADE_MANY)
+    expect(entry('quot-pieces').reward(p1, 1).coins).toBeGreaterThan(entry('quot-pieces').reward(p0, 1).coins!)
+    expect(entry('quot-rations').reward(p2, 1).fourrage).toBeGreaterThan(entry('quot-rations').reward(p0, 1).fourrage!)
+  })
+  it('la récompense en pièces vaut environ une heure de recettes, un peu plus pour ce qui coûte', () => {
+    const p = parkPace(bigPark())
+    const pieces = entry('quot-pieces').reward(p, 1).coins!
+    expect(Math.abs(pieces - p.coinsPerH)).toBeLessThanOrEqual(50)
+    expect(entry('quot-achat').reward(p, 1).coins!).toBeGreaterThan(pieces)
+    expect(entry('quot-rations').reward(p, 1).coins).toBeUndefined() // le fermier paie en nourriture
+    expect(entry('quot-rations').reward(p, 1).fourrage).toBeGreaterThan(0)
+  })
+  it("parc à l'arrêt (0 visiteur) : cibles minimales, jamais 0, récompense d'au moins 30", () => {
+    for (const p of [pace(), pace({ visitorsPerH: NaN })]) {
+      for (const d of DAILY_POOL) {
+        const n = d.target(p)
+        expect(n).toBeGreaterThan(0)
+        const r = d.reward(p, n)
+        expect(Math.max(r.coins ?? 0, r.fourrage ?? 0)).toBeGreaterThan(0)
+        if (r.coins !== undefined) expect(r.coins).toBeGreaterThanOrEqual(DAILY_TUNING.REWARD_MIN)
+      }
+      expect(entry('quot-visiteurs').target(p)).toBe(DAILY_TUNING.MIN_VISITORS)
+      expect(entry('quot-nettoyer').target(p)).toBe(DAILY_TUNING.CLEAN_MIN)
+    }
+  })
+  it('les cibles sont des chiffres ronds', () => {
+    for (const s of [start(), bigPark(), crowdedPark()]) {
+      const p = parkPace(s)
+      for (const id of ['quot-visiteurs', 'quot-pieces', 'quot-rations']) {
+        const n = entry(id).target(p)
+        expect(niceRound(n)).toBe(n)
+      }
+    }
+  })
+  it('vendre / acheter : 1 animal, 2 au-delà de 20 animaux ; titres au singulier et au pluriel', () => {
+    expect(entry('quot-vendre').target(pace({ animals: 20 }))).toBe(1)
+    expect(entry('quot-vendre').target(pace({ animals: 21 }))).toBe(2)
+    expect(drawn(start(), 'quot-vendre').title).toBe('Vends un animal')
+    expect(drawn(bigPark(), 'quot-vendre').title).toBe('Vends 2 animaux')
+    expect(drawn(start(), 'quot-achat').title).toBe('Achète un animal')
+    expect(drawn(bigPark(), 'quot-achat').title).toBe('Achète 2 animaux')
+    expect(drawn(bigPark(), 'quot-visiteurs').title).toMatch(/^Accueille \d+ visiteurs$/)
+  })
+  it('le tirage garde cible et récompense avec la mission, et la mesure suit la cible tirée', () => {
+    let trouve = false
+    for (let rng = 1; rng < 60 && !trouve; rng++) {
+      const s = emptyState({ ...bigPark(), rng, missions: storyAt(0) })
+      updateMissions(s, [])
+      const mp = s.missions.daily.list.find((m) => m.id === 'quot-visiteurs')
+      if (!mp) continue
+      trouve = true
+      const def = missionDef('quotidienne', mp.id, mp)!
+      expect(def.objective).toMatchObject({ kind: 'compteur', n: mp.n })
+      expect(mp.n).toBe(entry('quot-visiteurs').target(parkPace(bigPark())))
+      expect(def.reward).toEqual(entry('quot-visiteurs').reward(parkPace(bigPark()), mp.n!))
+    }
+    expect(trouve).toBe(true)
+  })
+  it('même graine, même parc : même tirage (cibles et récompenses comprises)', () => {
+    const a = emptyState({ ...bigPark(), missions: storyAt(0) }), b = emptyState({ ...bigPark(), missions: storyAt(0) })
+    updateMissions(a, []); updateMissions(b, [])
+    expect(a.missions.daily.list).toEqual(b.missions.daily.list)
+  })
+  it('à minuit, un parc grandi donne de nouvelles cibles', () => {
+    const s = withDaily() // parc vide : cibles minimales
+    expect(s.missions.daily.list.every((m) => (m.reward?.coins ?? 0) <= DAILY_TUNING.REWARD_MIN)).toBe(true)
+    Object.assign(s, { ...bigPark(), time: s.time, rng: s.rng, missions: s.missions })
+    const apres = toMidnight(s).state.missions.daily.list
+    expect(apres.some((m) => (m.reward?.coins ?? 0) > 200 || (m.reward?.fourrage ?? 0) > 15)).toBe(true)
+  })
+})
+
+describe('anciennes quotidiennes (partie v3, « quot-pieces#2 »)', () => {
+  it('restent lues telles quelles : cible et récompense × niveau', () => {
+    const mp = { id: 'quot-pieces#2', base: 0, done: false, claimed: false }
+    const def = missionDef('quotidienne', mp.id, mp)!
+    expect(def.title).toBe('Gagne 600 pièces')
+    expect(def.objective).toMatchObject({ n: 600 })
+    expect(def.reward).toEqual({ coins: 60 })
+    expect(missionDef('quotidienne', 'quot-vendre#1')!.title).toBe('Vends un animal')
+    expect(missionDef('quotidienne', 'quot-rations#3')!.reward).toEqual({ fourrage: 45 })
+  })
+  it('une quotidienne inconnue ou sans cible est ignorée sans planter', () => {
+    expect(missionDef('quotidienne', 'zzz#1')).toBeUndefined()
+    expect(missionDef('quotidienne', 'quot-pieces#0')).toBeUndefined()
+    expect(missionDef('quotidienne', 'quot-pieces')).toBeUndefined()
+  })
+  it('une partie v3 avec des « #2 » se charge, se mesure et se récupère', () => {
+    const g = structuredClone(withDaily({ village: { level: 2, clientsServed: 0 } })) as GameState
+    g.missions.daily.list = [{ id: 'quot-achat#2', base: g.stats.counts.achatsAnimaux, done: false, claimed: false }]
+    const mem: Record<string, string> = { [SAVE_KEY]: JSON.stringify({ version: 3, savedAt: 1, state: g }) }
+    const r = loadGame({ getItem: (k) => mem[k] ?? null, setItem: (k, v) => { mem[k] = v } })
+    expect(r.kind).toBe('ok')
+    if (r.kind !== 'ok') return
+    let s = r.state
+    s.stats.counts.achatsAnimaux += 1
+    updateMissions(s, [])
+    expect(s.missions.daily.list[0].done).toBe(true)
+    const coins = s.coins
+    s = ok(s, { type: 'recuperer', track: 'quotidienne', id: 'quot-achat#2' })
+    expect(s.coins).toBe(coins + 80)
   })
 })

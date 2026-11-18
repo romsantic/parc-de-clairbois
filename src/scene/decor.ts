@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import type { ModelKey } from '../assets/manifest'
 import { ZONES, PATHS, villagePaths } from '../data/zones'
 import { SLOTS } from '../data/economy'
+import { VILLAGE_PROPS, MAIRIE, MARKER } from '../data/village'
 import type { World } from './world'
 import { fitHeight } from './animalActor'
 import { prepareStatic } from './materials'
@@ -10,8 +11,10 @@ import { createRng } from '../core/rng'
 
 /** Pont et allée du zoo : à la hauteur du couloir de chemin des données (z = 10). */
 export const BRIDGE_Z = 10
-/** Hauteur du « ! » au-dessus du sol quand il désigne un point de la carte (enclos, bâtiment). */
-const MARKER_HEIGHT_OVER_GROUND = 5
+/** Dessus des planches du pont (les promeneurs y posent les pieds). */
+export const BRIDGE_DECK_Y = 0.36
+/** Demi-longueur du tablier (planches de bx − 3,3 à bx + 3,3). */
+export const BRIDGE_HALF_SPAN = 3.3
 
 /**
  * Décor fixe : village, pont, chemins, marqueur de mission, arbres et rochers.
@@ -23,6 +26,8 @@ export function buildDecor(world: World, rng: () => number): {
   /** Place le « ! » au-dessus d'un point de la carte ; null = au-dessus de la mairie. */
   setMarker(pos: { x: number; z: number } | null): void
   setMarkerVisible(v: boolean): void
+  /** Objets cliquables du village : mairie, maisons, puits… (index dans VILLAGE_PROPS). */
+  propMeshes(): Map<number, THREE.Object3D>
 } {
   const { scene, models, groundHeight, riverDistance } = world
   const occupied: { x: number; z: number; r: number }[] = []
@@ -50,14 +55,13 @@ export function buildDecor(world: World, rng: () => number): {
     occupied.every((o) => Math.hypot(o.x - x, o.z - z) > o.r + r)
 
   // ---------- Le village, de l'autre côté de la rivière ----------
-  const mairie = place('mairie', 17, -3, { height: 7, rot: -Math.PI / 2, r: 3.5 })
-  place('maison1', 18, -11.5, { height: 3.6, rot: 0.2, r: 3 })
-  place('maison3', 29.5, 3, { height: 3.6, rot: -Math.PI / 2, r: 3 })
-  place('maison2', 11, 16, { height: 3.6, rot: Math.PI + 0.4, r: 3 })
-  place('moulin', 31, -8, { height: 7, rot: -0.6, r: 3.5 })
-  place('puits', 13, 0, { height: 2.2, r: 1.2 })
-  place('charrette', 10, 4, { height: 1.8, rot: 0.8, r: 1.5 })
-  place('banc', 15, 3.5, { height: 0.9, rot: Math.PI, r: 0.8 })
+  let mairie: THREE.Object3D | undefined
+  const props = new Map<number, THREE.Object3D>()
+  VILLAGE_PROPS.forEach((v, i) => {
+    const obj = place(v.key, v.x, v.z, { height: v.height, rot: v.rot, r: v.r })
+    if (obj) { obj.userData.prop = i; props.set(i, obj) }
+    if (v === MAIRIE) mairie = obj
+  })
 
   // ---------- Pont de bois là où l'allée croise la rivière ----------
   for (const sl of SLOTS) occupied.push({ x: sl.x, z: sl.z, r: 3.4 })
@@ -68,7 +72,7 @@ export function buildDecor(world: World, rng: () => number): {
   const woodLight = new THREE.MeshStandardMaterial({ color: '#9c6a45', roughness: 0.9, flatShading: true })
   for (let i = 0; i < 13; i++) {
     const plank = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.16, 2.6), i % 2 ? wood : woodLight)
-    plank.position.set(bx - 3.3 + i * 0.55, 0.28 + (i % 3) * 0.015, BZ)
+    plank.position.set(bx - 3.3 + i * 0.55, BRIDGE_DECK_Y - 0.08 + (i % 3) * 0.015, BZ)
     plank.castShadow = plank.receiveShadow = true
     scene.add(plank)
   }
@@ -112,7 +116,7 @@ export function buildDecor(world: World, rng: () => number): {
         m.geometry.dispose()
         for (const mat of Array.isArray(m.material) ? m.material : [m.material]) mats.add(mat)
       })
-      mats.forEach((m) => m.dispose()) // les textures en cache restent partagées
+      mats.forEach((m) => { if (!m.userData.keep) m.dispose() }) // les textures en cache restent partagées
     }
     const style = Math.min(3, Math.max(1, Math.round(level) || 1)) as PathStyle
     const pRng = createRng(4242) // même rendu à chaque reconstruction
@@ -132,17 +136,17 @@ export function buildDecor(world: World, rng: () => number): {
   const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.16, 1.3, 8), gold)
   bar.position.y = 0.95
   marker.add(bar, new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 8), gold))
-  const mairieBase = (mairie ? new THREE.Box3().setFromObject(mairie).max.y : 9) + 1.4
+  const mairieBase = (mairie ? new THREE.Box3().setFromObject(mairie).max.y : MARKER.FALLBACK_TOP_Y) + MARKER.OVER_MAIRIE
   let markerBase = mairieBase
-  marker.position.set(17, markerBase, -3)
+  marker.position.set(MAIRIE.x, markerBase, MAIRIE.z)
   scene.add(marker)
   let markerAt: string | null = null
   function setMarker(pos: { x: number; z: number } | null) {
     const key = pos ? `${pos.x},${pos.z}` : null
     if (key === markerAt) return
     markerAt = key
-    const x = pos ? pos.x : 17, z = pos ? pos.z : -3
-    markerBase = pos ? groundHeight(x, z) + MARKER_HEIGHT_OVER_GROUND : mairieBase
+    const x = pos ? pos.x : MAIRIE.x, z = pos ? pos.z : MAIRIE.z
+    markerBase = pos ? groundHeight(x, z) + MARKER.OVER_GROUND : mairieBase
     marker.position.set(x, markerBase, z)
   }
 
@@ -190,5 +194,6 @@ export function buildDecor(world: World, rng: () => number): {
     setPathLevel,
     setMarker,
     setMarkerVisible(v) { marker.visible = v },
+    propMeshes: () => props,
   }
 }

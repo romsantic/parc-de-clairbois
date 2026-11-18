@@ -107,7 +107,7 @@ export function createParkView(world: World, getState: () => GameState, rng: () 
       const s = getState()
       syncEnclosures(s)
       syncAnimals(s)
-      for (const a of actors.values()) a.update(dt)
+      for (const a of actors.values()) { a.setNight(world.night); a.update(dt) }
       ageTimer += dt
       if (ageTimer > 2) { // les animaux grandissent : on remet leur taille à jour de temps en temps
         ageTimer = 0

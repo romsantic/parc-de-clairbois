@@ -1,14 +1,84 @@
 import { describe, it, expect } from 'vitest'
-import { startSession, resume } from '../../src/game/session'
+import { startSession, resume, restartState, STEP6_MARKER_KEY } from '../../src/game/session'
 import { saveGame, loadGame, SAVE_KEY, type Storage } from '../../src/save/save'
 import { newGame } from '../../src/sim/newGame'
 import { DAY_MS } from '../../src/data/tuning'
+import { fairPrice } from '../../src/sim/economy'
+import { population } from '../../src/sim/village'
+import { updateMissions } from '../../src/sim/missions'
+import { STORY } from '../../src/data/missions'
 
 function memory(init: Record<string, string> = {}): Storage & { data: Record<string, string> } {
   const data = { ...init }
   return { data, getItem: (k) => (k in data ? data[k] : null), setItem: (k, v) => { data[k] = v } }
 }
 const NOW = 1_800_000_000_000
+
+describe('billet et habitants après le rééquilibrage', () => {
+  it('ancienne partie niveau 2, 10 000 clients, porte faite : reste niveau 2, mission faite, habitants avec la nouvelle règle', () => {
+    const g = newGame(5, NOW)
+    g.village = { level: 2, clientsServed: 10_000 }
+    const gate = STORY.findIndex((x) => x.gate === 3)
+    g.missions.story = { index: gate, current: { id: STORY[gate].id, base: 0, done: true, claimed: false } }
+    const oldPop = 10 + 5 * g.buildings.reduce((s, b) => s + b.level, 0) + Math.floor(10_000 / 30)
+    const m = memory()
+    saveGame(m, g, NOW)
+    const r = startSession(m, NOW)
+    expect(r.state.village.level).toBe(2)
+    expect(r.state.missions.story.index).toBe(gate)
+    expect(r.state.missions.story.current?.done).toBe(true)
+    updateMissions(r.state, [])
+    expect(r.state.missions.story.current?.done).toBe(true)
+    const pop = population(r.state)
+    expect(pop).toBeGreaterThan(0)
+    expect(pop).toBeLessThan(oldPop)
+  })
+})
+
+describe("réglages de l'étape 6 : une seule fois", () => {
+  const old = (ticket: number, clients = 0) => { const g = newGame(5, NOW); g.village = { level: 2, clientsServed: clients }; g.ticketPrice = ticket; return g }
+  it('ancienne partie à prix très haut : même prix au chargement, sans message de billet, à chaque fois', () => {
+    const m = memory()
+    saveGame(m, old(14), NOW)
+    const a = startSession(m, NOW)
+    expect(a.state.ticketPrice).toBe(14)
+    expect(a.priceNotice).toBeNull()
+    saveGame(m, a.state, NOW)
+    const b = startSession(m, NOW)
+    expect(b.state.ticketPrice).toBe(14)
+    expect(b.priceNotice).toBeNull()
+  })
+  it('1er chargement sans rien à changer : le repère est posé quand même', () => {
+    const m = memory()
+    saveGame(m, newGame(5, NOW), NOW)
+    expect(startSession(m, NOW).priceNotice).toBeNull()
+    expect(m.data[STEP6_MARKER_KEY]).toBeDefined()
+  })
+  it('partie neuve et recommencer : repère posé, jamais ajustée', () => {
+    const m = memory()
+    startSession(m, NOW)
+    expect(m.data[STEP6_MARKER_KEY]).toBeDefined()
+    const m2 = memory()
+    restartState(m2, NOW)
+    expect(m2.data[STEP6_MARKER_KEY]).toBeDefined()
+  })
+  it('habitants en baisse avec la nouvelle règle : message une seule fois, avec les deux nombres', () => {
+    const m = memory()
+    const g = old(5, 10_000); g.ticketPrice = fairPrice(g)
+    saveGame(m, g, NOW)
+    const a = startSession(m, NOW)
+    expect(a.priceNotice).toContain('réorganisé')
+    expect(a.priceNotice).toContain(`${population(a.state)} habitants`)
+    saveGame(m, a.state, NOW)
+    expect(startSession(m, NOW).priceNotice).toBeNull()
+  })
+  it('peu de clients (pas de baisse) : pas de message habitants', () => {
+    const m = memory()
+    const g = old(5, 20); g.ticketPrice = fairPrice(g)
+    saveGame(m, g, NOW)
+    expect(startSession(m, NOW).priceNotice).toBeNull()
+  })
+})
 
 describe('startSession', () => {
   it('sans sauvegarde : nouvelle partie, aussitôt sauvegardée', () => {

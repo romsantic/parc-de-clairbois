@@ -1,10 +1,15 @@
 import './style.css'
 import WebGL from 'three/examples/jsm/capabilities/WebGL.js'
 import { MODELS, type ModelKey } from './assets/manifest'
-import { loadModels, AssetLoadError } from './scene/loadModels'
+import { loadModels, requestModel, AssetLoadError } from './scene/loadModels'
+import { hourFromLocation } from './scene/clock'
+import { createVisitorsView, WALKER_MODELS } from './scene/visitorsView'
 import { createWorld } from './scene/world'
+import { isPhone } from './core/device'
 import { showError, showLoading } from './ui/errorScreen'
 import { runGame } from './game/runGame'
+import { createAudioController, unlockOnFirstGesture } from './audio/sound'
+import { effectsOnPick } from './audio/pickSound'
 import type { Storage } from './save/save'
 import { createCameraRig } from './scene/cameraRig'
 import { mountCameraButtons } from './ui/cameraButtons'
@@ -19,7 +24,7 @@ import { createEnclosureEditor } from './scene/enclosureEditor'
 import { SPECIES_MODELS } from './data/speciesModels'
 import { createRng } from './core/rng'
 import { setHighlight } from './ui/highlight'
-import { highlightFor, markerPosition, markerVisible } from './ui/missionModel'
+import { highlightFor, markerPosition, markerSpot, markerVisible } from './ui/missionModel'
 
 /** Le stockage du navigateur, ou une mémoire temporaire s'il est bloqué. */
 function openStorage(): { store: Storage; ok: boolean } {
@@ -43,8 +48,11 @@ async function start(): Promise<void> {
   // Si le stockage du navigateur est bloqué (navigation privée stricte), on joue sans sauvegarde.
   const { store, ok } = openStorage()
   let game: ReturnType<typeof runGame>
+  let audio: ReturnType<typeof createAudioController>
   try {
-    game = runGame(store, ok)
+    audio = createAudioController(store)
+    unlockOnFirstGesture(audio.engine)
+    game = runGame(store, ok, audio)
   } catch (e) {
     console.error(e)
     showError("La partie n'a pas pu démarrer. Ta sauvegarde n'a pas été modifiée ; recharge la page.")
@@ -61,7 +69,7 @@ async function start(): Promise<void> {
   try {
     // Au démarrage : le décor et les espèces déjà présentes. Les autres animaux à la demande.
     const animalKeys = new Set<ModelKey>(Object.values(SPECIES_MODELS).flatMap((m) => [m.female, m.male]))
-    const needed = new Set<ModelKey>((Object.keys(MODELS) as ModelKey[]).filter((k) => !animalKeys.has(k)))
+    const needed = new Set<ModelKey>((Object.keys(MODELS) as ModelKey[]).filter((k) => !animalKeys.has(k) && !WALKER_MODELS.includes(k)))
     for (const a of getState().animals) {
       const m = SPECIES_MODELS[a.species]
       needed.add(a.sex === 'F' ? m.female : m.male)
@@ -88,10 +96,18 @@ async function start(): Promise<void> {
     const zones = createZonesView(world)
     let zonesLevel = getState().village.level
     zones.setLevel(zonesLevel)
+    world.onNight(zones.setNight) // la brume des zones fermées s'assombrit la nuit
+    world.onNight((n) => audio.engine.setNight(n)) // musique et ambiance passent du jour à la nuit en douceur
     decor.setPathLevel(zonesLevel)
     const villageView = createVillageView(world, getState)
     const park = createParkView(world, getState, createRng(Date.now() >>> 0))
     const rig = createCameraRig(world, canvas)
+    // Promeneurs : leurs modèles (~7 Mo) se chargent en arrière-plan, un par un, sans bloquer le parc.
+    const visitors = createVisitorsView(world, getState, {
+      hour: () => hourFromLocation(location.search, new Date()).hour,
+      mobile: isPhone(),
+    })
+    void (async () => { for (const k of WALKER_MODELS) { try { await requestModel(world.models, k) } catch { /* sans ce modèle, tant pis */ } } })()
     let selection: Pick = { kind: 'rien' }
     const select = (p: Pick) => {
       selection = p
@@ -99,12 +115,13 @@ async function start(): Promise<void> {
       villageView.setSelected(p.kind === 'emplacement' ? p.slot : null)
     }
     const dispatch = game.dispatch
+    game.onRestart(() => { select({ kind: 'rien' }); bottomBar.refresh() })
     const editor = createEnclosureEditor(world, canvas, rig, {
       get: getState,
       dispatch,
       onDone: (id) => { select({ kind: 'enclos', id }); bottomBar.refresh() },
     })
-    const picker = createPicker(world, canvas, () => park.enclosureMeshes(), () => editor.active(), () => villageView.slotMeshes())
+    const picker = createPicker(world, canvas, () => park.enclosureMeshes(), () => editor.active(), () => villageView.slotMeshes(), () => decor.propMeshes())
     const bottomBar = mountBottomBar({
       get: getState,
       selection: () => selection,
@@ -112,15 +129,20 @@ async function start(): Promise<void> {
       startBuild: (zone, point) => { closeDrawer(); editor.startBuild(zone, point) },
       startResize: (id) => { closeDrawer(); editor.startResize(id) },
       openGazette: game.openGazette,
+      focusMission: () => {
+        const spot = markerSpot(getState())
+        if (spot) rig.focusOn(spot.x, spot.z)
+        return !!spot
+      },
     })
-    picker.onPick((p) => { select(p); bottomBar.refresh(); closeDrawer() }) // un clic sur la carte ferme le volet
+    picker.onPick((p) => { select(p); effectsOnPick(p, getState(), audio.engine); bottomBar.refresh(); closeDrawer() }) // un clic sur la carte ferme le volet
     mountCameraButtons(rig)
     // Mission en cours : anneau doré sur le bon bouton, « ! » au-dessus de la cible sur la carte (ou de la mairie).
     const guideTick = () => {
       const s = getState()
       const id = highlightFor(s)
       setHighlight(id)
-      decor.setMarker(markerPosition(s, id, selection))
+      decor.setMarker(markerPosition(s, id))
       decor.setMarkerVisible(markerVisible(s))
     }
     guideTick()
@@ -136,8 +158,10 @@ async function start(): Promise<void> {
         world.update(dt)
         decor.update(dt)
         park.update(dt)
+        visitors.update(dt)
         const level = getState().village.level
         if (level !== zonesLevel) { zonesLevel = level; zones.setLevel(level); decor.setPathLevel(level) }
+        zones.update(dt)
         villageView.update()
         world.renderer.render(world.scene, world.camera)
       } catch (e) {

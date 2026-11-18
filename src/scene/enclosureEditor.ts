@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { isPhone } from '../core/device'
 import type { GameState, Rect } from '../sim/types'
 import type { Action } from '../sim/actions'
 import { previewEnclosure } from '../sim/actions'
@@ -24,7 +25,7 @@ const START_W = 10, START_D = 8
  * Valider / Annuler. La caméra n'est suspendue que pendant qu'on tire une poignée.
  */
 export function createEnclosureEditor(world: World, canvas: HTMLCanvasElement, rig: CameraRig, ctx: EditorContext) {
-  const coarse = window.matchMedia('(pointer: coarse)').matches
+  const coarse = isPhone()
   const handleMat = new THREE.MeshStandardMaterial({ color: '#fff7de', emissive: '#7a5b12', emissiveIntensity: 0.4, roughness: 0.5 })
   const handleGeo = new THREE.SphereGeometry(coarse ? 0.9 : 0.6, 16, 10)
   const handles = [0, 1, 2, 3].map(() => new THREE.Mesh(handleGeo, handleMat))
