@@ -76,7 +76,7 @@
 | 4 | Missions du jour qui grandissent avec le parc | agent · Sonnet | faite (6385362) — relue ; cibles ≈ 3 h d'activité / ½ journée de rations / nombre d'enclos, récompense ≈ 1 h de recettes ; pas de sauvegarde v4 (champs facultatifs, anciennes quotidiennes lues) — 535 tests |
 | 5 | Réglage de l'équilibre (chiffres choisis avec Romain) | chef (Opus) + agent · Sonnet | faite (e73f700 + 2bd7df7) — choix de Romain « B + recettes réduites » : habitants 1 pour 30 clients jusqu'à 2 400 puis 1 pour 350, Village à 40 habitants, prix juste 2 + 1/niveau + 0,05/attrait, commerces ×½ ; joueur automatique : Village jour 2-3, Bourg 6-7, fin 18-19 ; ancienne partie : billet remis au prix juste au chargement — 541 tests |
 | 6 | Brume des zones fermées | agent · Sonnet | faite (76ded49 + d372414) — relue, vue dans le navigateur (panneaux « Bois sombre » / « Falaises » entiers, forêt ouverte au Village) ; dissipation pas vue en mouvement (panneau masqué) — 549 tests |
-| 7 | Modèles des promeneurs (6 personnages Quaternius choisis par Romain) | agent · Sonnet (au lieu de Haiku : il faut alléger les fichiers par un petit script) | en cours |
+| 7 | Modèles des promeneurs (6 personnages Quaternius choisis par Romain) | agent · Sonnet (au lieu de Haiku : il faut alléger les fichiers par un petit script) | faite (7fe7da5) — 6 fichiers .glb de 1,1 à 1,25 Mo (au lieu de 3 Mo), marche + attente seulement, crédits ajoutés — 555 tests |
 | 8 | Promeneurs sur les chemins | agent · Sonnet | à faire |
 | 9 | La nuit (lanternes, fenêtres, étoiles, animaux calmes) | agent · Sonnet | à faire |
 | 10 | Téléphone, perfs d'affichage et petits défauts gardés | agent · Sonnet | à faire |
