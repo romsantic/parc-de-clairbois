@@ -1,6 +1,6 @@
 # Le Parc de Clairbois — où on en est
 
-*Mis à jour le 17/11/2026. Ce fichier sert de point de départ à chaque nouvelle session de travail : le lire en premier.*
+*Mis à jour le 18/11/2026. Ce fichier sert de point de départ à chaque nouvelle session de travail : le lire en premier.*
 
 ## Le joueur et la façon de travailler
 
@@ -66,7 +66,7 @@
 
 **Sous-tâche 7 (17/11/2026)** — relecture Opus : 0 critique, 5 importants, quelques mineurs, tous corrigés en 6ceae07 (enclos de départ un peu sale pour que « Nettoie l'enclos » marche tout de suite ; Gazette aussi quand l'onglet est repris sans rechargement ; validation complète des sauvegardes v3 ; minuit qui ne recule pas ; quotidiennes versées d'office signalées « (récompense versée) » ; seuils d'autonomie dans `TUNING`). Deux nouveaux choix de Romain en 2af73bf : missions d'habitants **150** (porte du Bourg) et **250** (finale V1) ; bon −25 % **au choix** (case « Utiliser mon bon » par offre). Vérifié dans le navigateur (en lisant la page, panneau masqué) : les 9 premiers pas, Passer, quotidiennes, refus du village, sauvegarde v2, Gazette après 5 jours, bon de réduction, téléphone. Pas vu à l'œil : le « ! » doré qui se déplace sur la carte.
 
-**V1 — étape 6 : finition** (branche `etape-6-finition`, plan `docs/superpowers/plans/2026-11-17-etape-6-finition-v1.md`) — **plan écrit et validé par Romain le 17/11/2026** (décisions D1 à D8 acceptées telles quelles, promeneurs Quaternius)
+**V1 — étape 6 : finition** (branche `etape-6-finition`, fusionnée et supprimée ; plan `docs/superpowers/plans/2026-11-17-etape-6-finition-v1.md`) — **plan écrit et validé par Romain le 17/11/2026** (décisions D1 à D8 acceptées telles quelles, promeneurs Quaternius)
 
 | # | Sous-tâche | Agent · modèle | État |
 |---|---|---|---|
@@ -84,7 +84,7 @@
 | 13 | Informations d'un bâtiment, de la mairie ou d'une maison au clic (demande de Romain) | agent · Sonnet | faite (a858625) — relue, vérifiée dans le navigateur (mairie, maison, ferme) — 640 tests |
 | 14 | Choix des sons CC0 avec Romain (il télécharge), copie et crédits (demande de Romain) | chef (Opus) + agent · Sonnet (conversion des fichiers) | faite (8e5d31c) — 14 sons en mp3 (2,1 Mo en tout), crédits ; à écouter par Romain (clic, pièces, mission ; le « loup » est un aboiement faute de hurlement CC0) — 595 tests |
 | 15 | Musique, ambiance et effets ; volumes Musique / Effets et Couper dans les Options (demande de Romain) | agent · Sonnet | faite (388cfdc + 63be383) — relue ; vérifiée dans le navigateur (volet, Couper/Remettre, réglages gardés, seuls les sons utiles chargés) ; **pas écoutée** (à faire par Romain) — 620 tests |
-| 11 | *(après 12 à 15)* Vérification d'ensemble, textes relus par Romain, relecture et publication | chef (Opus) + relecture · Opus | relecture finale faite (Opus : 0 critique, 4 importants corrigés en e546f54) + choix de Romain en d28cd82 (billet jamais changé tout seul ; 2 textes de Margaux réécrits) — 646 tests ; **en attente de l'accord de Romain pour fusionner** |
+| 11 | *(après 12 à 15)* Vérification d'ensemble, textes relus par Romain, relecture et publication | chef (Opus) + relecture · Opus | relecture finale faite (Opus : 0 critique, 4 importants corrigés en e546f54) + choix de Romain en d28cd82 (billet jamais changé tout seul ; 2 textes de Margaux réécrits) — 646 tests ; **fusionnée dans `main` (be2455a) avec l'accord de Romain le 18/11/2026, publiée et vérifiée en ligne** |
 
 ## Liens
 
@@ -102,7 +102,7 @@
 | 3. Carte jouable (zones, pose/redimensionnement d'enclos, sélection, barres, retour visuel) | ✅ fusionnée — vérifiée sur le téléphone de Romain |
 | 4. Économie et village (visiteurs, attrait, billet réglable, bâtiments, niveaux du village, marchand, ferme et rations, chemins qui évoluent avec le niveau) | ✅ fusionnée le 17/11/2026 |
 | 5. Missions (Premiers pas avec Margaux, histoire, quotidiennes, résumé d'absence/Gazette) | ✅ fusionnée le 17/11/2026 |
-| **6. Finition V1** (équilibrage, téléphone, brume des zones, visiteurs sur les chemins, jour/nuit, perfs, **bouton « Recommencer à zéro »**, son, fiches des bâtiments) | **construite et relue — en attente de l'accord de Romain pour fusionner** |
+| **6. Finition V1** (équilibrage, téléphone, brume des zones, visiteurs sur les chemins, jour/nuit, perfs, **bouton « Recommencer à zéro »**, son, fiches des bâtiments) | ✅ fusionnée le 18/11/2026 — **la V1 est terminée** |
 
 Après la V1 : V2 à V5 décrites en fin de spec (personnel et centre vétérinaire, routes à construire contre de l'argent, expéditions, musée, labo, saisons…).
 
@@ -185,3 +185,7 @@ Après la V1 : V2 à V5 décrites en fin de spec (personnel et centre vétérina
 - Modèles OBJ de Blender 2.79 : couleurs déjà linéaires (on annule la conversion dans `materials.ts`) ; arêtes `l` parasites à retirer ; un fichier manquant renvoie la page web (d'où la vérification « modèle vide »).
 - Téléphone : la page en ligne peut rester en cache ~10 min après une publication (fermer/rouvrir l'onglet).
 - Le dossier `_telechargements/` (packs zip) et `.superpowers/` (suivi de travail des agents) ne sont pas versionnés.
+
+## Suite
+
+- La V1 est publiée. Romain continue sur `main`. Prochaine étape possible : la V2 (« Le village s'éveille », voir la fin de la spec), après les retours de Romain sur la V1 (sons, barre du bas au téléphone, rythme).
