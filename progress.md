@@ -74,7 +74,7 @@
 | 2 | Perfs de la simulation (grand parc, 30 jours < 2 s) et compteur d'images | agent · Sonnet | faite (2961545 + f0ad802) — 30 jours d'absence d'un grand parc : 2–3 s → ≈ 1 s ; `bigPark()` réaliste et `crowdedPark()` de stress — 507 tests |
 | 3 | Joueur automatique et rapport d'équilibrage | agent · Sonnet | faite (a1590a3 + 18de4b1) — relu ; rythme actuel : Village jour 3, Bourg jour 5, fin de la V1 jour 6 à 10 (cible 21), 100 000 pièces au jour 5 : économie trop généreuse (réglage en sous-tâche 5) — 514 tests |
 | 4 | Missions du jour qui grandissent avec le parc | agent · Sonnet | faite (6385362) — relue ; cibles ≈ 3 h d'activité / ½ journée de rations / nombre d'enclos, récompense ≈ 1 h de recettes ; pas de sauvegarde v4 (champs facultatifs, anciennes quotidiennes lues) — 535 tests |
-| 5 | Réglage de l'équilibre (chiffres choisis avec Romain) | chef (Opus) + agent · Sonnet | à faire |
+| 5 | Réglage de l'équilibre (chiffres choisis avec Romain) | chef (Opus) + agent · Sonnet | faite (e73f700 + 2bd7df7) — choix de Romain « B + recettes réduites » : habitants 1 pour 30 clients jusqu'à 2 400 puis 1 pour 350, Village à 40 habitants, prix juste 2 + 1/niveau + 0,05/attrait, commerces ×½ ; joueur automatique : Village jour 2-3, Bourg 6-7, fin 18-19 ; ancienne partie : billet remis au prix juste au chargement — 541 tests |
 | 6 | Brume des zones fermées | agent · Sonnet | à faire |
 | 7 | Modèles des promeneurs (si Quaternius choisi) | agent · Haiku | à faire |
 | 8 | Promeneurs sur les chemins | agent · Sonnet | à faire |
