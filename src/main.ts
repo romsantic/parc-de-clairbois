@@ -7,6 +7,8 @@ import { createVisitorsView, WALKER_MODELS } from './scene/visitorsView'
 import { createWorld } from './scene/world'
 import { showError, showLoading } from './ui/errorScreen'
 import { runGame } from './game/runGame'
+import { createAudioController, unlockOnFirstGesture } from './audio/sound'
+import { effectsOnPick } from './audio/pickSound'
 import type { Storage } from './save/save'
 import { createCameraRig } from './scene/cameraRig'
 import { mountCameraButtons } from './ui/cameraButtons'
@@ -45,8 +47,11 @@ async function start(): Promise<void> {
   // Si le stockage du navigateur est bloqué (navigation privée stricte), on joue sans sauvegarde.
   const { store, ok } = openStorage()
   let game: ReturnType<typeof runGame>
+  let audio: ReturnType<typeof createAudioController>
   try {
-    game = runGame(store, ok)
+    audio = createAudioController(store)
+    unlockOnFirstGesture(audio.engine)
+    game = runGame(store, ok, audio)
   } catch (e) {
     console.error(e)
     showError("La partie n'a pas pu démarrer. Ta sauvegarde n'a pas été modifiée ; recharge la page.")
@@ -91,6 +96,7 @@ async function start(): Promise<void> {
     let zonesLevel = getState().village.level
     zones.setLevel(zonesLevel)
     world.onNight(zones.setNight) // la brume des zones fermées s'assombrit la nuit
+    world.onNight((n) => audio.engine.setNight(n)) // musique et ambiance passent du jour à la nuit en douceur
     decor.setPathLevel(zonesLevel)
     const villageView = createVillageView(world, getState)
     const park = createParkView(world, getState, createRng(Date.now() >>> 0))
@@ -123,7 +129,7 @@ async function start(): Promise<void> {
       startResize: (id) => { closeDrawer(); editor.startResize(id) },
       openGazette: game.openGazette,
     })
-    picker.onPick((p) => { select(p); bottomBar.refresh(); closeDrawer() }) // un clic sur la carte ferme le volet
+    picker.onPick((p) => { select(p); effectsOnPick(p, getState(), audio.engine); bottomBar.refresh(); closeDrawer() }) // un clic sur la carte ferme le volet
     mountCameraButtons(rig)
     // Mission en cours : anneau doré sur le bon bouton, « ! » au-dessus de la cible sur la carte (ou de la mairie).
     const guideTick = () => {

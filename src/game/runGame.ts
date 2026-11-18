@@ -20,6 +20,8 @@ import { applyAction, type Action } from '../sim/actions'
 import { updateMissions } from '../sim/missions'
 import { BUILDINGS } from '../data/economy'
 import { SPECIES } from '../data/species'
+import { silentAudio, type AudioController } from '../audio/sound'
+import { effectForAction, FAILED_EFFECT, doneMissionIds, missionJustDone } from '../audio/events'
 
 const SAVE_EVERY_MS = 30_000
 export { RESET_BACKUP_KEY }
@@ -38,7 +40,7 @@ export interface Game {
   onRestart(fn: () => void): void
 }
 
-export function runGame(store: Storage, storageOk = true): Game | null {
+export function runGame(store: Storage, storageOk = true, audio: AudioController = silentAudio): Game | null {
   const session = startSession(store, Date.now(), storageOk)
   if (session.problem === 'trop-recente') {
     showError("Cette sauvegarde vient d'une version plus récente du jeu. Recharge la page pour obtenir la dernière version.")
@@ -61,7 +63,7 @@ export function runGame(store: Storage, storageOk = true): Game | null {
     onTicket: () => toggleTicketPanel(panelCtx),
     onVillage: () => toggleVillagePanel(panelCtx),
     onAutonomy: () => toggleAutonomyPanel(panelCtx),
-    onOptions: () => toggleOptionsPanel({ restart: () => restartGame() }),
+    onOptions: () => toggleOptionsPanel({ restart: () => restartGame(), audio }),
   })
   // La Gazette : dernière édition gardée en mémoire de la page ; elle s'ouvre seule après une vraie absence.
   let news = session.summary && session.absentMs >= MISSIONS_TUNING.GAZETTE_MIN_ABSENCE_H * 3_600_000 ? { summary: session.summary, absentMs: session.absentMs } : null
@@ -74,6 +76,14 @@ export function runGame(store: Storage, storageOk = true): Game | null {
   /** Avance de l'horloge du jeu sur l'heure réelle (boutons du panneau de test). */
   let testOffset = 0
   const now = () => Date.now() + testOffset
+
+  /** Cloche quand une mission vient d'être réussie (au pas de simulation ou juste après une action). */
+  let doneIds = doneMissionIds(state)
+  function checkMissionSound(): void {
+    const now = doneMissionIds(state)
+    if (missionJustDone(doneIds, now)) audio.engine.playEffect('mission')
+    doneIds = now
+  }
 
   const save = () => {
     if (!canSave) return
@@ -95,6 +105,7 @@ export function runGame(store: Storage, storageOk = true): Game | null {
     const r = resume(state, now())
     state = r.state
     if (r.news) { news = r.news; openGazette(edition()) }
+    checkMissionSound()
   }
   setInterval(tick, 1000)
   setInterval(save, SAVE_EVERY_MS)
@@ -116,6 +127,7 @@ export function runGame(store: Storage, storageOk = true): Game | null {
     if (!canSave) { toast("Ton parc est ouvert dans un autre onglet : impossible de recommencer ici.", false); return }
     testOffset = 0
     state = restartState(store, Date.now(), state)
+    doneIds = doneMissionIds(state)
     updateMissions(state, [])
     news = null
     save()
@@ -133,7 +145,7 @@ export function runGame(store: Storage, storageOk = true): Game | null {
     const r = applyAction(state, action)
     const silent = action.type === 'vu' || action.type === 'lireMission' // observation : ni éclair, ni message
     if (!silent) flash(from, r.ok)
-    if (!r.ok) { toast(r.reason, false); return false }
+    if (!r.ok) { toast(r.reason, false); audio.engine.playEffect(FAILED_EFFECT.key, FAILED_EFFECT.gain); return false }
     state = r.state
     save()
     const dc = state.coins - before.coins
@@ -144,6 +156,9 @@ export function runGame(store: Storage, storageOk = true): Game | null {
     if (dv) topBar.pulse('viande', dv)
     if (state.village.level !== before.village.level) topBar.pulse('village', 1)
     if (!silent) toast(successMessage(action, state, before), true)
+    const fx = effectForAction(action)
+    if (fx) audio.engine.playEffect(fx.key, fx.gain)
+    checkMissionSound()
     return true
   }
 
