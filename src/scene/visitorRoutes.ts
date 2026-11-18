@@ -1,7 +1,7 @@
 import type { Animal, Building, Enclosure } from '../sim/types'
 import { SLOTS } from '../data/economy'
 import { villagePaths } from '../data/zones'
-import { WALKERS } from '../data/visuals'
+import { WALK_ROUTE, WALKERS } from '../data/visuals'
 import { BRIDGE_Z, BRIDGE_DECK_Y, BRIDGE_HALF_SPAN } from './decor'
 
 /** Point d'un trajet. Avec `faceX/faceZ` : arrêt possible, en regardant ce point. */
@@ -27,7 +27,7 @@ export function alleyStops(enclosures: Enclosure[], animals: Animal[], bx: numbe
     const gap = r.z + r.d <= BRIDGE_Z ? BRIDGE_Z - (r.z + r.d) : Math.max(0, r.z - BRIDGE_Z)
     if (gap > WALKERS.STOP_MAX_GAP) continue
     const cx = r.x + r.w / 2
-    out.push({ x: Math.min(bx - 5, Math.max(-33, cx)), z: BRIDGE_Z, faceX: cx, faceZ: r.z + r.d / 2 })
+    out.push({ x: Math.min(bx - WALK_ROUTE.STOP_BEFORE_BRIDGE, Math.max(WALK_ROUTE.STOP_WEST_LIMIT, cx)), z: BRIDGE_Z, faceX: cx, faceZ: r.z + r.d / 2 })
   }
   return out.sort((a, b) => a.x - b.x)
 }
@@ -78,21 +78,31 @@ export function buildRoute(bx: number, alley: RoutePoint[], cafe: RoutePoint[] |
   const out: RoutePoint[] = [
     { x: ROUTE_START_X, z: BRIDGE_Z },
     ...alley,
-    { x: bx - 3.5, z: BRIDGE_Z },
-    { x: bx + 3.5, z: BRIDGE_Z },
+    { x: bx - WALK_ROUTE.BRIDGE_APPROACH, z: BRIDGE_Z },
+    { x: bx + WALK_ROUTE.BRIDGE_APPROACH, z: BRIDGE_Z },
     ...village,
   ]
   const back = out.slice(0, -1).reverse().map((p) => ({ x: p.x, z: p.z }))
   return [...out, ...back]
 }
 
-/** Longueur de la rampe entre la berge et le tablier (m). */
-const DECK_RAMP = 1
-
 /** Hauteur des pieds : celle du sol, ou celle du tablier sur le pont (rampe douce depuis chaque berge). */
 export function walkHeight(x: number, z: number, bx: number, ground: (x: number, z: number) => number): number {
   const g = Math.max(ground(x, z), -0.05)
   if (Math.abs(z - BRIDGE_Z) > 1.4) return g
-  const t = Math.max(0, Math.min(1, (BRIDGE_HALF_SPAN - Math.abs(x - bx)) / DECK_RAMP))
+  const t = Math.max(0, Math.min(1, (BRIDGE_HALF_SPAN - Math.abs(x - bx)) / WALK_ROUTE.DECK_RAMP))
   return g + (BRIDGE_DECK_Y - g) * t
+}
+
+/** Comme walkHeight, avec mémoire : le sol n'est interrogé qu'une fois par case de HEIGHT_CELL mètres (les trajets sont toujours les mêmes). */
+export function cachedWalkHeight(bx: number, ground: (x: number, z: number) => number): (x: number, z: number) => number {
+  const cell = WALK_ROUTE.HEIGHT_CELL
+  const memo = new Map<string, number>()
+  return (x, z) => {
+    const cx = Math.round(x / cell), cz = Math.round(z / cell)
+    const key = `${cx},${cz}`
+    let h = memo.get(key)
+    if (h === undefined) { h = walkHeight(cx * cell, cz * cell, bx, ground); memo.set(key, h) }
+    return h
+  }
 }

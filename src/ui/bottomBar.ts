@@ -242,7 +242,7 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
       if (missionProgress) open.append(missionProgress)
       missionDaily = d ? text('span', '', 'quot') : null
       if (missionDaily) { missionDaily.title = 'Missions du jour réussies'; open.append(missionDaily) }
-      open.addEventListener('click', () => { ctx.focusMission(); toggleMissionPanel(panelCtx) })
+      open.addEventListener('click', () => { const opening = !isDrawerOpen('missions'); if (opening) ctx.focusMission(); toggleMissionPanel(panelCtx) })
       mission.append(open)
       if (l?.done) { mission.append(claimButton(panelCtx, l, true, updateMission)); armClaimGuard() }
     }

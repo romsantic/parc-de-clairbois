@@ -1,12 +1,11 @@
-import { closeDrawer, isDrawerOpen, openDrawer, refreshDrawer } from './drawer'
-import { createConfirmGuard } from './confirmGuard'
+import { closeDrawer, isDrawerOpen, openDrawer } from './drawer'
+import { createConfirmGuard, restartButtonLook } from './confirmGuard'
 import { setMuted, setVolume, type AudioSettings } from '../audio/settings'
 import type { AudioController } from '../audio/sound'
+import { CONFIRM_DELAY_MS, CONFIRM_TIMEOUT_MS } from '../data/visuals'
 
 export interface OptionsContext { restart(): void; audio: AudioController }
 
-const CONFIRM_DELAY_MS = 400
-const CONFIRM_TIMEOUT_MS = 3000
 
 /** Une ligne de réglage : libellé, pourcentage, bouton Couper / Remettre et curseur (haut, pour le doigt). */
 function soundRow(label: string, ch: 'music' | 'effects', audio: AudioController): HTMLElement {
@@ -48,9 +47,17 @@ export function toggleOptionsPanel(ctx: OptionsContext): void {
   if (isDrawerOpen('options')) { closeDrawer(); return }
   const guard = createConfirmGuard(CONFIRM_DELAY_MS)
   let timer = 0
+  let go: HTMLButtonElement | null = null
+  // Le bouton est mis à jour directement : refreshDrawer() ne fait rien tant qu'un curseur du volet garde le focus (Safari/iOS).
+  const paint = () => {
+    if (!go) return
+    const look = restartButtonLook(guard.armed())
+    go.className = look.className
+    go.textContent = look.text
+  }
   function disarm() {
     guard.reset()
-    if (isDrawerOpen('options')) refreshDrawer()
+    if (isDrawerOpen('options')) paint()
   }
   openDrawer('options', 'Options', (body) => {
     body.replaceChildren()
@@ -60,18 +67,19 @@ export function toggleOptionsPanel(ctx: OptionsContext): void {
     const warn = document.createElement('p')
     warn.textContent = 'Efface ta partie et recommence depuis le début, avec Margaux.'
     warn.className = 'discret'
-    const go = document.createElement('button')
-    go.type = 'button'
-    go.className = guard.armed() ? 'vendre confirmer' : 'vendre'
-    go.textContent = guard.armed() ? 'Tout ton parc sera effacé — confirmer ?' : 'Recommencer à zéro'
-    go.addEventListener('click', () => {
+    const btn = document.createElement('button')
+    go = btn
+    btn.type = 'button'
+    paint()
+    btn.addEventListener('click', () => {
+      if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
       const r = guard.click()
       if (r === 'ignored') return
       clearTimeout(timer)
       if (r === 'confirmed') { ctx.restart(); return } // ferme aussi le volet
       timer = window.setTimeout(disarm, CONFIRM_TIMEOUT_MS)
-      refreshDrawer()
+      paint()
     })
-    body.append(son, warn, go)
+    body.append(son, warn, btn)
   })
 }

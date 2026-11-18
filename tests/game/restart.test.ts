@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { restartState, RESET_BACKUP_KEY } from '../../src/game/session'
-import { createConfirmGuard } from '../../src/ui/confirmGuard'
+import { createConfirmGuard, restartButtonLook } from '../../src/ui/confirmGuard'
 import { saveGame, SAVE_KEY, type Storage } from '../../src/save/save'
 import { newGame } from '../../src/sim/newGame'
 
@@ -98,5 +98,12 @@ describe('createConfirmGuard', () => {
     t += 1000
     expect(g.armed()).toBe(false)
     expect(g.click()).toBe('armed')
+  })
+})
+
+describe('apparence du bouton de confirmation', () => {
+  it('désarmé : texte normal ; armé : texte d\'avertissement et classe confirmer', () => {
+    expect(restartButtonLook(false)).toEqual({ className: 'vendre', text: 'Recommencer à zéro' })
+    expect(restartButtonLook(true)).toEqual({ className: 'vendre confirmer', text: 'Tout ton parc sera effacé — confirmer ?' })
   })
 })

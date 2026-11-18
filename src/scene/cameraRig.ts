@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { MAP, type World } from './world'
+import { FOCUS_SECONDS } from '../data/visuals'
 
 export interface Orbit {
   azimuth: number
@@ -40,9 +41,6 @@ export function quarterTurn(azimuth: number, dir: 1 | -1): number {
 export function clampFocus(x: number, z: number): { x: number; z: number } {
   return { x: clamp(x, -MAP.halfX, MAP.halfX), z: clamp(z, -MAP.halfZ, MAP.halfZ) }
 }
-
-/** Durée de la glissade vers un point, en secondes. */
-export const FOCUS_SECONDS = 0.8
 
 /** Progression douce (0 → 1, ralentit à l'arrivée). */
 export function focusEase(t: number): number {
@@ -94,7 +92,7 @@ export function createCameraRig(world: World, canvas: HTMLCanvasElement): Camera
   }
 
   return {
-    setEnabled(on) { controls.enabled = on },
+    setEnabled(on) { controls.enabled = on; if (!on) focus = null },
     rotateQuarter(dir) {
       const from = controls.getAzimuthalAngle()
       turn = { from, to: quarterTurn(from, dir), t: 0 }

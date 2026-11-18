@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { alleyStops, bridgeX, buildRoute, cafeRoute, walkHeight, ROUTE_START_X, type RoutePoint } from '../../src/scene/visitorRoutes'
+import { alleyStops, bridgeX, buildRoute, cafeRoute, walkHeight, cachedWalkHeight, ROUTE_START_X, type RoutePoint } from '../../src/scene/visitorRoutes'
 import { visitorsShown, WALKERS } from '../../src/data/visuals'
 import { riverDistance } from '../../src/scene/world'
 import { BRIDGE_Z, BRIDGE_DECK_Y } from '../../src/scene/decor'
@@ -108,5 +108,18 @@ describe('walkHeight', () => {
   })
   it('suit le sol loin du pont', () => {
     expect(walkHeight(-20, BRIDGE_Z, bx, () => 0.2)).toBeCloseTo(0.2)
+  })
+})
+
+describe('cachedWalkHeight', () => {
+  it('même hauteur (à 1 cm près) mais le sol n\'est interrogé qu\'une fois par case', () => {
+    let calls = 0
+    const ground = (x: number, z: number) => { calls++; return 0.01 * x + 0.02 * z }
+    const h = cachedWalkHeight(bx, ground)
+    const pts: [number, number][] = [[bx - 3.3, BRIDGE_Z], [-20, BRIDGE_Z + 0.5], [4.02, 7.03]]
+    for (const [x, z] of pts) expect(h(x, z)).toBeCloseTo(walkHeight(x, z, bx, ground), 1)
+    const before = calls
+    for (let i = 0; i < 100; i++) for (const [x, z] of pts) h(x, z)
+    expect(calls).toBe(before)
   })
 })

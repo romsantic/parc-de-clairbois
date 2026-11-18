@@ -31,7 +31,7 @@ describe('fiche d\'un bâtiment', () => {
     expect(info.role.length).toBeGreaterThan(10)
     expect(row(info, 'Rapporte')).toBe(`≈ ${formatCoins(f.pieces)} par heure`)
     expect(row(info, 'Clients')).toBe(`≈ ${formatAmount(f.clients)} par heure (maximum ${BUILDINGS.cafe.maxClientsPerH[0]})`)
-    expect(row(info, 'Dépense par client')).toBe('1,5 pièces')
+    expect(row(info, 'Dépense par client')).toBe('1,5 pièce')
     expect(row(info, 'Amélioration')).toBe('600 pièces pour le niveau 2')
     expect(info.villageButton).toBeNull()
   })

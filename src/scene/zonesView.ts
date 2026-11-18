@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { ZONES, type Zone } from '../data/zones'
-import { FOG_DISSOLVE_S, fogOpacity, labelCanvasWidth, labelWorldWidth, zoneSignText } from './fog'
+import { FOG } from '../data/visuals'
+import { FOG_DISSOLVE_S, fogAmplitude, fogOpacity, labelCanvasWidth, labelWorldWidth, zoneSignText } from './fog'
 import type { World } from './world'
 
 const TINT: Record<Zone['id'], string> = { prairie: '#b6dc7a', foret: '#5f8f4a', montagne: '#a99a82' }
@@ -26,10 +27,8 @@ export function label(text: string, height = 2): THREE.Sprite {
   return s
 }
 
-const FOG_PER_ZONE = 4 // 2 zones fermables x 4 = 8 panneaux au plus
-const FOG_BASE_OPACITY = 0.8
-const FOG_DAY = new THREE.Color('#f4f6f8')
-const FOG_NIGHT = new THREE.Color('#3a4560')
+const FOG_DAY = new THREE.Color(FOG.DAY_COLOR)
+const FOG_NIGHT = new THREE.Color(FOG.NIGHT_COLOR)
 
 /** Texture douce de brume : tache blanche au bord fondu, dessinée une fois. */
 function fogTexture(): THREE.CanvasTexture {
@@ -76,17 +75,17 @@ export function createZonesView(world: World): { setLevel(level: number): void; 
   const fogs: Fog[] = ZONES.filter((z) => z.hiddenName).map((zone) => {
     const r = zone.rect
     const puffs: Puff[] = []
-    for (let i = 0; i < FOG_PER_ZONE; i++) {
+    for (let i = 0; i < FOG.PER_ZONE; i++) {
       const mat = new THREE.SpriteMaterial({ map: fogTex, color: FOG_DAY, transparent: true, opacity: 0, depthWrite: false })
       const sprite = new THREE.Sprite(mat)
-      const bx = r.x + r.w * (0.18 + 0.64 * (i / (FOG_PER_ZONE - 1)))
+      const bx = r.x + r.w * (0.18 + 0.64 * (i / (FOG.PER_ZONE - 1)))
       const bz = r.z + r.d * (i % 2 ? 0.35 : 0.65)
       sprite.scale.set(r.w * 0.5, 6, 1)
       sprite.renderOrder = 4
       sprite.visible = false
       sprite.position.set(bx, world.groundHeight(bx, bz) + 2.2, bz)
       world.scene.add(sprite)
-      puffs.push({ sprite, mat, bx, bz, amp: 2.5 + i * 0.7, speed: 0.12 + i * 0.03, phase: i * 1.7 })
+      puffs.push({ sprite, mat, bx, bz, amp: fogAmplitude(r, bx, 2.5 + i * 0.7), speed: 0.12 + i * 0.03, phase: i * 1.7 })
     }
     return { zone, puffs, state: 'open', elapsed: 0 }
   })
@@ -94,7 +93,7 @@ export function createZonesView(world: World): { setLevel(level: number): void; 
   let started = false
 
   const applyOpacity = (f: Fog) => {
-    const o = f.state === 'open' ? 0 : FOG_BASE_OPACITY * fogOpacity(f.state === 'dissolving', f.elapsed)
+    const o = f.state === 'open' ? 0 : FOG.BASE_OPACITY * fogOpacity(f.state === 'dissolving', f.elapsed)
     for (const p of f.puffs) { p.mat.opacity = o; p.sprite.visible = o > 0.005 }
   }
   const applyTint = () => {

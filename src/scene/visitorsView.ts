@@ -6,7 +6,7 @@ import { WALKERS, visitorsShown } from '../data/visuals'
 import type { ModelKey } from '../assets/manifest'
 import type { World } from './world'
 import { fitHeight } from './animalActor'
-import { alleyStops, bridgeX, buildRoute, cafeRoute, walkHeight, type RoutePoint } from './visitorRoutes'
+import { alleyStops, bridgeX, buildRoute, cafeRoute, cachedWalkHeight, type RoutePoint } from './visitorRoutes'
 
 /** Les six modèles de promeneurs, chargés en arrière-plan après l'affichage du parc. */
 export const WALKER_MODELS: ModelKey[] = [
@@ -33,8 +33,7 @@ class Walker {
 
   constructor(
     source: { scene: THREE.Object3D; animations: THREE.AnimationClip[] },
-    private world: World,
-    private bx: number,
+    private height: (x: number, z: number) => number,
     private rng: () => number,
     castShadow: boolean,
   ) {
@@ -78,7 +77,7 @@ class Walker {
   }
 
   private place(x: number, z: number): void {
-    this.object.position.set(x, walkHeight(x, z, this.bx, this.world.groundHeight), z)
+    this.object.position.set(x, this.height(x, z), z)
   }
 
   private setScale(): void {
@@ -154,6 +153,7 @@ export function createVisitorsView(
   const group = new THREE.Group()
   world.scene.add(group)
   const bx = bridgeX(world.riverDistance)
+  const height = cachedWalkHeight(bx, world.groundHeight)
   const walkers: Walker[] = []
   let route: RoutePoint[] = buildRoute(bx, [], null)
   let routeKey = ''
@@ -174,7 +174,7 @@ export function createVisitorsView(
     const ready = WALKER_MODELS.filter((k) => world.models.has(k))
     if (ready.length === 0 || walkers.length >= max) return undefined
     const key = ready[walkers.length % ready.length] // les modèles se répartissent, au fil de leur arrivée
-    const w = new Walker(world.models.get(key)!, world, bx, rng, !opts.mobile)
+    const w = new Walker(world.models.get(key)!, height, rng, !opts.mobile)
     group.add(w.object)
     walkers.push(w)
     return w

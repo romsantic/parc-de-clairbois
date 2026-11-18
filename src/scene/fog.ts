@@ -1,8 +1,14 @@
 import type { Zone } from '../data/zones'
 import { ECONOMY } from '../data/economy'
+import { FOG } from '../data/visuals'
 
 /** Durée de la dissipation de la brume quand une zone s'ouvre. */
-export const FOG_DISSOLVE_S = 3
+export const FOG_DISSOLVE_S = FOG.DISSOLVE_S
+
+/** Amplitude de dérive d'une tache de centre `bx` : au plus `amp`, sans sortir de l'étendue est-ouest de sa zone. */
+export function fogAmplitude(rect: { x: number; w: number }, bx: number, amp: number): number {
+  return Math.max(0, Math.min(amp, bx - rect.x, rect.x + rect.w - bx))
+}
 
 /**
  * Opacité (0 à 1) de la brume d'une zone.

@@ -25,7 +25,7 @@ export interface BuildingInfo {
 }
 
 /** « 1,5 pièce » : la dépense d'un client est souvent fractionnaire. */
-const spendText = (n: number) => `${formatAmount(n)} pièce${n > 1 ? 's' : ''}`
+const spendText = (n: number) => `${formatAmount(n)} pièce${n >= 2 ? 's' : ''}`
 const pct = (x: number) => `${Math.round(x * 100)} %`
 
 /** Fiche d'un bâtiment construit, de la mairie ou d'un décor ; null pour un emplacement libre ou une cible inconnue. */

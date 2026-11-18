@@ -43,7 +43,6 @@ describe('markerPosition', () => {
     const s = emptyState({ buildings: [{ slot: 1, type: 'ferme', level: 1 }] })
     const slot = SLOTS.find((x) => x.id === 1)!
     expect(markerPosition(s, 'ferme')).toEqual({ x: slot.x, z: slot.z })
-    expect(markerPosition(s, 'ferme')).toEqual({ x: slot.x, z: slot.z })
     expect(markerPosition(emptyState({ buildings: [] }), 'ferme')).toBeNull()
   })
   it('emplacement libre : le premier débloqué sans bâtiment', () => {

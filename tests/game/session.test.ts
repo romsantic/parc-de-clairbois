@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { startSession, resume, adjustTicketAfterLoad } from '../../src/game/session'
+import { startSession, resume, adjustTicketAfterLoad, restartState, STEP6_MARKER_KEY } from '../../src/game/session'
 import { saveGame, loadGame, SAVE_KEY, type Storage } from '../../src/save/save'
 import { newGame } from '../../src/sim/newGame'
 import { DAY_MS } from '../../src/data/tuning'
@@ -57,6 +57,59 @@ describe('billet après le rééquilibrage', () => {
     const pop = population(r.state)
     expect(pop).toBeGreaterThan(0)
     expect(pop).toBeLessThan(oldPop)
+  })
+})
+
+describe("réglages de l'étape 6 : une seule fois", () => {
+  const old = (ticket: number, clients = 0) => { const g = newGame(5, NOW); g.village = { level: 2, clientsServed: clients }; g.ticketPrice = ticket; return g }
+  it('1er chargement : billet remis + repère ; 2e chargement : billet haut intouché, sans message', () => {
+    const m = memory()
+    saveGame(m, old(14), NOW)
+    const a = startSession(m, NOW)
+    expect(a.priceNotice).toContain('prix juste')
+    expect(m.data[STEP6_MARKER_KEY]).toBeDefined()
+    const s = structuredClone(a.state); s.ticketPrice = 14
+    saveGame(m, s, NOW)
+    const b = startSession(m, NOW)
+    expect(b.state.ticketPrice).toBe(14)
+    expect(b.priceNotice).toBeNull()
+  })
+  it('1er chargement sans rien à changer : le repère est posé quand même', () => {
+    const m = memory()
+    saveGame(m, newGame(5, NOW), NOW)
+    expect(startSession(m, NOW).priceNotice).toBeNull()
+    expect(m.data[STEP6_MARKER_KEY]).toBeDefined()
+  })
+  it('partie neuve et recommencer : repère posé, jamais ajustée', () => {
+    const m = memory()
+    startSession(m, NOW)
+    expect(m.data[STEP6_MARKER_KEY]).toBeDefined()
+    const m2 = memory()
+    restartState(m2, NOW)
+    expect(m2.data[STEP6_MARKER_KEY]).toBeDefined()
+  })
+  it('habitants en baisse avec la nouvelle règle : message une seule fois, avec les deux nombres', () => {
+    const m = memory()
+    const g = old(5, 10_000); g.ticketPrice = fairPrice(g)
+    saveGame(m, g, NOW)
+    const a = startSession(m, NOW)
+    expect(a.priceNotice).toContain('réorganisé')
+    expect(a.priceNotice).toContain(`${population(a.state)} habitants`)
+    saveGame(m, a.state, NOW)
+    expect(startSession(m, NOW).priceNotice).toBeNull()
+  })
+  it('les deux à la fois : un seul message combiné', () => {
+    const m = memory()
+    saveGame(m, old(14, 10_000), NOW)
+    const n = startSession(m, NOW).priceNotice ?? ''
+    expect(n).toContain('prix juste')
+    expect(n).toContain('réorganisé')
+  })
+  it('peu de clients (pas de baisse) : pas de message habitants', () => {
+    const m = memory()
+    const g = old(5, 20); g.ticketPrice = fairPrice(g)
+    saveGame(m, g, NOW)
+    expect(startSession(m, NOW).priceNotice).toBeNull()
   })
 })
 

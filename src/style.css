@@ -284,7 +284,7 @@ button.recuperer:hover { background: #5f9a3c; }
 
 /* Bannière « Nouvelle mission » : au-dessus de la barre du bas et du message, jamais sur la barre du haut. */
 .banniere-mission {
-  position: fixed; left: 50%; bottom: calc(100px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 8px); z-index: 8;
+  position: fixed; left: 50%; bottom: calc(var(--barre-h, calc(48px + env(safe-area-inset-bottom, 0px))) + 52px); transform: translate(-50%, 8px); z-index: 8;
   max-width: min(520px, calc(100vw - 32px)); padding: 8px 16px; border-radius: 12px; font-size: 14px; font-weight: 600; text-align: center;
   background: #fff7e0; color: var(--encre); border: 1px solid #e0b64e; box-shadow: 0 4px 14px rgba(0, 0, 0, .22);
   opacity: 0; transition: opacity .3s, transform .3s;

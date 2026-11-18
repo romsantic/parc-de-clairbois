@@ -86,3 +86,35 @@ export function renderSettings(mobile: boolean, devicePixelRatio: number): { pix
 
 /** Lumière du soleil : zone couverte par la carte d'ombres (m) et profondeur. */
 export const SUN_SHADOW = { LEFT: -45, RIGHT: 45, TOP: 40, BOTTOM: -40, NEAR: 1, FAR: 200 } as const
+
+/** Brume des zones fermées (purement visuel). */
+export const FOG = {
+  /** Durée de la dissipation quand une zone s'ouvre (s). */
+  DISSOLVE_S: 3,
+  /** Taches de brume par zone fermable (2 zones x 4 = 8 panneaux au plus). */
+  PER_ZONE: 4,
+  BASE_OPACITY: 0.8,
+  DAY_COLOR: '#f4f6f8',
+  NIGHT_COLOR: '#3a4560',
+} as const
+
+/** Durée de la glissade de la caméra vers un point (s). */
+export const FOCUS_SECONDS = 0.8
+
+/** « Recommencer à zéro » : délai avant que le 2e clic compte (ms), et durée avant que la confirmation se désarme (ms). */
+export const CONFIRM_DELAY_MS = 400
+export const CONFIRM_TIMEOUT_MS = 3000
+
+/** Trajet des promeneurs (m) : marges autour du pont et de l'allée du zoo. */
+export const WALK_ROUTE = {
+  /** Les arrêts devant les enclos restent à l'ouest de cette distance avant le pont. */
+  STOP_BEFORE_BRIDGE: 5,
+  /** Les arrêts restent à l'est de cette abscisse. */
+  STOP_WEST_LIMIT: -33,
+  /** Demi-longueur du passage sur le pont, de part et d'autre de son centre. */
+  BRIDGE_APPROACH: 3.5,
+  /** Longueur de la rampe entre la berge et le tablier. */
+  DECK_RAMP: 1,
+  /** Les hauteurs de marche sont mises en cache par cases de ce côté. */
+  HEIGHT_CELL: 0.1,
+} as const

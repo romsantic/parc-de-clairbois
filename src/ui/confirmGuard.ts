@@ -22,3 +22,10 @@ export function createConfirmGuard(delayMs = 400, now: () => number = () => perf
     reset() { armedAt = null },
   }
 }
+
+/** Aspect du bouton « Recommencer à zéro » selon que le garde est armé (sans toucher au DOM : testable). */
+export function restartButtonLook(armed: boolean): { className: string; text: string } {
+  return armed
+    ? { className: 'vendre confirmer', text: 'Tout ton parc sera effacé — confirmer ?' }
+    : { className: 'vendre', text: 'Recommencer à zéro' }
+}
