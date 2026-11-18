@@ -7,7 +7,7 @@ type PickEffect = 'clic' | { cry: NonNullable<ReturnType<typeof cryFor>> } | nul
 
 /** Sélection sur la carte : le cri de l'espèce de l'enclos s'il en a un, sinon le clic de bois (enclos ou bâtiment). */
 export function pickEffect(p: Pick, s: GameState): PickEffect {
-  if (p.kind === 'emplacement') return 'clic'
+  if (p.kind === 'emplacement' || p.kind === 'decor') return 'clic'
   if (p.kind !== 'enclos') return null
   const enc = s.enclosures.find((e) => e.id === p.id)
   const hasAnimal = s.animals.some((a) => a.enclosureId === p.id)

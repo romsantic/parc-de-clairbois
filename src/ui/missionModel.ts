@@ -122,14 +122,20 @@ export function markerPosition(state: GameState, id: HighlightId | null): { x: n
   }
 }
 
+/** « Il faut d'abord terminer la mission : … » pour le palier ; vide si ce palier n'a pas de mission. */
+export function gateMissionText(level: 2 | 3): string {
+  const gate = STORY.find((m) => m.gate === level)
+  return gate ? `Il faut d'abord terminer la mission : ${gate.title}` : ''
+}
+
 /** Raison affichée quand le village ne peut pas monter de niveau ; vide s'il le peut. */
 export function levelBlockReason(state: GameState): string {
   const c = canLevelUp(state)
   if (c.ok) return ''
   const level = (state.village.level + 1) as 2 | 3
   if (population(state) >= ECONOMY.LEVEL_POPULATION[level] && !missionGateOk(state, level)) {
-    const gate = STORY.find((m) => m.gate === level)
-    if (gate) return `Il faut d'abord terminer la mission : ${gate.title}`
+    const text = gateMissionText(level)
+    if (text) return text
   }
   return c.reason
 }

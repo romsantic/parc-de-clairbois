@@ -17,6 +17,10 @@ import { currentLine, dailyCount, storyEnded, storyEndMessage } from './missionM
 import { buildBuildingBar, slotKey } from './buildingBar'
 import { toggleMerchantPanel } from './merchantPanel'
 import { sellPrice } from '../sim/merchant'
+import { buildingInfo, type InfoTarget } from './buildingInfo'
+import { toggleVillagePanel } from './villagePanel'
+import { INFO_LABELS } from '../data/buildingInfo'
+import { VILLAGE_PROPS } from '../data/village'
 
 export interface BottomBarContext {
   get(): GameState
@@ -132,6 +136,39 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
     })
   }
 
+  /** Fiche d'un bâtiment ou de la mairie dans le volet : textes fixes une fois, chiffres remis à jour chaque seconde. */
+  function infoSheet(key: string, target: InfoTarget) {
+    const first = buildingInfo(ctx.get(), target)
+    if (!first) return
+    openDrawer(key, first.title, (body) => {
+      body.replaceChildren()
+      const role = text('p', first.role)
+      const list = document.createElement('dl'); list.className = 'fiche'
+      const missing = document.createElement('div')
+      body.append(role, list, missing)
+      if (first.villageButton) {
+        const go = document.createElement('button')
+        go.type = 'button'; go.className = 'principal'; go.textContent = first.villageButton
+        go.addEventListener('click', () => toggleVillagePanel(panelCtx))
+        body.append(go)
+      }
+      const fill = () => {
+        const info = buildingInfo(ctx.get(), target)
+        if (!info) return
+        list.replaceChildren(...info.rows.flatMap((r) => [text('dt', r.label), text('dd', r.value)]))
+        missing.replaceChildren(...info.missing.map((m) => text('p', m, 'rouge')))
+      }
+      fill()
+      return fill
+    })
+  }
+
+  function infoButton(key: string, target: InfoTarget): HTMLButtonElement {
+    const btn = iconButton(ICONS.liste, INFO_LABELS.info)
+    btn.addEventListener('click', () => { if (isDrawerOpen(key)) closeDrawer(); else infoSheet(key, target) })
+    return btn
+  }
+
   function build(p: Pick) {
     left.replaceChildren(); actions.replaceChildren(); slotUpdate = null
     const s = ctx.get()
@@ -168,6 +205,16 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
       }
     } else if (p.kind === 'emplacement') {
       slotUpdate = buildBuildingBar(ctx, p.slot, left, actions)
+      if (s.buildings.some((b) => b.slot === p.slot)) actions.prepend(infoButton(`info:s${p.slot}`, { kind: 'emplacement', slot: p.slot }))
+    } else if (p.kind === 'decor') {
+      const v = VILLAGE_PROPS[p.index]
+      if (!v) { left.append(text('span', 'Clique un enclos ou une zone', 'discret invite')); return }
+      if (v.key === 'mairie') {
+        left.append(text('b', v.name, 'nom'))
+        actions.append(infoButton('info:mairie', { kind: 'decor', index: p.index }))
+      } else {
+        left.append(text('b', v.name, 'nom'), text('span', v.sentence, 'discret'))
+      }
     } else {
       left.append(text('span', 'Clique un enclos ou une zone', 'discret invite'))
     }
@@ -206,7 +253,7 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
   function update() {
     updateMission()
     const p = ctx.selection()
-    const kind = p.kind === 'enclos' ? `e${p.id}` : p.kind === 'zone' ? `z${p.zone.id}` : p.kind === 'emplacement' ? `s${p.slot}` : 'rien'
+    const kind = p.kind === 'enclos' ? `e${p.id}` : p.kind === 'zone' ? `z${p.zone.id}` : p.kind === 'emplacement' ? `s${p.slot}` : p.kind === 'decor' ? `d${p.index}` : 'rien'
     const key = p.kind === 'emplacement' ? slotKey(ctx.get(), p.slot) : kind
     if (key !== builtFor) {
       builtFor = key; build(p)

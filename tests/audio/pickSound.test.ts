@@ -12,6 +12,7 @@ describe('son de sélection', () => {
   })
   it('bâtiment : clic ; sol ou rien : silence', () => {
     expect(pickEffect({ kind: 'emplacement', slot: 0 }, s)).toBe('clic')
+    expect(pickEffect({ kind: 'decor', index: 0 }, s)).toBe('clic')
     expect(pickEffect({ kind: 'rien' }, s)).toBeNull()
   })
 })

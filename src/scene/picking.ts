@@ -6,13 +6,15 @@ import type { World } from './world'
 export type Pick =
   | { kind: 'enclos'; id: number }
   | { kind: 'emplacement'; slot: number }
+  /** Mairie, maison ou autre décor du village : `index` dans VILLAGE_PROPS. */
+  | { kind: 'decor'; index: number }
   | { kind: 'zone'; zone: Zone; point: { x: number; z: number } }
   | { kind: 'rien' }
 
 const CLICK_TOLERANCE_PX = 6
 
 /**
- * Clic (ou tap) sur la carte : enclos ou emplacement du village touché, sinon zone touchée au sol, sinon rien.
+ * Clic (ou tap) sur la carte : enclos, emplacement ou décor du village touché (promeneurs et brume ne sont jamais dans la liste), sinon zone touchée au sol, sinon rien.
  * Un glisser (rotation de la caméra) n'est pas un clic ; les clics sur l'interface sont ignorés
  * car ils ne visent pas le canevas.
  */
@@ -22,6 +24,7 @@ export function createPicker(
   targets: () => Map<number, THREE.Object3D>,
   isBusy: () => boolean = () => false,
   slotTargets: () => Map<number, THREE.Object3D> = () => new Map(),
+  propTargets: () => Map<number, THREE.Object3D> = () => new Map(),
 ) {
   const listeners: ((p: Pick) => void)[] = []
   const ray = new THREE.Raycaster()
@@ -43,12 +46,13 @@ export function createPicker(
 
   function pickAt(r: THREE.Raycaster): Pick {
     const objs = targets()
-    const hits = r.intersectObjects([...objs.values(), ...slotTargets().values()], true)
+    const hits = r.intersectObjects([...objs.values(), ...slotTargets().values(), ...propTargets().values()], true)
     for (const h of hits) {
       let o: THREE.Object3D | null = h.object
-      while (o && o.userData.enclosureId === undefined && o.userData.slot === undefined) o = o.parent
+      while (o && o.userData.enclosureId === undefined && o.userData.slot === undefined && o.userData.prop === undefined) o = o.parent
       if (!o) continue
       if (o.userData.slot !== undefined) return { kind: 'emplacement', slot: o.userData.slot as number }
+      if (o.userData.prop !== undefined) return { kind: 'decor', index: o.userData.prop as number }
       return { kind: 'enclos', id: o.userData.enclosureId as number }
     }
     const p = new THREE.Vector3()

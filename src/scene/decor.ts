@@ -26,6 +26,8 @@ export function buildDecor(world: World, rng: () => number): {
   /** Place le « ! » au-dessus d'un point de la carte ; null = au-dessus de la mairie. */
   setMarker(pos: { x: number; z: number } | null): void
   setMarkerVisible(v: boolean): void
+  /** Objets cliquables du village : mairie, maisons, puits… (index dans VILLAGE_PROPS). */
+  propMeshes(): Map<number, THREE.Object3D>
 } {
   const { scene, models, groundHeight, riverDistance } = world
   const occupied: { x: number; z: number; r: number }[] = []
@@ -54,10 +56,12 @@ export function buildDecor(world: World, rng: () => number): {
 
   // ---------- Le village, de l'autre côté de la rivière ----------
   let mairie: THREE.Object3D | undefined
-  for (const v of VILLAGE_PROPS) {
+  const props = new Map<number, THREE.Object3D>()
+  VILLAGE_PROPS.forEach((v, i) => {
     const obj = place(v.key, v.x, v.z, { height: v.height, rot: v.rot, r: v.r })
+    if (obj) { obj.userData.prop = i; props.set(i, obj) }
     if (v === MAIRIE) mairie = obj
-  }
+  })
 
   // ---------- Pont de bois là où l'allée croise la rivière ----------
   for (const sl of SLOTS) occupied.push({ x: sl.x, z: sl.z, r: 3.4 })
@@ -190,5 +194,6 @@ export function buildDecor(world: World, rng: () => number): {
     setPathLevel,
     setMarker,
     setMarkerVisible(v) { marker.visible = v },
+    propMeshes: () => props,
   }
 }

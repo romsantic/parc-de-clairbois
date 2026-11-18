@@ -385,3 +385,12 @@ button.recuperer .cadeau svg { width: 18px; height: 18px; display: block; }
   .volet label.bon { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; }
   .volet label.bon input { width: 22px; height: 22px; }
 }
+
+/* Fiche d'un bâtiment (volet de la barre du bas) */
+.volet dl.fiche { display: grid; grid-template-columns: max-content 1fr; gap: 3px 12px; margin: 6px 0; font-variant-numeric: tabular-nums; }
+.volet dl.fiche dt { color: #6f6852; }
+.volet dl.fiche dd { margin: 0; font-weight: 600; }
+@media (max-width: 640px) {
+  .volet dl.fiche { grid-template-columns: 1fr; gap: 0; }
+  .volet dl.fiche dd { margin-bottom: 4px; }
+}

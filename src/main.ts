@@ -121,7 +121,7 @@ async function start(): Promise<void> {
       dispatch,
       onDone: (id) => { select({ kind: 'enclos', id }); bottomBar.refresh() },
     })
-    const picker = createPicker(world, canvas, () => park.enclosureMeshes(), () => editor.active(), () => villageView.slotMeshes())
+    const picker = createPicker(world, canvas, () => park.enclosureMeshes(), () => editor.active(), () => villageView.slotMeshes(), () => decor.propMeshes())
     const bottomBar = mountBottomBar({
       get: getState,
       selection: () => selection,
