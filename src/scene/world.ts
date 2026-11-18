@@ -43,7 +43,7 @@ const RIVER = new THREE.CatmullRomCurve3([
 const RIVER_POINTS = RIVER.getSpacedPoints(500)
 const RIVER_HALF_WIDTH = 2.2
 
-function riverDistance(x: number, z: number): number {
+export function riverDistance(x: number, z: number): number {
   let best = Infinity
   for (const p of RIVER_POINTS) best = Math.min(best, (p.x - x) ** 2 + (p.z - z) ** 2)
   return Math.sqrt(best)

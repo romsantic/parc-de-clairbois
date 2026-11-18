@@ -1,7 +1,9 @@
 import './style.css'
 import WebGL from 'three/examples/jsm/capabilities/WebGL.js'
 import { MODELS, type ModelKey } from './assets/manifest'
-import { loadModels, AssetLoadError } from './scene/loadModels'
+import { loadModels, requestModel, AssetLoadError } from './scene/loadModels'
+import { hourFromLocation } from './scene/clock'
+import { createVisitorsView, WALKER_MODELS } from './scene/visitorsView'
 import { createWorld } from './scene/world'
 import { showError, showLoading } from './ui/errorScreen'
 import { runGame } from './game/runGame'
@@ -61,7 +63,7 @@ async function start(): Promise<void> {
   try {
     // Au démarrage : le décor et les espèces déjà présentes. Les autres animaux à la demande.
     const animalKeys = new Set<ModelKey>(Object.values(SPECIES_MODELS).flatMap((m) => [m.female, m.male]))
-    const needed = new Set<ModelKey>((Object.keys(MODELS) as ModelKey[]).filter((k) => !animalKeys.has(k)))
+    const needed = new Set<ModelKey>((Object.keys(MODELS) as ModelKey[]).filter((k) => !animalKeys.has(k) && !WALKER_MODELS.includes(k)))
     for (const a of getState().animals) {
       const m = SPECIES_MODELS[a.species]
       needed.add(a.sex === 'F' ? m.female : m.male)
@@ -92,6 +94,12 @@ async function start(): Promise<void> {
     const villageView = createVillageView(world, getState)
     const park = createParkView(world, getState, createRng(Date.now() >>> 0))
     const rig = createCameraRig(world, canvas)
+    // Promeneurs : leurs modèles (~7 Mo) se chargent en arrière-plan, un par un, sans bloquer le parc.
+    const visitors = createVisitorsView(world, getState, {
+      hour: () => hourFromLocation(location.search, new Date()).hour,
+      mobile: window.matchMedia('(pointer: coarse)').matches,
+    })
+    void (async () => { for (const k of WALKER_MODELS) { try { await requestModel(world.models, k) } catch { /* sans ce modèle, tant pis */ } } })()
     let selection: Pick = { kind: 'rien' }
     const select = (p: Pick) => {
       selection = p
@@ -137,6 +145,7 @@ async function start(): Promise<void> {
         world.update(dt)
         decor.update(dt)
         park.update(dt)
+        visitors.update(dt)
         const level = getState().village.level
         if (level !== zonesLevel) { zonesLevel = level; zones.setLevel(level); decor.setPathLevel(level) }
         zones.update(dt)
