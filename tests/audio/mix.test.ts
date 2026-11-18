@@ -46,3 +46,17 @@ describe('dayNightMix', () => {
     expect(dayNightMix(9)).toEqual(dayNightMix(1))
   })
 })
+
+import { aliveLoops } from '../../src/audio/mix'
+describe('aliveLoops', () => {
+  const on = { volume: 0.4, muted: false }
+  it('jour : paire du jour seule ; nuit : paire de la nuit seule', () => {
+    expect(aliveLoops(0, on).sort()).toEqual(['ambianceJour', 'musiqueJour'])
+    expect(aliveLoops(1, on).sort()).toEqual(['ambianceNuit', 'musiqueNuit'])
+  })
+  it('pendant le fondu : les deux paires', () => expect(aliveLoops(0.5, on)).toHaveLength(4))
+  it('musique coupée ou à 0 : rien du tout', () => {
+    expect(aliveLoops(0.5, { volume: 0.4, muted: true })).toEqual([])
+    expect(aliveLoops(0, { volume: 0, muted: false })).toEqual([])
+  })
+})

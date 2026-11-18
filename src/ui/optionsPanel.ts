@@ -36,7 +36,8 @@ function soundRow(label: string, ch: 'music' | 'effects', audio: AudioController
     mute.setAttribute('aria-pressed', String(s[ch].muted))
   }
   show(audio.settings())
-  slider.addEventListener('input', () => { audio.update((s) => setVolume(s, ch, Number(slider.value) / 100)); show(audio.settings()) })
+  slider.addEventListener('input', () => { audio.update((s) => setVolume(s, ch, Number(slider.value) / 100), false); show(audio.settings()) })
+  slider.addEventListener('change', () => audio.persist())
   mute.addEventListener('click', () => { audio.update((s) => setMuted(s, ch, !s[ch].muted)); show(audio.settings()) })
   row.append(head, slider)
   return row

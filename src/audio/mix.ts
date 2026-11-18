@@ -36,3 +36,18 @@ export function dayNightMix(night: number): DayNightMix {
     ambNight: nig * AUDIO_TUNING.AMBIENCE_LEVEL,
   }
 }
+
+export type LoopKey = 'musiqueJour' | 'musiqueNuit' | 'ambianceJour' | 'ambianceNuit'
+
+/**
+ * Boucles qui doivent exister en mémoire (décodées et en lecture) : seulement la paire audible.
+ * Rien si la musique est coupée ou à 0 (l'ambiance suit le curseur Musique) ; les deux paires pendant le fondu.
+ */
+export function aliveLoops(night: number, music: { volume: number; muted: boolean }): LoopKey[] {
+  if (music.muted || music.volume <= 0) return []
+  const n = clamp01(night)
+  const out: LoopKey[] = []
+  if (n < 1 - AUDIO_TUNING.LOOP_ALIVE_MARGIN) out.push('musiqueJour', 'ambianceJour')
+  if (n > AUDIO_TUNING.LOOP_ALIVE_MARGIN) out.push('musiqueNuit', 'ambianceNuit')
+  return out
+}
