@@ -110,12 +110,12 @@ const GARDE = 'La garde forestière'
 export const TUTORIAL: MissionDef[] = [
   {
     id: 'pas-fiche', title: "Ouvre la fiche de l'enclos des moutons", giver: MARGAUX, highlight: 'detailsEnclos',
-    text: "Bienvenue à Clairbois, je suis Margaux, la maire ! Touche l'enclos des moutons, puis le bouton Détails pour voir qui y vit.",
+    text: "Bienvenue à Clairbois, je suis Margaux, la maire du village ! Je vais te guider pas à pas dans la création et l'évolution de ton village et de ton zoo. Pour commencer, touche l'enclos des moutons, puis le bouton Détails pour voir qui y vit.",
     objective: { kind: 'compteur', stat: 'ficheEnclosVue', n: 1 }, reward: { coins: 20 },
   },
   {
     id: 'pas-fourrage', title: 'Achète 20 fourrages à la ferme', giver: MARGAUX, highlight: 'ferme',
-    text: 'Tes animaux mangent tous les jours. Touche la ferme, puis achète du fourrage pour remplir le garde-manger.',
+    text: 'Bravo, tu as tes premiers animaux. Mais ils mangent tous les jours. Touche la ferme, puis achète du fourrage pour remplir le garde-manger.',
     objective: { kind: 'compteur', stat: 'fourrageAchete', n: 20 }, reward: { fourrage: 20 },
   },
   {

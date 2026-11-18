@@ -2,8 +2,6 @@ import type { GameState } from '../sim/types'
 import { newGame } from '../sim/newGame'
 import { advanceTo } from '../sim/advance'
 import { restock } from '../sim/merchant'
-import { fairPrice } from '../sim/economy'
-import { ECONOMY } from '../data/economy'
 import { summarize, type Summary } from '../sim/summary'
 import { MISSIONS_TUNING } from '../data/missions'
 import { HOUR_MS } from '../data/tuning'
@@ -29,7 +27,7 @@ export interface Session {
   problem: 'illisible' | 'trop-recente' | 'migration-impossible' | null
   /** Faux si sauvegarder écraserait une partie qu'on ne sait pas lire, ou si le stockage manque. */
   canSave: boolean
-  /** Message à montrer une fois si le billet d'une ancienne partie a été remis au prix juste. */
+  /** Message à montrer une fois (habitants recomptés avec la nouvelle règle) ; null sinon. */
   priceNotice: string | null
   /** Identifiant de cet onglet : seul lui sauvegarde tant qu'aucun autre n'a repris la partie. */
   owner: string
@@ -53,32 +51,19 @@ export function restartState(store: Storage, nowMs: number, replaced?: GameState
 }
 const newSeed = () => Math.floor(Math.random() * 2 ** 32)
 
-/**
- * Après le rééquilibrage de l'étape 6 : un billet réglé sur les anciens prix peut valoir plusieurs fois le nouveau prix juste
- * (plus aucun visiteur). S'il dépasse 1,5 x le prix juste, il y est remis (modifie `state`) ; rend le nouveau prix, sinon null.
- */
-export function adjustTicketAfterLoad(state: GameState): number | null {
-  const fair = fairPrice(state)
-  if (state.ticketPrice <= ECONOMY.REPUTATION_DROP_ABOVE * fair) return null
-  state.ticketPrice = fair
-  return fair
-}
-
 const markStep6 = (store: Storage): void => { try { store.setItem(STEP6_MARKER_KEY, '1') } catch { /* rien */ } }
 const step6Done = (store: Storage): boolean => { try { return store.getItem(STEP6_MARKER_KEY) !== null } catch { return false } }
 
 /**
- * Réglages de l'étape 6, une seule fois par partie (repère dans le stockage) : billet remis au prix juste s'il est démesuré,
- * et message si les habitants baissent avec la nouvelle règle. Modifie `state` ; rend le message à montrer, ou null.
+ * Après le rééquilibrage de l'étape 6, une seule fois par partie (repère dans le stockage) : message si les habitants baissent
+ * avec la nouvelle règle. Le prix du billet n'est JAMAIS changé au chargement : c'est le joueur qui le décide.
  */
 export function applyStep6Adjustments(store: Storage, state: GameState): string | null {
   if (step6Done(store)) return null
   const oldPop = population(state) - newcomers(state.village.clientsServed) + Math.floor(state.village.clientsServed / OLD_CLIENTS_PER_NEWCOMER)
   const newPop = population(state)
-  const fair = adjustTicketAfterLoad(state)
   markStep6(store)
   const parts: string[] = []
-  if (fair !== null) parts.push(`Les prix ont changé : ton billet est revenu au prix juste (${fair} pièces).`)
   if (oldPop > newPop) parts.push(`Clairbois s'est réorganisé : le village compte maintenant ${newPop} habitants (au lieu de ${oldPop}). Ton niveau et tes missions réussies sont gardés.`)
   return parts.length ? parts.join(' ') : null
 }

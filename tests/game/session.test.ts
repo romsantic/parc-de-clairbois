@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { startSession, resume, adjustTicketAfterLoad, restartState, STEP6_MARKER_KEY } from '../../src/game/session'
+import { startSession, resume, restartState, STEP6_MARKER_KEY } from '../../src/game/session'
 import { saveGame, loadGame, SAVE_KEY, type Storage } from '../../src/save/save'
 import { newGame } from '../../src/sim/newGame'
 import { DAY_MS } from '../../src/data/tuning'
@@ -14,32 +14,7 @@ function memory(init: Record<string, string> = {}): Storage & { data: Record<str
 }
 const NOW = 1_800_000_000_000
 
-describe('billet après le rééquilibrage', () => {
-  it('niveau 2 à 14 pièces : remis au prix juste, avec message', () => {
-    const g = newGame(5, NOW)
-    g.village.level = 2
-    g.ticketPrice = 14
-    const fair = fairPrice(g)
-    expect(adjustTicketAfterLoad(g)).toBe(fair)
-    expect(g.ticketPrice).toBe(fair)
-    const m = memory()
-    const old = newGame(5, NOW); old.village.level = 2; old.ticketPrice = 14
-    saveGame(m, old, NOW)
-    const r = startSession(m, NOW)
-    expect(r.state.ticketPrice).toBe(fairPrice(r.state))
-    expect(r.priceNotice).toContain('prix juste')
-  })
-  it('dans 1,5 x le prix juste : intouché ; partie neuve : intouchée', () => {
-    const g = newGame(5, NOW)
-    g.ticketPrice = Math.floor(1.5 * fairPrice(g))
-    const before = g.ticketPrice
-    expect(adjustTicketAfterLoad(g)).toBeNull()
-    expect(g.ticketPrice).toBe(before)
-    const f = newGame(7, NOW)
-    expect(adjustTicketAfterLoad(f)).toBeNull()
-    const m = memory()
-    expect(startSession(m, NOW).priceNotice).toBeNull()
-  })
+describe('billet et habitants après le rééquilibrage', () => {
   it('ancienne partie niveau 2, 10 000 clients, porte faite : reste niveau 2, mission faite, habitants avec la nouvelle règle', () => {
     const g = newGame(5, NOW)
     g.village = { level: 2, clientsServed: 10_000 }
@@ -62,14 +37,13 @@ describe('billet après le rééquilibrage', () => {
 
 describe("réglages de l'étape 6 : une seule fois", () => {
   const old = (ticket: number, clients = 0) => { const g = newGame(5, NOW); g.village = { level: 2, clientsServed: clients }; g.ticketPrice = ticket; return g }
-  it('1er chargement : billet remis + repère ; 2e chargement : billet haut intouché, sans message', () => {
+  it('ancienne partie à prix très haut : même prix au chargement, sans message de billet, à chaque fois', () => {
     const m = memory()
     saveGame(m, old(14), NOW)
     const a = startSession(m, NOW)
-    expect(a.priceNotice).toContain('prix juste')
-    expect(m.data[STEP6_MARKER_KEY]).toBeDefined()
-    const s = structuredClone(a.state); s.ticketPrice = 14
-    saveGame(m, s, NOW)
+    expect(a.state.ticketPrice).toBe(14)
+    expect(a.priceNotice).toBeNull()
+    saveGame(m, a.state, NOW)
     const b = startSession(m, NOW)
     expect(b.state.ticketPrice).toBe(14)
     expect(b.priceNotice).toBeNull()
@@ -97,13 +71,6 @@ describe("réglages de l'étape 6 : une seule fois", () => {
     expect(a.priceNotice).toContain(`${population(a.state)} habitants`)
     saveGame(m, a.state, NOW)
     expect(startSession(m, NOW).priceNotice).toBeNull()
-  })
-  it('les deux à la fois : un seul message combiné', () => {
-    const m = memory()
-    saveGame(m, old(14, 10_000), NOW)
-    const n = startSession(m, NOW).priceNotice ?? ''
-    expect(n).toContain('prix juste')
-    expect(n).toContain('réorganisé')
   })
   it('peu de clients (pas de baisse) : pas de message habitants', () => {
     const m = memory()
