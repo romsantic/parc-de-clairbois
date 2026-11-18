@@ -63,6 +63,14 @@ export const MODELS = {
   sacs: 'models/village/Bags.obj',
   feu: 'models/village/Bonfire_Lit.obj',
   forge: 'models/village/Blacksmith.obj',
+
+  // Promeneurs — Quaternius, Ultimate Modular Men / Women (CC0)
+  promeneurHoodie: 'models/visiteurs/homme-casual-hoodie.glb',
+  promeneurCasual2: 'models/visiteurs/homme-casual-2.glb',
+  promeneurFermier: 'models/visiteurs/homme-fermier.glb',
+  promeneuseCasual: 'models/visiteurs/femme-casual.glb',
+  promeneuseAventuriere: 'models/visiteurs/femme-aventuriere.glb',
+  promeneuseTailleur: 'models/visiteurs/femme-tailleur.glb',
 } as const
 
 export type ModelKey = keyof typeof MODELS
