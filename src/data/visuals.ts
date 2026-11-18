@@ -40,3 +40,26 @@ export function visitorsShown(visitorsPerH: number, hour: number, mobile: boolea
   const base = Math.min(max, Math.ceil(visitorsPerH / WALKERS.VISITORS_PER_WALKER))
   return Math.round(base * factor)
 }
+
+/** La nuit (purement visuel). Hauteurs du soleil en degrés : au-dessus de DAY_ELEV c'est le jour, sous NIGHT_ELEV la nuit noire. */
+export const NIGHT = {
+  DAY_ELEV: 6,
+  NIGHT_ELEV: -8,
+  /** Étoiles : un seul nuage de points sur la voûte du ciel. */
+  STAR_COUNT: 320,
+  STAR_RADIUS: 380,
+  STAR_SIZE: 2.2,
+  STAR_COLOR: '#fff6e0',
+  /** Lune : disque lumineux, opposé au soleil. */
+  MOON_RADIUS: 13,
+  MOON_DISTANCE: 340,
+  MOON_COLOR: '#f4f1e4',
+  /** Brillance max des fenêtres et des lanternes la nuit (le jour : lanternes à LANTERN_DAY). */
+  WINDOW_GLOW: 1.6,
+  WINDOW_COLOR: '#ffcf7a',
+  LANTERN_DAY: 0.05,
+  LANTERN_GLOW: 2.2,
+  /** Animaux : pauses multipliées par ce facteur à pleine nuit, marche ralentie. */
+  REST_FACTOR: 3.5,
+  WALK_SPEED_FACTOR: 0.7,
+} as const

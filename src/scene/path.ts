@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import type { Point } from './wander'
+import { lanternMat } from './materials'
 
 export interface Edge { left: Point; right: Point }
 
@@ -238,7 +239,7 @@ export function createPath(control: Point[], opts: PathOptions): THREE.Group {
   if (style === 3 && opts.lanterns) {
     const lampEdges = ribbonEdges(pts, width / 2 + 0.55)
     const postMat = new THREE.MeshStandardMaterial({ color: '#3a2e26', roughness: 0.8, flatShading: true })
-    const glowMat = new THREE.MeshStandardMaterial({ color: '#ffe3a8', emissive: '#ffcf7a', emissiveIntensity: 1.2, roughness: 0.5 })
+    const glowMat = lanternMat // brille la nuit (voir setNightGlow)
     const postGeo = new THREE.CylinderGeometry(0.05, 0.07, 1.6, 6)
     const capGeo = new THREE.BoxGeometry(0.28, 0.06, 0.28)
     const boxGeo = new THREE.BoxGeometry(0.22, 0.28, 0.22)

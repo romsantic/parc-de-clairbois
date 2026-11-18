@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { pickWanderTarget, stepToward } from '../../src/scene/wander'
+import { pickWanderTarget, stepToward, restDuration, walkSpeedFactor } from '../../src/scene/wander'
 import { createRng } from '../../src/core/rng'
 
 const b = { minX: -5, maxX: 5, minZ: -3, maxZ: 3 }
@@ -24,5 +24,20 @@ describe('stepToward', () => {
   })
   it('déjà sur la cible : arrivé, sans bouger', () => {
     expect(stepToward({ x: 3, z: 3 }, { x: 3, z: 3 }, 2, 1)).toEqual({ x: 3, z: 3, arrived: true })
+  })
+})
+
+describe('la nuit, les animaux sont plus calmes', () => {
+  it('pauses plus longues la nuit', () => {
+    const mid = () => 0.5
+    expect(restDuration(mid, 0)).toBeCloseTo(4)
+    expect(restDuration(mid, 1)).toBeGreaterThan(restDuration(mid, 0) * 2)
+    expect(restDuration(mid, 0.5)).toBeGreaterThan(restDuration(mid, 0))
+    expect(restDuration(mid, 0.5)).toBeLessThan(restDuration(mid, 1))
+  })
+  it('marchent plus doucement la nuit, vitesse normale le jour', () => {
+    expect(walkSpeedFactor(0)).toBe(1)
+    expect(walkSpeedFactor(1)).toBeLessThan(1)
+    expect(walkSpeedFactor(1)).toBeGreaterThan(0)
   })
 })

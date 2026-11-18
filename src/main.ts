@@ -90,6 +90,7 @@ async function start(): Promise<void> {
     const zones = createZonesView(world)
     let zonesLevel = getState().village.level
     zones.setLevel(zonesLevel)
+    world.onNight(zones.setNight) // la brume des zones fermées s'assombrit la nuit
     decor.setPathLevel(zonesLevel)
     const villageView = createVillageView(world, getState)
     const park = createParkView(world, getState, createRng(Date.now() >>> 0))

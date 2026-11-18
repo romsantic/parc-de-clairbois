@@ -1,4 +1,5 @@
 /** Position et couleur du soleil selon l'heure (0–24, boucle). Fonction pure. */
+import { NIGHT as NIGHT_CFG } from '../data/visuals'
 export interface SunState {
   /** Hauteur au-dessus de l'horizon, en degrés (négative la nuit). */
   elevation: number
@@ -40,4 +41,11 @@ export function sunForHour(hour: number): SunState {
     sky = { top: mix(DAWN.top, DAY.top, t), bottom: mix(DAWN.bottom, DAY.bottom, t) }
   } else sky = DAY
   return { elevation, azimuth: (h / 24) * 360, intensity, skyTop: sky.top, skyBottom: sky.bottom }
+}
+
+/** 0 en plein jour, 1 en pleine nuit, transition douce (selon la hauteur du soleil). */
+export function nightAmount(hour: number): number {
+  const elev = sunForHour(hour).elevation
+  const t = Math.min(1, Math.max(0, (NIGHT_CFG.DAY_ELEV - elev) / (NIGHT_CFG.DAY_ELEV - NIGHT_CFG.NIGHT_ELEV)))
+  return t * t * (3 - 2 * t)
 }

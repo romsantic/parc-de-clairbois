@@ -1,5 +1,8 @@
 import * as THREE from 'three'
-import { sunForHour } from './sun'
+import { sunForHour, nightAmount } from './sun'
+import { setNightGlow } from './materials'
+import { NIGHT } from '../data/visuals'
+import { createRng } from '../core/rng'
 import { hourFromLocation } from './clock'
 import type { LoadedModel } from './loadModels'
 import type { ModelKey } from '../assets/manifest'
@@ -17,6 +20,10 @@ export interface World {
   /** Distance au centre de la rivière (pour ne rien planter dedans). */
   riverDistance(x: number, z: number): number
   setHour(hour: number): void
+  /** Nuit actuelle, 0 (jour) à 1 (pleine nuit). */
+  night: number
+  /** Appelle `cb` tout de suite puis à chaque changement d'heure (au plus une fois par minute) avec la nuit 0..1. */
+  onNight(cb: (night: number) => void): void
   update(dt: number): void
   resize(): void
 }
@@ -135,6 +142,36 @@ function makeSky(): { mesh: THREE.Mesh; set: (top: string, bottom: string) => vo
   return { mesh, set: (t, b) => { uniforms.top.value.set(t); uniforms.bottom.value.set(b) } }
 }
 
+/** Étoiles (un seul nuage de points) et lune, sur la voûte du ciel ; invisibles le jour. */
+function makeNightSky(): { group: THREE.Group; set: (night: number, moonDir: THREE.Vector3) => void } {
+  const rng = createRng(77)
+  const pos = new Float32Array(NIGHT.STAR_COUNT * 3)
+  for (let i = 0; i < NIGHT.STAR_COUNT; i++) {
+    const y = 0.05 + rng() * 0.95, az = rng() * Math.PI * 2, r = Math.sqrt(1 - y * y) // moitié haute du ciel
+    pos.set([Math.cos(az) * r * NIGHT.STAR_RADIUS, y * NIGHT.STAR_RADIUS, Math.sin(az) * r * NIGHT.STAR_RADIUS], i * 3)
+  }
+  const geo = new THREE.BufferGeometry()
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
+  const starMat = new THREE.PointsMaterial({ color: NIGHT.STAR_COLOR, size: NIGHT.STAR_SIZE, sizeAttenuation: false, transparent: true, opacity: 0, fog: false, depthWrite: false })
+  const stars = new THREE.Points(geo, starMat)
+  stars.frustumCulled = false
+  const moonMat = new THREE.MeshBasicMaterial({ color: NIGHT.MOON_COLOR, transparent: true, opacity: 0, fog: false, depthWrite: false })
+  const moon = new THREE.Mesh(new THREE.CircleGeometry(NIGHT.MOON_RADIUS, 24), moonMat)
+  const group = new THREE.Group()
+  group.add(stars, moon)
+  group.visible = false
+  return {
+    group,
+    set(night, moonDir) {
+      group.visible = night > 0.01
+      starMat.opacity = night
+      moonMat.opacity = night
+      moon.position.copy(moonDir).multiplyScalar(NIGHT.MOON_DISTANCE)
+      moon.lookAt(0, 0, 0)
+    },
+  }
+}
+
 export function createWorld(canvas: HTMLCanvasElement, models: Map<ModelKey, LoadedModel>): World {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
   renderer.setPixelRatio(Math.min(2, window.devicePixelRatio))
@@ -149,6 +186,8 @@ export function createWorld(canvas: HTMLCanvasElement, models: Map<ModelKey, Loa
 
   const sky = makeSky()
   scene.add(sky.mesh)
+  const nightSky = makeNightSky()
+  scene.add(nightSky.group)
   scene.fog = new THREE.Fog('#d6ecf8', 60, 140)
 
   const hemi = new THREE.HemisphereLight('#dcefff', '#5d7a3c', 1)
@@ -166,8 +205,10 @@ export function createWorld(canvas: HTMLCanvasElement, models: Map<ModelKey, Loa
   scene.add(river.mesh)
 
   let time = 0, sinceClock = 0
+  const nightListeners: ((n: number) => void)[] = []
   const world: World = {
-    scene, camera, renderer, models, groundHeight, riverDistance,
+    scene, camera, renderer, models, groundHeight, riverDistance, night: 0,
+    onNight(cb) { nightListeners.push(cb); cb(world.night) },
     setHour(hour) {
       const s = sunForHour(hour)
       const el = THREE.MathUtils.degToRad(Math.max(s.elevation, 12)) // la nuit, la lune éclaire d'en haut
@@ -179,6 +220,14 @@ export function createWorld(canvas: HTMLCanvasElement, models: Map<ModelKey, Loa
       hemi.intensity = 0.35 + 0.75 * s.intensity
       sky.set(s.skyTop, s.skyBottom)
       ;(scene.fog as THREE.Fog).color.set(s.skyBottom)
+      // La nuit : fenêtres et lanternes brillent, étoiles et lune apparaissent (une fois par minute, pas à chaque image).
+      const n = nightAmount(hour)
+      world.night = n
+      setNightGlow(n)
+      const er = THREE.MathUtils.degToRad(s.elevation)
+      const mAz = THREE.MathUtils.degToRad(s.azimuth + 200 + 180)
+      nightSky.set(n, new THREE.Vector3(Math.cos(er) * Math.sin(mAz), Math.max(0.35, -Math.sin(er)), Math.cos(er) * Math.cos(mAz)).normalize())
+      for (const cb of nightListeners) cb(n)
     },
     update(dt) {
       time += dt

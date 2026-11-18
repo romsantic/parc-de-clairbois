@@ -116,7 +116,7 @@ export function buildDecor(world: World, rng: () => number): {
         m.geometry.dispose()
         for (const mat of Array.isArray(m.material) ? m.material : [m.material]) mats.add(mat)
       })
-      mats.forEach((m) => m.dispose()) // les textures en cache restent partagées
+      mats.forEach((m) => { if (!m.userData.keep) m.dispose() }) // les textures en cache restent partagées
     }
     const style = Math.min(3, Math.max(1, Math.round(level) || 1)) as PathStyle
     const pRng = createRng(4242) // même rendu à chaque reconstruction
