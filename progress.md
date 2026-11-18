@@ -78,11 +78,11 @@
 | 6 | Brume des zones fermées | agent · Sonnet | faite (76ded49 + d372414) — relue, vue dans le navigateur (panneaux « Bois sombre » / « Falaises » entiers, forêt ouverte au Village) ; dissipation pas vue en mouvement (panneau masqué) — 549 tests |
 | 7 | Modèles des promeneurs (6 personnages Quaternius choisis par Romain) | agent · Sonnet (au lieu de Haiku : il faut alléger les fichiers par un petit script) | faite (7fe7da5) — 6 fichiers .glb de 1,1 à 1,25 Mo (au lieu de 3 Mo), marche + attente seulement, crédits ajoutés — 555 tests |
 | 8 | Promeneurs sur les chemins | agent · Sonnet | faite (5815498 + 88a482e) — relue ; chargés en arrière-plan après l'ouverture du parc, sur le tablier du pont, moins nombreux la nuit ; vus marcher dans le navigateur (allée, pont, village) — 570 tests |
-| 9 | La nuit (lanternes, fenêtres, étoiles, animaux calmes) | agent · Sonnet | à faire |
+| 9 | La nuit (lanternes, fenêtres, étoiles, animaux calmes) | agent · Sonnet | faite (3fc7011 + 28644c6) — relue, vue dans le navigateur à 23 h (lune, étoiles près de l'horizon, fenêtres allumées) ; la caméra peut s'incliner un peu plus vers l'horizon — 575+ tests |
 | 10 | Téléphone, perfs d'affichage et petits défauts gardés | agent · Sonnet | à faire |
 | 12 | Le « ! » doré reste sur l'endroit de la mission tant qu'elle n'est pas faite (aujourd'hui il revient sur la mairie quand on clique) ; clic sur la mission → caméra jusqu'au « ! » (demande de Romain) | agent · Sonnet | à faire |
 | 13 | Informations d'un bâtiment, de la mairie ou d'une maison au clic (demande de Romain) | agent · Sonnet | à faire |
-| 14 | Choix des sons CC0 avec Romain (il télécharge), copie et crédits (demande de Romain) | chef (Opus) + agent · Haiku | à faire |
+| 14 | Choix des sons CC0 avec Romain (il télécharge), copie et crédits (demande de Romain) | chef (Opus) + agent · Sonnet (conversion des fichiers) | en cours — Romain a tout téléchargé le 18/11 |
 | 15 | Musique, ambiance et effets ; volumes Musique / Effets et Couper dans les Options (demande de Romain) | agent · Sonnet | à faire |
 | 11 | *(après 12 à 15)* Vérification d'ensemble, textes relus par Romain, relecture et publication | chef (Opus) + relecture · Opus | à faire |
 
