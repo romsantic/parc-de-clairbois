@@ -46,7 +46,11 @@ export const NIGHT = {
   DAY_ELEV: 6,
   NIGHT_ELEV: -8,
   /** Étoiles : un seul nuage de points sur la voûte du ciel. */
-  STAR_COUNT: 320,
+  STAR_COUNT: 600,
+  /** Les étoiles sont serrées près de l'horizon (0 à STAR_MAX_ELEV degrés), là où la caméra regarde. */
+  STAR_MAX_ELEV: 10,
+  /** Lune : hauteur au-dessus de l'horizon (degrés), droit devant la vue de départ. */
+  MOON_ELEV: 4,
   STAR_RADIUS: 380,
   STAR_SIZE: 2.2,
   STAR_COLOR: '#fff6e0',

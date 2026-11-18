@@ -1,3 +1,5 @@
+import { NIGHT } from '../data/visuals'
+
 /** Déambulation des animaux dans leur enclos. Fonctions pures, testées. */
 export interface Bounds { minX: number; maxX: number; minZ: number; maxZ: number }
 export interface Point { x: number; z: number }
@@ -15,8 +17,6 @@ export function stepToward(pos: Point, target: Point, speed: number, dt: number)
   if (dist <= step) return { x: target.x, z: target.z, arrived: true }
   return { x: pos.x + (dx / dist) * step, z: pos.z + (dz / dist) * step, arrived: false }
 }
-
-import { NIGHT } from '../data/visuals'
 
 /** Durée d'une pause (s) : 2 à 6 s de jour, jusqu'à NIGHT.REST_FACTOR fois plus à pleine nuit (night 0..1). */
 export function restDuration(rng: () => number, night: number): number {

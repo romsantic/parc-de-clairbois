@@ -2,6 +2,8 @@ import * as THREE from 'three'
 import { sunForHour, nightAmount } from './sun'
 import { setNightGlow } from './materials'
 import { NIGHT } from '../data/visuals'
+import { moonDirection, skyDirection } from './nightSky'
+import { START_AZIMUTH } from './cameraRig'
 import { createRng } from '../core/rng'
 import { hourFromLocation } from './clock'
 import type { LoadedModel } from './loadModels'
@@ -143,12 +145,12 @@ function makeSky(): { mesh: THREE.Mesh; set: (top: string, bottom: string) => vo
 }
 
 /** Étoiles (un seul nuage de points) et lune, sur la voûte du ciel ; invisibles le jour. */
-function makeNightSky(): { group: THREE.Group; set: (night: number, moonDir: THREE.Vector3) => void } {
+function makeNightSky(): { group: THREE.Group; set: (night: number) => void } {
   const rng = createRng(77)
   const pos = new Float32Array(NIGHT.STAR_COUNT * 3)
   for (let i = 0; i < NIGHT.STAR_COUNT; i++) {
-    const y = 0.05 + rng() * 0.95, az = rng() * Math.PI * 2, r = Math.sqrt(1 - y * y) // moitié haute du ciel
-    pos.set([Math.cos(az) * r * NIGHT.STAR_RADIUS, y * NIGHT.STAR_RADIUS, Math.sin(az) * r * NIGHT.STAR_RADIUS], i * 3)
+    const d = skyDirection(rng() * Math.PI * 2, rng() * NIGHT.STAR_MAX_ELEV) // bande près de l'horizon, tout autour
+    pos.set([d[0] * NIGHT.STAR_RADIUS, d[1] * NIGHT.STAR_RADIUS, d[2] * NIGHT.STAR_RADIUS], i * 3)
   }
   const geo = new THREE.BufferGeometry()
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
@@ -160,14 +162,15 @@ function makeNightSky(): { group: THREE.Group; set: (night: number, moonDir: THR
   const group = new THREE.Group()
   group.add(stars, moon)
   group.visible = false
+  const md = moonDirection(START_AZIMUTH)
+  moon.position.set(md[0], md[1], md[2]).multiplyScalar(NIGHT.MOON_DISTANCE)
+  moon.lookAt(0, 0, 0) // le groupe suit la caméra : le ciel ne bouge pas quand on se déplace
   return {
     group,
-    set(night, moonDir) {
+    set(night) {
       group.visible = night > 0.01
       starMat.opacity = night
       moonMat.opacity = night
-      moon.position.copy(moonDir).multiplyScalar(NIGHT.MOON_DISTANCE)
-      moon.lookAt(0, 0, 0)
     },
   }
 }
@@ -224,14 +227,13 @@ export function createWorld(canvas: HTMLCanvasElement, models: Map<ModelKey, Loa
       const n = nightAmount(hour)
       world.night = n
       setNightGlow(n)
-      const er = THREE.MathUtils.degToRad(s.elevation)
-      const mAz = THREE.MathUtils.degToRad(s.azimuth + 200 + 180)
-      nightSky.set(n, new THREE.Vector3(Math.cos(er) * Math.sin(mAz), Math.max(0.35, -Math.sin(er)), Math.cos(er) * Math.cos(mAz)).normalize())
+      nightSky.set(n)
       for (const cb of nightListeners) cb(n)
     },
     update(dt) {
       time += dt
       river.update(time)
+      nightSky.group.position.copy(camera.position)
       // La lumière suit l'heure réelle : on la recalcule une fois par minute.
       sinceClock += dt
       if (sinceClock >= 60) {

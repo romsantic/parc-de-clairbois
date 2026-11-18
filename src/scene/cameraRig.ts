@@ -9,7 +9,10 @@ export interface Orbit {
   distance: number
 }
 
-export const CAMERA_LIMITS = { minDistance: 12, maxDistance: 60, minPolar: 0.35, maxPolar: 1.25 } as const
+/** Azimut de la vue de départ. */
+export const START_AZIMUTH = Math.PI / 4
+
+export const CAMERA_LIMITS = { minDistance: 12, maxDistance: 60, minPolar: 0.35, maxPolar: 1.35 } as const
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v))
 
@@ -56,7 +59,7 @@ export function createCameraRig(world: World, canvas: HTMLCanvasElement): Camera
   controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN }
 
   // Vue de départ : trois quarts, assez haute pour voir tout le domaine.
-  const start = clampOrbit({ azimuth: Math.PI / 4, polar: 0.9, distance: 52 })
+  const start = clampOrbit({ azimuth: START_AZIMUTH, polar: 0.9, distance: 52 })
   camera.position.setFromSpherical(new THREE.Spherical(start.distance, start.polar, start.azimuth))
   controls.update()
 
