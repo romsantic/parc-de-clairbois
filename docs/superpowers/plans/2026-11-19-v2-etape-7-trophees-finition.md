@@ -1,5 +1,7 @@
 # V2 — Étape 7 : trophées, musée, équilibrage, finition — plan de construction
 
+> **Votes de Romain (19/11/2026)** — La liste des 40 trophées (D1) sera **relue par Romain au lancement de l'étape 7**. Les autres décisions sont acceptées telles que proposées.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal :** la V2 devient un jeu fini qui dure ≈ 7 semaines : ~40 trophées en bronze / argent / or (pièces pour bronze et argent, objet de décoration unique pour l'or), un musée des trophées dans le village, de nouvelles missions du jour liées aux métiers de la V2, une Gazette qui raconte la paie, les maladies et le marchand itinérant, et un équilibre vérifié par le joueur automatique (niveaux 1–3 ≈ 18 jours, 4–6 ≈ 1 mois, 3 jours d'absence sans mort ni dette).

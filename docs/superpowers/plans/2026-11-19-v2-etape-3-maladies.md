@@ -1,5 +1,7 @@
 # V2 — Étape 3 : maladies et centre vétérinaire — plan de construction
 
+> **Votes de Romain (19/11/2026)** — D1 validée (léger 24 h → grave 24 h → mortel 12 h). **D8 changée** : une nouvelle partie reçoit un **premier pas de plus** avec Margaux, « Construis le centre vétérinaire » (placé tôt dans les premiers pas, avant que le premier malade puisse arriver ; une ancienne partie qui refait les premiers pas le réussit aussitôt puisque le centre lui est offert). Les autres décisions sont acceptées telles que proposées.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal :** les animaux attrapent quatre maladies (parasites, indigestion, blessure, grippe) qui s'aggravent par stades ; on ne les soigne plus d'un clic mais au **centre vétérinaire**, où le vétérinaire soigne seul les malades repérés, même pendant l'absence.

@@ -1,5 +1,7 @@
 # V2 — Étape 6 : niveaux 4 à 6, carte agrandie, 21 espèces, potager, restaurant, marchand itinérant — plan de construction
 
+> **Votes de Romain (19/11/2026)** — D1 validée (étang au nord, forêt profonde à l'ouest, haute montagne au sud) ; D5 validée (loutre, lynx et aigle vendus seulement par le marchand itinérant). Les autres décisions sont acceptées telles que proposées. Si l'étape 5 a déjà créé l'écran de crédits (fontaine CC-BY), le réutiliser.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal :** Clairbois passe du Bourg (niveau 3) à trois nouveaux niveaux ; chacun ouvre une nouvelle zone sous la brume (4 étang, 5 forêt profonde, 6 haute montagne) avec 21 nouvelles espèces d'Europe (31 en tout). Le potager donne une 3ᵉ nourriture (fruits et légumes), le restaurant rapporte gros, un marchand itinérant passe environ une fois par semaine pendant 24 h, et de nouveaux personnages donnent les missions d'histoire.

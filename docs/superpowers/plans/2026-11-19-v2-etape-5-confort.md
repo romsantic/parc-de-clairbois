@@ -1,5 +1,7 @@
 # V2 — Étape 5 : confort, décoration, déchets, satisfaction, animateur — plan de construction
 
+> **Votes de Romain (19/11/2026)** — **D10 changée : une vraie fontaine en modèle CC-BY**, auteur cité dans `CREDITS.md` et l'écran de crédits (même exception que les 4 grands animaux de l'étape 6). Ajouter à la sous-tâche chef des modèles : chercher un modèle de fontaine low-poly CC-BY (ou CC0 s'il en apparaît un), le faire télécharger par Romain. Les autres décisions sont acceptées telles que proposées. Ordre des étapes : l'écran de crédits peut donc arriver dès cette étape (sinon à l'étape 6).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal :** le joueur pose librement des objets (bancs, poubelles, toilettes, kiosque à boissons, fleurs, arbres, puits, lampadaires, statues) le long des chemins ; chacun sert la portion de chemin qui l'entoure. Les visiteurs salissent les chemins, les déchets se voient et se ramassent d'un clic (ou par l'agent d'entretien). Une jauge de **satisfaction** (icône dans la barre du haut) fait monter ou baisser la réputation, donc les visiteurs. L'**animateur** devient embauchable.

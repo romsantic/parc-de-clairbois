@@ -1,5 +1,7 @@
 # V2 — Étape 4 : la ferme qui produit — plan de construction
 
+> **Votes de Romain (19/11/2026)** — D2 validée : les 8 champs sont **à l'est du village** (« les champs de Clairbois »). Les autres décisions sont acceptées telles que proposées.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal :** des parcelles achetées une à une produisent du fourrage, le fermier le porte au garde-manger (ou le joueur le ramasse d'un clic), la grange agrandit le stock des champs ; le fourrage gratuit de la V1 disparaît.

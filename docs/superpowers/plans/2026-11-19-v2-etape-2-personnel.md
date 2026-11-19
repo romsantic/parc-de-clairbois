@@ -1,5 +1,7 @@
 # V2 — Étape 2 : le personnel — plan de construction
 
+> **Votes de Romain (19/11/2026)** — D5 (dette) validée telle quelle : tout est bloqué sauf rations, ventes, nettoyage et licenciement ; employés à 50 %. Les autres décisions sont acceptées telles que proposées (chiffres réglés à l'étape 7).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal :** le parc a besoin d'employés payés chaque jour : des soigneurs qui suivent les animaux (sinon enclos plus sale, animaux moins heureux, pas de naissance) et des agents d'entretien qui nettoient ; on les embauche parmi des candidats, dans la limite de la maison du personnel.
