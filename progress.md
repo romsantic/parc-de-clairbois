@@ -1,6 +1,6 @@
 # Le Parc de Clairbois — où on en est
 
-*Mis à jour le 18/11/2026. Ce fichier sert de point de départ à chaque nouvelle session de travail : le lire en premier.*
+*Mis à jour le 19/11/2026. Ce fichier sert de point de départ à chaque nouvelle session de travail : le lire en premier.*
 
 ## Le joueur et la façon de travailler
 
@@ -85,6 +85,18 @@
 | 14 | Choix des sons CC0 avec Romain (il télécharge), copie et crédits (demande de Romain) | chef (Opus) + agent · Sonnet (conversion des fichiers) | faite (8e5d31c) — 14 sons en mp3 (2,1 Mo en tout), crédits ; à écouter par Romain (clic, pièces, mission ; le « loup » est un aboiement faute de hurlement CC0) — 595 tests |
 | 15 | Musique, ambiance et effets ; volumes Musique / Effets et Couper dans les Options (demande de Romain) | agent · Sonnet | faite (388cfdc + 63be383) — relue ; vérifiée dans le navigateur (volet, Couper/Remettre, réglages gardés, seuls les sons utiles chargés) ; **pas écoutée** (à faire par Romain) — 620 tests |
 | 11 | *(après 12 à 15)* Vérification d'ensemble, textes relus par Romain, relecture et publication | chef (Opus) + relecture · Opus | relecture finale faite (Opus : 0 critique, 4 importants corrigés en e546f54) + choix de Romain en d28cd82 (billet jamais changé tout seul ; 2 textes de Margaux réécrits) — 646 tests ; **fusionnée dans `main` (be2455a) avec l'accord de Romain le 18/11/2026, publiée et vérifiée en ligne** |
+
+**V2 — « Le village s'éveille »** — conception écrite avec Romain (questions et votes) et **validée le 19/11/2026** : `docs/superpowers/specs/2026-11-19-parc-de-clairbois-v2-design.md` (source de vérité de la V2, complète celle de la V1). Personnel obligatoire (5 métiers), 4 maladies soignées seulement au centre vétérinaire, ferme qui produit, chemins à construire, confort et satisfaction des visiteurs, niveaux 4–6 (étang, forêt profonde, haute montagne), ~20 espèces d'Europe, marchand itinérant, trophées. Rythme : niveaux 1–3 ≈ 18 jours, puis ≈ 1 mois pour 4–6 ; un parc bien tenu tient 3 jours sans le joueur.
+
+| Étape V2 | Contenu | État |
+|---|---|---|
+| 1 | Chemins à construire | à lancer (session d'étape) |
+| 2 | Personnel et maison du personnel | — |
+| 3 | Maladies et centre vétérinaire | — |
+| 4 | Ferme qui produit (parcelles, fermier, grange) | — |
+| 5 | Confort, décoration, déchets, satisfaction, animateur | — |
+| 6 | Niveaux 4–6, carte agrandie, espèces, potager, restaurant, marchand itinérant | — |
+| 7 | Trophées, musée, équilibrage, finition | — |
 
 ## Liens
 
@@ -188,4 +200,4 @@ Après la V1 : V2 à V5 décrites en fin de spec (personnel et centre vétérina
 
 ## Suite
 
-- La V1 est publiée. Romain continue sur `main`. Prochaine étape possible : la V2 (« Le village s'éveille », voir la fin de la spec), après les retours de Romain sur la V1 (sons, barre du bas au téléphone, rythme).
+- La V1 est publiée. La V2 est conçue et validée (19/11/2026) ; étape 1 (chemins à construire) à faire dans sa propre session.
