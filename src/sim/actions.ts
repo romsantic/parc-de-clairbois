@@ -131,6 +131,8 @@ export function buildBuilding(state: GameState, slot: number, type: BuildingType
   if (state.village.level < sl.unlockLevel) return { ok: false, reason: `Cet emplacement se débloque au niveau ${sl.unlockLevel} du village.` }
   if (sl.unlockLevel === 3) return { ok: false, reason: 'De nouveaux bâtiments arriveront bientôt ici.' } // pas de bâtiment au Bourg en V1
   if (state.buildings.some((b) => b.slot === slot)) return { ok: false, reason: 'Cet emplacement est déjà pris.' }
+  if (sl.only && sl.only !== type) return { ok: false, reason: 'Cet emplacement est réservé à la maison du personnel.' }
+  if (!sl.only && type === 'personnel') return { ok: false, reason: 'La maison du personnel se construit sur son emplacement, au fond du village.' }
   const data = BUILDINGS[type]
   if (state.village.level < data.unlockLevel) return { ok: false, reason: `Ce bâtiment se débloque au niveau ${data.unlockLevel} du village.` }
   if (state.buildings.some((b) => b.type === type)) return { ok: false, reason: `Clairbois a déjà ${data.withArticle}.` }

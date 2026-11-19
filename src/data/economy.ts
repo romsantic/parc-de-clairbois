@@ -58,6 +58,7 @@ export const BUILDINGS: Record<BuildingType, BuildingData> = {
   ferme: { name: 'Ferme', withArticle: 'une ferme', unlockLevel: 1, buildCost: null, upgradeCost: [400, 1000], share: 0, spend: [0, 0, 0], maxClientsPerH: [0, 0, 0] },
   cafe: { name: 'Café', withArticle: 'un café', unlockLevel: 1, buildCost: 300, upgradeCost: [600, 1200], share: 0.4, spend: [1.5, 2, 2.5], maxClientsPerH: [10, 25, 50] },
   boutique: { name: 'Boutique', withArticle: 'une boutique', unlockLevel: 2, buildCost: 800, upgradeCost: [1500, 3000], share: 0.3, spend: [0.5, 0.6, 0.75], maxClientsPerH: [10, 25, 50] },
+  personnel: { name: 'Maison du personnel', withArticle: 'une maison du personnel', unlockLevel: 1, buildCost: 400, upgradeCost: [900, 2000], share: 0, spend: [0, 0, 0], maxClientsPerH: [0, 0, 0] },
   auberge: { name: 'Auberge', withArticle: 'une auberge', unlockLevel: 2, buildCost: 1200, upgradeCost: [2500, 5000], share: 0.1, spend: [4, 5, 6], maxClientsPerH: [4, 8, 15] },
 }
 
@@ -85,11 +86,14 @@ export const MERCHANT = {
  * à plus de 8,5 m de l'axe de la rivière, à 9 m les uns des autres. `rot` tourne la façade vers le chemin.
  * Les deux premiers (ferme, premier choix) sont les plus proches du pont.
  */
-export const SLOTS: { id: number; x: number; z: number; rot: number; unlockLevel: 1 | 2 | 3 }[] = [
+/** `only` : l'emplacement n'accepte que ce bâtiment (et les autres emplacements ne l'acceptent pas). */
+export const SLOTS: { id: number; x: number; z: number; rot: number; unlockLevel: 1 | 2 | 3; only?: BuildingType }[] = [
   { id: 0, x: 15, z: 10, rot: 2.31, unlockLevel: 1 },
   { id: 1, x: 21, z: 17, rot: -2.93, unlockLevel: 1 },
   { id: 2, x: 24, z: 8, rot: -1.67, unlockLevel: 2 },
   { id: 3, x: 24, z: -1.5, rot: -1.29, unlockLevel: 2 },
   { id: 4, x: 12, z: -11, rot: 0.41, unlockLevel: 3 },
   { id: 5, x: 24, z: -11, rot: -0.55, unlockLevel: 3 },
+  // Au fond du village, derrière les emplacements du Bourg, façade tournée vers la place : la maison du personnel.
+  { id: 6, x: 17, z: -19, rot: 0, unlockLevel: 1, only: 'personnel' },
 ]

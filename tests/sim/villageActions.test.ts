@@ -5,7 +5,9 @@ import {
 } from '../../src/sim/actions'
 import type { ActionResult } from '../../src/sim/actions'
 import type { GameState } from '../../src/sim/types'
-import { clientsForNewcomers } from '../../src/sim/village'
+import { clientsForNewcomers, slotCanBuild } from '../../src/sim/village'
+import { newGame } from '../../src/sim/newGame'
+import { saveGame, loadGame } from '../../src/save/save'
 
 const ok = (r: ActionResult): GameState => {
   if (!r.ok) throw new Error(r.reason)
@@ -13,6 +15,46 @@ const ok = (r: ActionResult): GameState => {
 }
 const withCafe = (level: 1 | 2 | 3 = 1) =>
   emptyState({ coins: 5000, buildings: [{ slot: 0, type: 'ferme', level: 1 }, { slot: 1, type: 'cafe', level }] })
+
+describe('buildBuilding : maison du personnel', () => {
+  it('refuse un café sur son emplacement réservé', () => {
+    expect(buildBuilding(emptyState({ coins: 5000 }), 6, 'cafe')).toEqual({ ok: false, reason: 'Cet emplacement est réservé à la maison du personnel.' })
+  })
+  it('refuse la maison ailleurs', () => {
+    expect(buildBuilding(emptyState({ coins: 5000 }), 1, 'personnel')).toEqual({ ok: false, reason: 'La maison du personnel se construit sur son emplacement, au fond du village.' })
+  })
+  it("construit la maison sur l'emplacement 6 au Hameau : -400 pièces", () => {
+    const s = ok(buildBuilding(emptyState({ coins: 1000 }), 6, 'personnel'))
+    expect(s.coins).toBe(600)
+    expect(s.buildings.find((b) => b.slot === 6)).toEqual({ slot: 6, type: 'personnel', level: 1 })
+  })
+  it('les emplacements du Bourg restent « Bientôt »', () => {
+    expect(buildBuilding(emptyState({ coins: 5000 }), 4, 'cafe')).toEqual({ ok: false, reason: 'Cet emplacement se débloque au niveau 3 du village.' })
+    const b = emptyState({ coins: 5000 }); b.village.level = 3
+    expect(buildBuilding(b, 4, 'cafe')).toEqual({ ok: false, reason: 'De nouveaux bâtiments arriveront bientôt ici.' })
+  })
+  it('slotCanBuild respecte only', () => {
+    const s = emptyState({ coins: 5000, buildings: [{ slot: 0, type: 'ferme', level: 1 }] })
+    expect(slotCanBuild(s, 6)).toBe(true)
+    expect(slotCanBuild(s, 1)).toBe(true)
+    s.buildings.push({ slot: 1, type: 'cafe', level: 1 })
+    expect(slotCanBuild(s, 6)).toBe(true)
+    expect(slotCanBuild(s, 2)).toBe(false) // au Hameau, rien d'autre à bâtir : le niveau 2 est verrouillé de toute façon
+    s.buildings.push({ slot: 6, type: 'personnel', level: 1 })
+    expect(slotCanBuild(s, 6)).toBe(false)
+  })
+  it('une sauvegarde avec des bâtiments sur 0–5, ou sur 6, reste valide', () => {
+    const load = (buildings: GameState['buildings']) => {
+      const g = newGame(1, 1_800_000_000_000); g.buildings = buildings
+      const data: Record<string, string> = {}
+      const m = { getItem: (k: string) => data[k] ?? null, setItem: (k: string, v: string) => { data[k] = v } }
+      saveGame(m, g, 1)
+      return loadGame(m).kind
+    }
+    expect(load([{ slot: 0, type: 'ferme', level: 1 }, { slot: 5, type: 'cafe', level: 1 }])).toBe('ok')
+    expect(load([{ slot: 0, type: 'ferme', level: 1 }, { slot: 6, type: 'personnel', level: 2 }])).toBe('ok')
+  })
+})
 
 describe('buildBuilding', () => {
   it('construit un café au slot 1 : -300 pièces, niveau 1', () => {

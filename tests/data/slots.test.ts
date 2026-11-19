@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { SLOTS } from '../../src/data/economy'
 import { VILLAGE_PATHS } from '../../src/data/zones'
+import { VILLAGE_PROPS } from '../../src/data/village'
 
 function distToSegment(px: number, pz: number, a: { x: number; z: number }, b: { x: number; z: number }) {
   const dx = b.x - a.x, dz = b.z - a.z
@@ -9,8 +10,17 @@ function distToSegment(px: number, pz: number, a: { x: number; z: number }, b: {
 }
 
 describe('emplacements du village', () => {
-  it('sont 6, avec des ids 0..5', () => {
-    expect(SLOTS.map((s) => s.id)).toEqual([0, 1, 2, 3, 4, 5])
+  it('sont 7, avec des ids 0..6', () => {
+    expect(SLOTS.map((s) => s.id)).toEqual([0, 1, 2, 3, 4, 5, 6])
+  })
+  it("l'emplacement 6 est réservé à la maison du personnel, débloqué au Hameau", () => {
+    expect(SLOTS[6].only).toBe('personnel')
+    expect(SLOTS[6].unlockLevel).toBe(1)
+    expect(SLOTS.filter((s) => s.id !== 6).every((s) => s.only === undefined)).toBe(true)
+  })
+  it("l'emplacement 6 ne chevauche aucun élément du village (rayons + 1 m)", () => {
+    for (const s of SLOTS.filter((x) => x.id === 6)) for (const p of VILLAGE_PROPS)
+      expect(Math.hypot(s.x - p.x, s.z - p.z), `slot ${s.id} / ${p.key}`).toBeGreaterThanOrEqual(p.r + 3.4 + 1)
   })
   it('sont espacés d\'au moins 9 m', () => {
     for (const a of SLOTS) for (const b of SLOTS)

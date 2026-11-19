@@ -31,6 +31,12 @@ const LOOKS: Record<BuildingType, { signY: number; parts: Part[] }> = {
     { key: 'caisse', x: -2.4, z: 1.8, h: 0.7 },
     { key: 'sacs', x: -1.2, z: 2.9, h: 0.8, rot: 0.6, minLevel: 3 },
   ] },
+  personnel: { signY: 4.8, parts: [
+    { key: 'maison3', x: 0, z: -0.6, h: 3.6, rot: Math.PI },
+    { key: 'banc', x: 0, z: 2.4, h: 0.9, rot: Math.PI },
+    { key: 'tonneau', x: 2.9, z: 0.6, h: 1 },
+    { key: 'caisse', x: -2.8, z: 1.8, h: 0.7, rot: 0.5, minLevel: 3 },
+  ] },
   auberge: { signY: 5.6, parts: [
     { key: 'auberge', x: 0, z: -0.6, h: 4.6, rot: Math.PI },
     { key: 'tonneau', x: 2.9, z: 1.6, h: 1 },
@@ -43,7 +49,7 @@ type Own = { mats: THREE.Material[]; geos: THREE.BufferGeometry[] }
 type SlotState = 'libre' | 'bientot' | 'verrou'
 
 /**
- * Les 6 emplacements du village : terre avec panneau quand ils sont libres ou verrouillés,
+ * Les 7 emplacements du village : terre avec panneau quand ils sont libres ou verrouillés,
  * bâtiment (qui change d'allure avec son niveau) quand ils sont occupés.
  * Seuls les emplacements dont l'apparence a changé sont reconstruits.
  */

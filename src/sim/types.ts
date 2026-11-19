@@ -34,7 +34,7 @@ export interface Animal {
   lastBirthAt: number | null
 }
 
-export type BuildingType = 'ferme' | 'cafe' | 'boutique' | 'auberge'
+export type BuildingType = 'ferme' | 'cafe' | 'boutique' | 'auberge' | 'personnel'
 export interface Building { slot: number; type: BuildingType; level: 1 | 2 | 3 }
 
 /** Un animal proposé par le marchand. */

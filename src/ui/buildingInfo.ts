@@ -1,4 +1,5 @@
 /** Ce que la fiche d'un bâtiment, de la mairie ou d'un décor du village affiche : fonctions pures (testées), sans DOM. */
+import { staffCap } from '../sim/staff'
 import { BUILDINGS, ECONOMY, FARM, SLOTS } from '../data/economy'
 import { BUILDING_ROLE, INFO_LABELS, MAIRIE_INFO } from '../data/buildingInfo'
 import { VILLAGE_PROPS } from '../data/village'
@@ -43,6 +44,8 @@ export function buildingInfo(state: GameState, target: InfoTarget): BuildingInfo
       { label: INFO_LABELS.discount, value: FARM.discount[i] ? pct(FARM.discount[i]) : 'aucune' },
       { label: INFO_LABELS.pantry, value: `${state.pantry.capacity} places` },
     )
+  } else if (b.type === 'personnel') {
+    rows.push({ label: INFO_LABELS.staff, value: `${state.staff.employees.length} sur ${staffCap(state)} places` })
   } else {
     const flow = buildingIncomePerHour(state, target.slot)
     const especes = visibleSpecies(state)

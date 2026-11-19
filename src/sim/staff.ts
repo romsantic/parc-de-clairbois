@@ -13,6 +13,12 @@ export function employeeLevel(e: Employee): StaffLevel {
   return level as StaffLevel
 }
 
+/** Nombre maximum d'employés : 3 sans maison du personnel, sinon selon le niveau de la maison. */
+export function staffCap(state: GameState): number {
+  const house = state.buildings.find((b) => b.type === 'personnel')
+  return house ? STAFF_TUNING.CAP_BY_HOUSE_LEVEL[house.level - 1] : STAFF_TUNING.CAP_NO_HOUSE
+}
+
 /** Salaire journalier d'un métier à un niveau. */
 export function wage(job: JobId, level: StaffLevel): number {
   return Math.round(JOBS[job].wage * (1 + STAFF_TUNING.WAGE_PER_LEVEL * (level - 1)))

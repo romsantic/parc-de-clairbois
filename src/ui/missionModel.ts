@@ -90,9 +90,9 @@ export function prairieSpot(state: GameState): { x: number; z: number } {
   return best ?? c
 }
 
-/** Premier emplacement débloqué sans bâtiment. */
+/** Premier emplacement débloqué sans bâtiment (hors emplacements réservés). */
 export function freeSlot(state: GameState): { x: number; z: number; id: number } | null {
-  return SLOTS.find((s) => s.unlockLevel <= state.village.level && !state.buildings.some((b) => b.slot === s.id)) ?? null
+  return SLOTS.find((s) => !s.only && s.unlockLevel <= state.village.level && !state.buildings.some((b) => b.slot === s.id)) ?? null
 }
 
 /**

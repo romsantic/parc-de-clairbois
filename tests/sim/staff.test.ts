@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { employeeLevel, wage, dailyWages, firstKeeper, staffStep, renewCandidates } from '../../src/sim/staff'
+import { staffCap, employeeLevel, wage, dailyWages, firstKeeper, staffStep, renewCandidates } from '../../src/sim/staff'
 import { advanceTo, step } from '../../src/sim/advance'
 import { DAY_MS, HOUR_MS } from '../../src/data/tuning'
 import { JOBS } from '../../src/data/staff'
@@ -160,5 +160,18 @@ describe('naissance et affectations', () => {
     const ev: GameEvent[] = [{ kind: 'naissance', at: s.time, animalId: 1, motherId: 1 }]
     staffStep(s, ev)
     expect(s.staff.employees[0].encIds).toEqual([1])
+  })
+})
+
+describe('staffCap', () => {
+  it('3 sans maison, puis 6 / 10 / 15 selon son niveau', () => {
+    const s = emptyState()
+    expect(staffCap(s)).toBe(3)
+    s.buildings.push({ slot: 6, type: 'personnel', level: 1 })
+    expect(staffCap(s)).toBe(6)
+    s.buildings[s.buildings.length - 1].level = 2
+    expect(staffCap(s)).toBe(10)
+    s.buildings[s.buildings.length - 1].level = 3
+    expect(staffCap(s)).toBe(15)
   })
 })

@@ -50,6 +50,10 @@ describe('markerPosition', () => {
     expect(freeSlot(s)!.id).toBe(1)
     expect(markerPosition(s, 'emplacementLibre')).toEqual({ x: SLOTS[1].x, z: SLOTS[1].z })
   })
+  it("emplacement libre : jamais l'emplacement réservé à la maison du personnel", () => {
+    const s = emptyState({ buildings: [{ slot: 0, type: 'ferme', level: 1 }, { slot: 1, type: 'cafe', level: 1 }] })
+    expect(freeSlot(s)).toBeNull()
+  })
   it('prairie : un point de la prairie hors des enclos', () => {
     const s = fresh()
     const p = prairieSpot(s)

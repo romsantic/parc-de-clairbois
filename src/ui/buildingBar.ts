@@ -3,6 +3,7 @@ import type { Action } from '../sim/actions'
 import { rationCost } from '../sim/actions'
 import { buildingIncomePerHour } from '../sim/economy'
 import { slotCanBuild } from '../sim/village'
+import { staffCap } from '../sim/staff'
 import { BUILDINGS, SLOTS } from '../data/economy'
 import { TUNING } from '../data/tuning'
 import { ICONS, iconButton } from './icons'
@@ -14,12 +15,12 @@ export interface BuildingBarContext {
 }
 
 const text = (tag: string, t: string, cls = '') => { const e = document.createElement(tag); e.textContent = t; if (cls) e.className = cls; return e }
-const BUILD_ICON: Record<BuildingType, string> = { ferme: ICONS.garde, cafe: ICONS.cafe, boutique: ICONS.boutique, auberge: ICONS.auberge }
+const BUILD_ICON: Record<BuildingType, string> = { ferme: ICONS.garde, cafe: ICONS.cafe, boutique: ICONS.boutique, auberge: ICONS.auberge, personnel: ICONS.personnel }
 
 /** Ce qui doit changer pour que la barre d'un emplacement soit reconstruite. */
 export function slotKey(s: GameState, slot: number): string {
   const b = s.buildings.find((x) => x.slot === slot)
-  return `s${slot}:${b?.level ?? 0}:${s.buildings.length}:${s.village.level}:${s.pantry.capacity}`
+  return `s${slot}:${b?.level ?? 0}:${s.buildings.length}:${s.village.level}:${s.pantry.capacity}:${s.staff.employees.length}`
 }
 
 /** Place libre dans le garde-manger (rations, fractions comprises). */
@@ -56,7 +57,7 @@ export function buildBuildingBar(ctx: BuildingBarContext, slot: number, left: HT
       return none
     }
     left.append(text('b', 'Emplacement libre', 'nom'))
-    const types = (Object.keys(BUILDINGS) as BuildingType[]).filter((t) => BUILDINGS[t].buildCost !== null && !s.buildings.some((x) => x.type === t))
+    const types = (Object.keys(BUILDINGS) as BuildingType[]).filter((t) => BUILDINGS[t].buildCost !== null && (def?.only ? t === def.only : t !== 'personnel') && !s.buildings.some((x) => x.type === t))
     if (types.length === 0 || !slotCanBuild(s, slot)) {
       left.append(text('span', 'De nouveaux bâtiments arriveront bientôt', 'discret'))
       return none
@@ -118,6 +119,12 @@ export function buildBuildingBar(ctx: BuildingBarContext, slot: number, left: HT
         if (n > 0) btn.removeAttribute('aria-disabled'); else btn.setAttribute('aria-disabled', 'true')
       }
     }
+  }
+
+  if (b.type === 'personnel') {
+    left.append(text('b', `${d.name} · niveau ${b.level} · ${s.staff.employees.length}/${staffCap(s)} employés`, 'nom'))
+    actions.append(upgrade())
+    return none
   }
 
   left.append(text('b', `${d.name} · niveau ${b.level}`, 'nom'), text('span', '', 'estim'))

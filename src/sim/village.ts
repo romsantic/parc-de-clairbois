@@ -35,7 +35,7 @@ export function slotCanBuild(state: GameState, slotId: number): boolean {
   const sl = SLOTS.find((x) => x.id === slotId)
   if (!sl || sl.unlockLevel === 3) return false
   return (Object.keys(BUILDINGS) as BuildingType[]).some((t) =>
-    BUILDINGS[t].buildCost !== null && BUILDINGS[t].unlockLevel <= state.village.level && !state.buildings.some((b) => b.type === t))
+    (sl.only ? t === sl.only : t !== 'personnel') && BUILDINGS[t].buildCost !== null && BUILDINGS[t].unlockLevel <= state.village.level && !state.buildings.some((b) => b.type === t))
 }
 
 /** Le village peut-il passer au niveau suivant ? (Simple question : le niveau ne change que par une action.) */
