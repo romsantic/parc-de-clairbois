@@ -164,7 +164,7 @@ export function createPathEditor(world: World, canvas: HTMLCanvasElement, _rig: 
   }
 
   canvas.addEventListener('pointerdown', (e) => {
-    if (!open || e.button !== 0) return
+    if (!open || e.button !== 0 || !e.isPrimary) return // un second doigt n'est jamais un tap
     down = { x: e.clientX, y: e.clientY, id: e.pointerId }
   })
   canvas.addEventListener('pointermove', (e) => {
@@ -172,6 +172,7 @@ export function createPathEditor(world: World, canvas: HTMLCanvasElement, _rig: 
     candidate(e)
   })
   canvas.addEventListener('pointerup', (e) => {
+    if (!e.isPrimary) return
     const d = down
     down = null
     if (!open || !d || d.id !== e.pointerId) return
@@ -209,6 +210,7 @@ export function createPathEditor(world: World, canvas: HTMLCanvasElement, _rig: 
       panel.hidden = false
       refresh()
     },
+    close,
     active: () => open,
   }
 }

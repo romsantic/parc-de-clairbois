@@ -12,6 +12,7 @@ import { createJunctionDisc, createPath, type PathStyle } from './path'
 export function createPathsView(world: World) {
   let group: THREE.Group | null = null
   let shownKey = ''
+  let lastPaths: unknown = null, lastLen = -1, lastId = NaN, lastLevel = -1 // test sans allocation, à chaque image
   const ground = (x: number, z: number) => Math.max(world.groundHeight(x, z), -0.05)
 
   function dispose() {
@@ -31,6 +32,10 @@ export function createPathsView(world: World) {
   return {
     update(state: GameState) {
       const level = state.village.level
+      const n = state.paths.length
+      const id = n ? state.paths[n - 1].id : NaN
+      if (state.paths === lastPaths && n === lastLen && Object.is(id, lastId) && level === lastLevel) return
+      lastPaths = state.paths; lastLen = n; lastId = id; lastLevel = level
       const key = `${level}|${state.paths.map((p) => `${p.id}:${p.a.x},${p.a.z},${p.b.x},${p.b.z}`).join(';')}`
       if (key === shownKey) return
       shownKey = key

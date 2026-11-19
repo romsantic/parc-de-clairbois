@@ -130,9 +130,9 @@ async function start(): Promise<void> {
       get: getState,
       selection: () => selection,
       dispatch,
-      startBuild: (zone, point) => { closeDrawer(); editor.startBuild(zone, point) },
-      startResize: (id) => { closeDrawer(); editor.startResize(id) },
-      startPath: () => { closeDrawer(); pathEditor.start() },
+      startBuild: (zone, point) => { closeDrawer(); pathEditor.close(); editor.startBuild(zone, point) },
+      startResize: (id) => { closeDrawer(); pathEditor.close(); editor.startResize(id) },
+      startPath: () => { closeDrawer(); editor.close(); pathEditor.start() },
       openGazette: game.openGazette,
       focusMission: () => {
         const spot = markerSpot(getState())

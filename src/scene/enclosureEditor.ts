@@ -168,6 +168,7 @@ export function createEnclosureEditor(world: World, canvas: HTMLCanvasElement, r
       const enc = ctx.get().enclosures.find((e) => e.id === encId)
       if (enc) open({ kind: 'resize', encId, original: { ...enc.rect } }, enc.rect)
     },
+    close,
     active: () => mode !== null,
   }
 }
