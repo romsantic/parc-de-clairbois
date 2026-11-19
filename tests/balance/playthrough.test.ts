@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { formatTimeline, playBot } from './bot'
+import { linkedEnclosureIds } from '../../src/sim/paths'
 
 /**
  * Rapport de rythme : un joueur automatique (vraies règles) joue 40 jours, 2 puis 3 visites par jour.
@@ -27,6 +28,13 @@ describe('joueur automatique : rythme de la partie', () => {
       })
     }
   }
+
+  it('relie chaque enclos qu’il construit (aucun enclos orphelin)', () => {
+    const t = playBot({ seed: 1, days: 12, visitsPerDay: 2 })
+    expect(t.final.enclosures.length).toBeGreaterThan(5)
+    const linked = linkedEnclosureIds(t.final)
+    expect(t.final.enclosures.filter((e) => !linked.has(e.id))).toEqual([])
+  })
 
   it('est déterministe : même graine, même partie', () => {
     const a = playBot({ seed: 1, days: 6, visitsPerDay: 2 })

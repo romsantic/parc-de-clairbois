@@ -54,6 +54,7 @@ export function runGame(store: Storage, storageOk = true, audio: AudioController
     showNotice('Ta sauvegarde était abîmée ; une copie a été mise de côté et une nouvelle partie commence.')
   }
   if (session.priceNotice) showNotice(session.priceNotice)
+  if (session.pathsNotice) showNotice(session.pathsNotice)
   if (!storageOk) showNotice('Ton navigateur bloque la sauvegarde : la partie ne sera pas conservée après fermeture.')
 
   let state = session.state

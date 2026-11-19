@@ -5,7 +5,7 @@ import { isLinked, reachableIds, segmentsTouch, rectSegmentDistance, segmentAt }
 import { newGame } from '../../src/sim/newGame'
 import { checkSegment, giftPaths, linkPlan, pathCost, removalImpact } from '../../src/sim/paths'
 import { applyAction } from '../../src/sim/actions'
-import { ENTRANCE_ID } from '../../src/data/paths'
+import { ENTRANCE_ID, ENTRANCE_PATH } from '../../src/data/paths'
 
 const seg = (id: number, ax: number, az: number, bx: number, bz: number) => ({ id, a: { x: ax, z: az }, b: { x: bx, z: bz } })
 
@@ -197,5 +197,20 @@ describe('relier un enclos et chemin offert', () => {
     expect(g.linked).toEqual([])
     expect(g.stuck).toEqual([])
     expect(g.state.paths).toEqual([])
+  })
+})
+
+describe('chemin offert : copies', () => {
+  it('les points offerts ne sont jamais partagés avec l’état d’origine ni l’entrée', () => {
+    const g = newGame(1, T0)
+    g.enclosures.push({ id: 900, biome: 'prairie', species: null, rect: { x: -34, z: -8, w: 6, d: 6 }, cleanedAt: T0 })
+    const r = giftPaths(g)
+    expect(r.linked).toContain(900)
+    const fresh = r.state.paths.slice(g.paths.length)
+    expect(fresh.length).toBeGreaterThan(0)
+    const olds = [...g.paths, ...ENTRANCE_PATH].flatMap((p) => [p.a, p.b])
+    for (const p of fresh) { expect(olds).not.toContain(p.a); expect(olds).not.toContain(p.b) }
+    for (const p of r.state.paths.slice(0, g.paths.length)) expect(g.paths.map((q) => q.a)).not.toContain(p.a)
+    expect(new Set(fresh.flatMap((p) => [p.a, p.b])).size).toBe(fresh.length * 2)
   })
 })

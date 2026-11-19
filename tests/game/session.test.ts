@@ -184,3 +184,39 @@ describe('resume (onglet repris sans rechargement)', () => {
     expect(resume(g, NOW + 60_000).state.utcOffsetMin).toBe(-new Date(NOW + 60_000).getTimezoneOffset())
   })
 })
+
+describe('chemins : chemin offert aux anciennes parties', () => {
+  const v3 = () => {
+    const g = newGame(5, NOW)
+    g.ticketPrice = fairPrice(g)
+    g.enclosures.push({ id: 900, biome: 'prairie', species: null, rect: { x: -34, z: -8, w: 6, d: 6 }, cleanedAt: NOW })
+    return g
+  }
+  const asV3 = (g: ReturnType<typeof newGame>) => { const s = structuredClone(g) as unknown as Record<string, unknown>; delete s.paths; s.version = 3; return s }
+  it('sauvegarde v3 : enclos relié, message avec le nombre', () => {
+    const m = memory()
+    const g = v3()
+    m.data[SAVE_KEY] = JSON.stringify({ version: 3, savedAt: NOW, state: asV3(g) })
+    const r = startSession(m, NOW)
+    expect(r.state.paths.length).toBeGreaterThan(1)
+    expect(r.pathsNotice).toContain('Nouveau à Clairbois : les chemins !')
+    expect(r.pathsNotice).toContain('offert un chemin à 2 enclos') // l'enclos de départ (sans chemin en v3) et le nouveau
+    const again = startSession(m, NOW)
+    expect(again.pathsNotice).toBeNull() // déjà réécrite en v4
+  })
+  it('sauvegarde v3 avec un seul enclos : « à 1 enclos »', () => {
+    const m = memory()
+    m.data[SAVE_KEY] = JSON.stringify({ version: 3, savedAt: NOW, state: asV3(newGame(5, NOW)) })
+    const r = startSession(m, NOW)
+    expect(r.pathsNotice).toContain('offert un chemin à 1 enclos')
+    expect(r.pathsNotice).not.toContain('À relier')
+  })
+  it('sauvegarde v4 : pas de message', () => {
+    const m = memory()
+    saveGame(m, v3(), NOW)
+    expect(startSession(m, NOW).pathsNotice).toBeNull()
+  })
+  it('partie neuve : pas de message', () => {
+    expect(startSession(memory(), NOW).pathsNotice).toBeNull()
+  })
+})

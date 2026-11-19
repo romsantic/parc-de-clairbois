@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { animal, emptyState, enclosure } from './helpers'
-import { appeal, buildingIncomePerHour, fairPrice, incomePerHour, priceMultiplier, visitorsPerHour } from '../../src/sim/economy'
+import { animal, emptyState, enclosure, T0 } from './helpers'
+import { appeal, visibleAnimals, buildingIncomePerHour, fairPrice, incomePerHour, priceMultiplier, visitorsPerHour } from '../../src/sim/economy'
 import type { SpeciesId } from '../../src/data/species'
 import type { GameState } from '../../src/sim/types'
+import { newGame } from '../../src/sim/newGame'
+import { applyAction } from '../../src/sim/actions'
 
 /** Un animal par espèce, chacun dans son propre grand enclos (bonheur 1). */
 function withAnimals(species: SpeciesId[]): GameState {
@@ -109,5 +111,38 @@ describe('buildingIncomePerHour', () => {
   })
   it('emplacement libre : zéro', () => {
     expect(buildingIncomePerHour(moutons(2), 3)).toEqual({ clients: 0, pieces: 0 })
+  })
+})
+
+describe('seuls les enclos reliés attirent', () => {
+  // Départ : enclos des moutons relié ; un second enclos de moutons loin de l'allée.
+  const deuxEnclos = () => {
+    const g = newGame(3, T0)
+    const a = g.enclosures[0]
+    g.enclosures.push({ id: 900, biome: 'prairie', species: 'mouton', rect: { x: -34, z: -8, w: 6, d: 6 }, cleanedAt: T0 })
+    for (const n of [1, 2]) g.animals.push(animal(900 + n, 'mouton', n === 1 ? 'F' : 'M', 900))
+    return { g, a }
+  }
+  it('enclos non relié sans attrait ; relié, il compte', () => {
+    const { g, a } = deuxEnclos()
+    const seul = appeal({ ...g, animals: g.animals.filter((x) => x.enclosureId === a.id) })
+    expect(seul).toBeGreaterThan(0)
+    expect(appeal(g)).toBeCloseTo(seul) // le second enclos ne compte pas
+    const r = applyAction(g, { type: 'relierEnclos', encId: 900 })
+    expect(r.ok).toBe(true)
+    if (r.ok) expect(appeal(r.state)).toBeGreaterThan(seul)
+  })
+  it('visibleAnimals : seulement les animaux des enclos reliés', () => {
+    const { g } = deuxEnclos()
+    expect(visibleAnimals(g).every((x) => x.enclosureId !== 900)).toBe(true)
+    expect(visibleAnimals(g).length).toBe(g.animals.length - 2)
+  })
+  it('attrait suit un déplacement : éloigner l’enclos de son chemin ramène l’attrait à 0', () => {
+    const g = newGame(3, T0)
+    expect(appeal(g)).toBeGreaterThan(0)
+    const e = g.enclosures[0]
+    const r = applyAction(g, { type: 'redimensionner', encId: e.id, rect: { x: -34, z: -8, w: e.rect.w, d: e.rect.d } })
+    expect(r.ok).toBe(true)
+    if (r.ok) expect(appeal(r.state)).toBe(0)
   })
 })

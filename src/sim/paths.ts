@@ -228,7 +228,7 @@ export function giftPaths(state: GameState): { state: GameState; linked: number[
       if (plan && (!pick || plan.length < pick.length)) pick = plan
     }
     if (!pick) break
-    for (const seg of pick.segments) s.paths.push({ id: s.nextId++, a: seg.a, b: seg.b })
+    for (const seg of pick.segments) s.paths.push({ id: s.nextId++, a: { ...seg.a }, b: { ...seg.b } })
   }
   return { state: s, linked: todo.filter((id) => isLinked(s, id)), stuck: todo.filter((id) => !isLinked(s, id)) }
 }

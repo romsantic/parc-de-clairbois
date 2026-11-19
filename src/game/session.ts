@@ -6,6 +6,8 @@ import { summarize, type Summary } from '../sim/summary'
 import { MISSIONS_TUNING } from '../data/missions'
 import { HOUR_MS } from '../data/tuning'
 import { population, newcomers } from '../sim/village'
+import { giftPaths } from '../sim/paths'
+import { SPECIES } from '../data/species'
 import { loadGame, saveGame, SAVE_KEY, type Storage } from '../save/save'
 
 /** Copie de la partie effacée par « Recommencer à zéro ». */
@@ -29,6 +31,8 @@ export interface Session {
   canSave: boolean
   /** Message à montrer une fois (habitants recomptés avec la nouvelle règle) ; null sinon. */
   priceNotice: string | null
+  /** Message à montrer une fois (chemins offerts à une ancienne partie) ; null sinon. */
+  pathsNotice: string | null
   /** Identifiant de cet onglet : seul lui sauvegarde tant qu'aucun autre n'a repris la partie. */
   owner: string
 }
@@ -68,10 +72,25 @@ export function applyStep6Adjustments(store: Storage, state: GameState): string 
   return parts.length ? parts.join(' ') : null
 }
 
+/** Texte du chemin offert : null s'il n'y a rien à dire (aucun enclos relié, aucun resté seul). */
+function pathsMessage(state: GameState, linked: number[], stuck: number[]): string | null {
+  if (linked.length === 0 && stuck.length === 0) return null
+  const n = linked.length
+  let msg = `Nouveau à Clairbois : les chemins ! Les visiteurs ne voient que les enclos reliés à l'allée. Margaux a offert un chemin à ${n} enclos.`
+  if (stuck.length > 0) {
+    const names = stuck.map((id) => {
+      const e = state.enclosures.find((x) => x.id === id)
+      return e && e.species ? SPECIES[e.species].name : 'Enclos vide'
+    })
+    msg += ` À relier toi-même : ${names.join(', ')}.`
+  }
+  return msg
+}
+
 /** Charge la partie (ou en crée une), rattrape le temps d'absence et prend la main sur la sauvegarde. */
 export function startSession(store: Storage, nowMs: number, storageOk = true): Session {
   const owner = newOwner()
-  const base = { summary: null, skippedMs: 0, absentMs: 0, owner, priceNotice: null as string | null }
+  const base = { summary: null, skippedMs: 0, absentMs: 0, owner, priceNotice: null as string | null, pathsNotice: null as string | null }
   if (!storageOk) return { ...base, state: freshGame(nowMs), problem: null, canSave: false }
   const loaded = loadGame(store, undefined, nowMs)
   if (loaded.kind === 'trop-recente' || loaded.kind === 'migration-impossible') {
@@ -83,7 +102,13 @@ export function startSession(store: Storage, nowMs: number, storageOk = true): S
     if (canSave) markStep6(store)
     return { ...base, state, problem: loaded.kind === 'illisible' ? 'illisible' : null, canSave }
   }
-  const start = structuredClone(loaded.state)
+  let start = structuredClone(loaded.state)
+  let pathsNotice: string | null = null
+  if (loaded.fromVersion < 4) { // avant le rattrapage : l'absence se passe avec les enclos déjà reliés
+    const g = giftPaths(start)
+    start = g.state
+    pathsNotice = pathsMessage(g.state, g.linked, g.stuck)
+  }
   start.utcOffsetMin = localOffset(nowMs) // l'heure locale, avant le rattrapage
   const notice = applyStep6Adjustments(store, start) // avant le rattrapage : l'absence ne se passe pas à un prix démesuré
   const r = advanceTo(start, nowMs)
@@ -93,7 +118,7 @@ export function startSession(store: Storage, nowMs: number, storageOk = true): S
     restock(r.state)
   }
   const canSave = saveGame(store, r.state, nowMs, owner) === 'ok'
-  return { ...base, state: r.state, summary: summarize(r.events, r.state), skippedMs: r.skippedMs, absentMs: loaded.savedAt === undefined ? 0 : Math.max(0, nowMs - loaded.savedAt), problem: null, canSave, priceNotice: notice }
+  return { ...base, state: r.state, summary: summarize(r.events, r.state), skippedMs: r.skippedMs, absentMs: loaded.savedAt === undefined ? 0 : Math.max(0, nowMs - loaded.savedAt), problem: null, canSave, priceNotice: notice, pathsNotice }
 }
 
 /**
