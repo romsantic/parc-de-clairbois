@@ -6,8 +6,10 @@ import { ECONOMY } from '../data/economy'
 import { formatAutonomy, formatGameTime } from './format'
 import { flash, floatDelta } from './feedback'
 import { guide } from './highlight'
+import { ICONS } from './icons'
+import { staffCell } from './staffModel'
 
-export type Resource = 'coins' | 'fourrage' | 'viande' | 'village'
+export type Resource = 'coins' | 'fourrage' | 'viande' | 'village' | 'personnel'
 
 /** Icônes en SVG fixe (aucun contenu venu du joueur). */
 const ICON = {
@@ -32,7 +34,7 @@ function cell(cls: string, icon: string, label: string): { root: HTMLSpanElement
 }
 
 /** Barre des ressources en haut de l'écran (spec §7). */
-export interface TopBarHandlers { onTicket(): void; onVillage(): void; onAutonomy(): void; onOptions(): void }
+export interface TopBarHandlers { onTicket(): void; onVillage(): void; onAutonomy(): void; onStaff(): void; onOptions(): void }
 
 export function mountTopBar(get: () => GameState, handlers: TopBarHandlers): { pulse(r: Resource, delta: number): void } {
   const bar = document.createElement('header')
@@ -45,6 +47,7 @@ export function mountTopBar(get: () => GameState, handlers: TopBarHandlers): { p
     visiteurs: cell('visiteurs', ICON.visiteurs, 'Visiteurs par heure'),
     billet: cell('billet', ICON.billet, 'Prix du billet : touche pour le régler'),
     village: cell('village', ICON.village, 'Village : touche pour voir les habitants'),
+    personnel: cell('personnel', ICONS.personnel, 'Personnel : touche pour embaucher et affecter'),
   }
   const time = document.createElement('span')
   time.className = 'heure'
@@ -59,7 +62,7 @@ export function mountTopBar(get: () => GameState, handlers: TopBarHandlers): { p
   document.body.append(bar)
   guide(cells.billet.root, 'billet')
   guide(cells.auto.root, 'autonomie')
-  for (const [c, fn] of [[cells.billet, handlers.onTicket], [cells.village, handlers.onVillage], [cells.auto, handlers.onAutonomy]] as const) {
+  for (const [c, fn] of [[cells.billet, handlers.onTicket], [cells.village, handlers.onVillage], [cells.auto, handlers.onAutonomy], [cells.personnel, handlers.onStaff]] as const) {
     c.root.setAttribute('role', 'button')
     c.root.tabIndex = 0
     c.root.classList.add('cliquable')
@@ -80,6 +83,10 @@ export function mountTopBar(get: () => GameState, handlers: TopBarHandlers): { p
     cells.village.value.textContent = `${ECONOMY.LEVEL_NAMES[s.village.level - 1]} · ${population(s)} hab.`
     cells.billet.root.dataset.trop = s.ticketPrice > ECONOMY.REPUTATION_DROP_ABOVE * fairPrice(s) ? 'oui' : 'non'
     cells.village.root.dataset.pret = canLevelUp(s).ok ? 'oui' : 'non'
+    const st = staffCell(s)
+    cells.personnel.value.textContent = st.text
+    cells.personnel.root.dataset.alerte = st.alert ? 'oui' : 'non'
+    cells.coins.root.dataset.dette = s.coins < 0 ? 'oui' : 'non'
     time.textContent = formatGameTime(s.time)
   }
   render()

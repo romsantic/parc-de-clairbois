@@ -16,6 +16,8 @@ import { mountMissionBanner } from './missionBanner'
 import { currentLine, dailyCount, storyEnded, storyEndMessage } from './missionModel'
 import { buildBuildingBar, slotKey } from './buildingBar'
 import { toggleMerchantPanel } from './merchantPanel'
+import { toggleStaffPanel } from './staffPanel'
+import { careWarning, encStaffNames } from './staffModel'
 import { sellPrice } from '../sim/merchant'
 import { buildingInfo, type InfoTarget } from './buildingInfo'
 import { toggleVillagePanel } from './villagePanel'
@@ -95,6 +97,13 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
       body.replaceChildren()
       if (!enc) { body.append(text('p', 'Cet enclos n’existe plus.')); return }
       if (!isLinked(s, encId)) body.append(text('p', NO_PATH_TEXT, 'rouge'))
+      const staffRow = document.createElement('p')
+      staffRow.className = 'ligne-perso'
+      const staffBtn = document.createElement('button')
+      staffBtn.type = 'button'; staffBtn.textContent = 'Personnel'
+      staffBtn.addEventListener('click', () => toggleStaffPanel(panelCtx))
+      staffRow.append(text('span', encStaffNames(s, encId)), staffBtn)
+      body.append(staffRow)
       const here = animalsIn(s, encId)
       if (here.length === 0) { body.append(text('p', 'Cet enclos est vide. Le marchand d’animaux arrive bientôt.')); return }
       const table = document.createElement('table')
@@ -231,7 +240,7 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
       left.append(text('b', enc.species ? SPECIES[enc.species].name : 'Enclos vide', 'nom'), text('span', '', 'compte'))
       const gauge = document.createElement('span'); gauge.className = 'jauge'; gauge.title = 'Propreté'
       gauge.append(document.createElement('i'))
-      left.append(gauge, text('span', '', 'malades'))
+      left.append(gauge, text('span', '', 'malades'), text('span', '', 'rouge soins'))
       const clean = guide(iconButton(ICONS.balai, 'Nettoyer', { price: TUNING.CLEAN_COST }), 'nettoyer')
       clean.addEventListener('click', () => ctx.dispatch({ type: 'nettoyer', encId: p.id }, clean))
       const cure = iconButton(ICONS.soin, 'Soigner les malades')
@@ -347,6 +356,7 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
       fill.style.width = pct(c); fill.dataset.niveau = c < 0.3 ? 'bas' : c < 0.7 ? 'moyen' : 'haut'
       const m = left.querySelector<HTMLElement>('.malades')!
       m.textContent = sick.length ? `${sick.length} malade${sick.length > 1 ? 's' : ''}` : ''
+      left.querySelector('.soins')!.textContent = careWarning(s, p.id)
       const cureBtn = actions.querySelectorAll('button')[1]
       const cost = sick.reduce((t, a) => t + cureCost(SPECIES[a.species].price), 0)
       let price = cureBtn?.querySelector('small')
@@ -356,7 +366,7 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
     // Le volet n'est redessiné que si ses animaux ont changé (sinon ses boutons seraient recréés sous le clic).
     if (p.kind === 'enclos') {
       const s = ctx.get()
-      const k = JSON.stringify([s.time, animalsIn(s, p.id)])
+      const k = JSON.stringify([s.time, animalsIn(s, p.id), encStaffNames(s, p.id)])
       if (k !== drawerSeen && isDrawerOpen(`enclos:${p.id}`) && refreshDrawer()) drawerSeen = k // sinon on réessaiera au prochain passage
     }
   }

@@ -408,3 +408,23 @@ button.recuperer .cadeau svg { width: 18px; height: 18px; display: block; }
 .zone-selection .alerte { color: #b23a2a; font-size: 13px; white-space: normal; }
 .barre-bas button.vendre { padding: 2px 8px; font-size: 13px; white-space: nowrap; }
 .barre-bas button.vendre.confirmer { background: #f7d6cf; color: #8f2a1a; border-color: #e09484; }
+
+/* ---------- Personnel (V2 étape 2) ---------- */
+.ressource.pieces[data-dette="oui"] { color: #b23a2a; }
+.ressource.personnel[data-alerte="oui"] { color: #b23a2a; }
+.zone-selection .soins { font-size: 12px; flex-basis: 100%; }
+.volet .carte-perso { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; padding: 6px 0; border-bottom: 1px solid #e3d8bb; }
+.volet .carte-perso .infos { flex: 1 1 12em; min-width: 0; }
+.volet .carte-perso .boutons { display: flex; flex-wrap: wrap; gap: 6px; }
+.volet .liste-enclos { flex-basis: 100%; display: flex; flex-direction: column; gap: 4px; padding: 4px 0 2px 6px; }
+.volet .liste-enclos label { display: flex; align-items: center; gap: 6px; }
+.volet .liste-enclos input { width: auto; }
+.volet .bientot { margin: 2px 0; }
+.volet .ligne-perso { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+@media (max-width: 640px), (pointer: coarse) {
+  .volet .personnel button, .volet .ligne-perso button { min-height: 44px; }
+  .volet .carte-perso { flex-direction: column; align-items: stretch; }
+  .volet .carte-perso .boutons button { flex: 1 1 auto; }
+  .volet .liste-enclos label { min-height: 44px; }
+  .volet .liste-enclos input { width: 22px; height: 22px; }
+}

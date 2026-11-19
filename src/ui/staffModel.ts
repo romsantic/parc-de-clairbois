@@ -97,3 +97,10 @@ export function encStaffNames(state: GameState, encId: number): string {
   if (cleaners.list.length) parts.push(`Entretien : ${cleaners.text}`)
   return parts.join(' · ')
 }
+
+/** Case « Personnel » de la barre du haut : « 2/3 », et si elle doit attirer l'œil (animaux non suivis ou dette). */
+export function staffCell(state: GameState): { text: string; alert: boolean } {
+  const { covered } = careCoverage(state)
+  const unfollowed = state.animals.some((a) => !covered.has(a.id))
+  return { text: `${state.staff.employees.length}/${staffCap(state)}`, alert: unfollowed || state.coins < 0 }
+}

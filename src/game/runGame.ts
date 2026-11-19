@@ -6,6 +6,7 @@ import { mountDebugPanel } from '../ui/debugPanel'
 import { showError, showNotice } from '../ui/errorScreen'
 import { mountTopBar } from '../ui/topBar'
 import { toggleTicketPanel } from '../ui/ticketPanel'
+import { toggleStaffPanel } from '../ui/staffPanel'
 import { toggleVillagePanel } from '../ui/villagePanel'
 import { toggleAutonomyPanel } from '../ui/autonomyPanel'
 import { formatReward } from '../ui/format'
@@ -65,6 +66,7 @@ export function runGame(store: Storage, storageOk = true, audio: AudioController
     onTicket: () => toggleTicketPanel(panelCtx),
     onVillage: () => toggleVillagePanel(panelCtx),
     onAutonomy: () => toggleAutonomyPanel(panelCtx),
+    onStaff: () => toggleStaffPanel(panelCtx),
     onOptions: () => toggleOptionsPanel({ restart: () => restartGame(), audio }),
   })
   // La Gazette : dernière édition gardée en mémoire de la page ; elle s'ouvre seule après une vraie absence.
