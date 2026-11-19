@@ -77,7 +77,7 @@ export function reachableIds(state: GameState): Set<number> {
 let memoKey = ''
 let memoValue: ReadonlySet<number> = new Set()
 
-function signature(state: GameState): string {
+export function signature(state: GameState): string {
   let k = ''
   for (const e of state.enclosures) k += `${e.id}:${e.rect.x},${e.rect.z},${e.rect.w},${e.rect.d};`
   k += '|'

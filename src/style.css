@@ -213,6 +213,15 @@ button.icone:hover::after, button.icone:focus-visible::after { opacity: 1; }
   .barre-bas { gap: 6px; }
 }
 
+/* Avertissement « Détruire ? » d'un chemin : bulle pleine largeur au-dessus de la barre (la barre ne bouge pas). */
+.note-chemin {
+  position: fixed; left: 50%; transform: translateX(-50%); z-index: 6; box-sizing: border-box;
+  bottom: calc(var(--barre-h, calc(48px + env(safe-area-inset-bottom, 0px))) + 8px);
+  width: max-content; max-width: min(520px, calc(100vw - 32px)); padding: 6px 12px; text-align: center; white-space: normal; overflow-wrap: anywhere;
+  background: var(--papier); color: #8f2a1a; border: 1px solid #e09484; border-radius: 10px; box-shadow: 0 3px 10px rgba(0,0,0,.18);
+  font-size: 14px; pointer-events: none;
+}
+
 /* ---------- Éditeur d'enclos ---------- */
 .editeur-enclos {
   position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(60px + env(safe-area-inset-bottom, 0px)); z-index: 6;

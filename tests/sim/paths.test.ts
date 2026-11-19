@@ -3,7 +3,7 @@ import { emptyState, enclosure, T0 } from './helpers'
 import { START_PATH } from '../../src/data/paths'
 import { isLinked, reachableIds, segmentsTouch, rectSegmentDistance, segmentAt } from '../../src/sim/paths'
 import { newGame } from '../../src/sim/newGame'
-import { checkSegment, giftPaths, linkPlan, pathCost, removalImpact } from '../../src/sim/paths'
+import { checkSegment, giftPaths, linkPlan, pathCost, removalImpact, signature } from '../../src/sim/paths'
 import { applyAction } from '../../src/sim/actions'
 import { ENTRANCE_ID, ENTRANCE_PATH } from '../../src/data/paths'
 
@@ -253,5 +253,16 @@ describe('chemin offert : copies', () => {
     for (const p of fresh) { expect(olds).not.toContain(p.a); expect(olds).not.toContain(p.b) }
     for (const p of r.state.paths.slice(0, g.paths.length)) expect(g.paths.map((q) => q.a)).not.toContain(p.a)
     expect(new Set(fresh.flatMap((p) => [p.a, p.b])).size).toBe(fresh.length * 2)
+  })
+})
+
+describe('signature du réseau', () => {
+  it('change quand un enclos bouge ou qu’un chemin est ajouté (clé de la fiche « Relier »)', () => {
+    const s = emptyState({ enclosures: [enc(1, -26, -5, 12, 10)] })
+    const base = signature(s)
+    expect(signature(structuredClone(s))).toBe(base)
+    const moved = structuredClone(s); moved.enclosures[0].rect.w = 14
+    expect(signature(moved)).not.toBe(base)
+    expect(signature({ ...s, paths: [seg(2, -20, 10, -20, 6.5)] })).not.toBe(base)
   })
 })

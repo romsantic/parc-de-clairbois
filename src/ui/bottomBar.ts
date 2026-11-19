@@ -21,7 +21,7 @@ import { buildingInfo, type InfoTarget } from './buildingInfo'
 import { toggleVillagePanel } from './villagePanel'
 import { INFO_LABELS } from '../data/buildingInfo'
 import { VILLAGE_PROPS } from '../data/village'
-import { allSegments, closestPoint, isLinked, linkPlan } from '../sim/paths'
+import { allSegments, closestPoint, isLinked, linkPlan, signature } from '../sim/paths'
 import type { PathPoint } from '../sim/types'
 import { ENTRANCE_ID } from '../data/paths'
 import { createConfirmGuard } from './confirmGuard'
@@ -65,10 +65,14 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
 
   const marchand = guide(iconButton(ICONS.marchand, 'Marchand d’animaux'), 'marchand')
   marchand.addEventListener('click', () => toggleMerchantPanel({ get: ctx.get, selection: ctx.selection, dispatch: ctx.dispatch }))
+  /** Avertissement de destruction d'un chemin : une bulle au-dessus de la barre, pour ne rien déplacer dans la barre (le 2e clic doit tomber sur le même bouton). */
+  const pathNote = document.createElement('div')
+  pathNote.className = 'note-chemin'; pathNote.setAttribute('role', 'status'); pathNote.hidden = true
+  document.body.append(pathNote)
   const gazette = iconButton(ICONS.gazette, 'La Gazette de Clairbois')
   gazette.addEventListener('click', () => ctx.openGazette())
   const fold = iconButton(ICONS.replier, 'Replier la barre')
-  fold.addEventListener('click', () => { bar.hidden = true; tab.hidden = false; closeDrawer() })
+  fold.addEventListener('click', () => { bar.hidden = true; tab.hidden = false; closeDrawer(); pathNote.hidden = true })
   tab.addEventListener('click', () => { bar.hidden = false; tab.hidden = true })
   right.append(marchand, gazette, fold)
 
@@ -181,14 +185,15 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
   }
 
   /** Fiche d'un chemin : longueur, Prolonger, Détruire en deux clics (l'entrée ne se détruit pas). */
+  function disarmPath() { pathGuard.reset(); clearTimeout(pathGuardTimer); pathNote.hidden = true; pathNote.textContent = '' }
+
   function pathSheet(id: number, point: PathPoint) {
-    pathGuard.reset(); clearTimeout(pathGuardTimer)
+    disarmPath()
     const seg = allSegments(ctx.get()).find((x) => x.id === id)
     if (!seg) { left.append(text('span', 'Clique un enclos ou une zone', 'discret invite')); return }
     const entrance = id === ENTRANCE_ID
     left.innerHTML = ICONS.chemin
     left.append(text('b', entrance ? 'Chemin de l’entrée' : `Chemin · ${Math.round(Math.hypot(seg.b.x - seg.a.x, seg.b.z - seg.a.z))} m`, 'nom'))
-    const warn = text('span', '', 'rouge alerte'); warn.hidden = true
     const extend = document.createElement('button')
     extend.type = 'button'; extend.className = 'principal'; extend.textContent = 'Prolonger'
     extend.addEventListener('click', () => ctx.startPath(closestPoint(point, seg)))
@@ -196,24 +201,28 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
     if (entrance) return
     const del = document.createElement('button')
     del.type = 'button'; del.className = 'vendre'; del.textContent = 'Détruire'
+    const disarmLook = () => { disarmPath(); del.className = 'vendre'; del.textContent = 'Détruire' }
     del.addEventListener('click', () => {
       const r = pathGuard.click()
       if (r === 'ignored') return
       clearTimeout(pathGuardTimer)
       if (r === 'armed') {
-        warn.textContent = pathWarning(ctx.get(), id); warn.hidden = false
+        pathNote.textContent = pathWarning(ctx.get(), id); pathNote.hidden = false
+        del.style.minWidth = `${del.offsetWidth}px` // le bouton ne bouge pas (il ne peut que grandir vers la droite)
         del.className = 'vendre confirmer'; del.textContent = 'Détruire ?'
-        pathGuardTimer = window.setTimeout(() => { pathGuard.reset(); warn.hidden = true; del.className = 'vendre'; del.textContent = 'Détruire' }, 4000)
+        pathGuardTimer = window.setTimeout(disarmLook, 4000)
         return
       }
+      pathNote.hidden = true
       if (ctx.dispatch({ type: 'detruireChemin', id }, del)) { builtFor = ''; update() } // le chemin n'existe plus : fiche reconstruite
+      else disarmLook() // refusé : le bouton redevient « Détruire »
     })
     actions.append(del)
-    left.append(warn)
   }
 
   function build(p: Pick) {
     left.replaceChildren(); actions.replaceChildren(); slotUpdate = null
+    disarmPath() // l'avertissement et son minuteur ne survivent pas à un changement de fiche
     const s = ctx.get()
     if (p.kind === 'enclos') {
       const enc = s.enclosures.find((e) => e.id === p.id)
@@ -317,7 +326,7 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
     const p = ctx.selection()
     const kind = p.kind === 'enclos' ? `e${p.id}` : p.kind === 'chemin' ? `c${p.id}` : p.kind === 'zone' ? `z${p.zone.id}` : p.kind === 'emplacement' ? `s${p.slot}` : p.kind === 'decor' ? `d${p.index}` : 'rien'
     // Un enclos change de fiche quand son lien change ; non relié, quand le réseau change (le plan de liaison peut changer).
-    const linkKey = p.kind === 'enclos' ? (isLinked(ctx.get(), p.id) ? ':l' : `:u${ctx.get().paths.length}`) : ''
+    const linkKey = p.kind === 'enclos' ? (isLinked(ctx.get(), p.id) ? ':l' : `:u${signature(ctx.get())}`) : ''
     const key = p.kind === 'emplacement' ? slotKey(ctx.get(), p.slot) : kind + linkKey
     if (key !== builtFor) {
       builtFor = key; build(p)
