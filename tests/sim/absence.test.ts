@@ -3,6 +3,7 @@ import { advanceTo } from '../../src/sim/advance'
 import { summarize } from '../../src/sim/summary'
 import { newGame } from '../../src/sim/newGame'
 import { DAY_MS, HOUR_MS } from '../../src/data/tuning'
+import { efficiency } from '../../src/sim/care'
 import { animal, emptyState, enclosure, T0 } from './helpers'
 
 /** Couple de moutons dans un enclos plein (pas de naissance), propreté neutralisée. */
@@ -51,5 +52,26 @@ describe('nouvelle partie laissée seule', () => {
       const faim = events.filter((e) => e.kind === 'malade' && e.cause === 'faim')
       expect(faim, `graine ${seed}`).toHaveLength(0)
     }
+  })
+})
+
+describe('dette du personnel', () => {
+  it('trois nuits sans recettes : la caisse ne passe jamais sous une journée de salaires', () => {
+    let st = emptyState({ coins: 0 })
+    st.staff = { ...st.staff, coverAllUntil: 0, renewAt: Number.MAX_SAFE_INTEGER, payDay: Math.floor(T0 / DAY_MS) }
+    st.staff.employees = [
+      { id: 1, name: 'Léa', job: 'soigneur', xpH: 0, hiredAt: T0, encIds: [] },
+      { id: 2, name: 'Hugo', job: 'entretien', xpH: 0, hiredAt: T0, encIds: [] },
+    ]
+    for (let i = 0; i < 3 * 144; i++) {
+      st = advanceTo(st, st.time + 600_000).state
+      expect(st.coins).toBeGreaterThanOrEqual(-100)
+    }
+    expect(st.coins).toBeLessThan(0)
+    expect(efficiency(st)).toBe(0.5)
+    st.coins += 1000 // des recettes arrivent
+    st = advanceTo(st, st.time + DAY_MS).state
+    expect(st.coins).toBeGreaterThan(0)
+    expect(efficiency(st)).toBe(1)
   })
 })

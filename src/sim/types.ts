@@ -120,5 +120,9 @@ export type GameEvent =
   | { kind: 'stock'; at: number }
   | { kind: 'mission'; at: number; track: 'tutoriel' | 'histoire' | 'quotidienne'; id: string; title?: string }
   | { kind: 'quotidiennes'; at: number }
+  /** Salaires de minuit : dus, et réellement payés (la dette est plafonnée à une journée). */
+  | { kind: 'paie'; at: number; due: number; paid: number }
+  | { kind: 'niveauEmploye'; at: number; employeeId: number; name: string; level: StaffLevel }
+  | { kind: 'candidats'; at: number }
   /** Une quotidienne réussie et non récupérée a été versée d'office à minuit. */
   | { kind: 'missionVersee'; at: number; id: string; title?: string }
