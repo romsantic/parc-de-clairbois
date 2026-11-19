@@ -91,12 +91,14 @@
 | Étape V2 | Contenu | État |
 |---|---|---|
 | 1 | Chemins à construire | à lancer (session d'étape) |
-| 2 | Personnel et maison du personnel | — |
-| 3 | Maladies et centre vétérinaire | — |
-| 4 | Ferme qui produit (parcelles, fermier, grange) | — |
-| 5 | Confort, décoration, déchets, satisfaction, animateur | — |
-| 6 | Niveaux 4–6, carte agrandie, espèces, potager, restaurant, marchand itinérant | — |
-| 7 | Trophées, musée, équilibrage, finition | — |
+| 2 | Personnel et maison du personnel | plan prêt et voté (branche `etape-v2-2-personnel`) |
+| 3 | Maladies et centre vétérinaire | plan prêt et voté (branche `etape-v2-3-maladies`) |
+| 4 | Ferme qui produit (parcelles, fermier, grange) | plan prêt et voté (branche `etape-v2-4-ferme`) |
+| 5 | Confort, décoration, déchets, satisfaction, animateur | plan prêt et voté (branche `etape-v2-5-confort`) |
+| 6 | Niveaux 4–6, carte agrandie, espèces, potager, restaurant, marchand itinérant | plan prêt et voté (branche `etape-v2-6-niveaux-especes`) |
+| 7 | Trophées, musée, équilibrage, finition | plan prêt et voté (branche `etape-v2-7-trophees`) |
+
+**Préparation des étapes 2 à 7 (19/11/2026, pendant l'étape 1)** — Romain a voté les détails de chaque étape (§12 de la conception V2, 21 espèces choisies, CC-BY accepté pour ours, lynx, bison, élan et une fontaine) et validé la maquette de l'interface V2 (`docs/maquettes/v2-interface.png`). Les plans `docs/superpowers/plans/2026-11-19-v2-etape-{2..7}-*.md` sont écrits, avec les votes en tête. Chaque étape a sa branche `etape-v2-N-…`, partie de `plans-v2` (conception + plans + maquette, **aucun code**). **Au lancement d'une étape** : fusionner `main` (avec les étapes précédentes) dans sa branche, puis revérifier le tableau « ce qu'on attend des étapes précédentes » en tête du plan avant de coder. Emplacements de village réservés : 6 maison du personnel, 7 centre vétérinaire, 8 grange, puis restaurant et musée au prochain numéro libre.
 
 ## Liens
 
