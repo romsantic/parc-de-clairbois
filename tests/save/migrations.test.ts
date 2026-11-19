@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { loadGame, SAVE_KEY, type Storage } from '../../src/save/save'
 import { newGame } from '../../src/sim/newGame'
-import { CURRENT_VERSION } from '../../src/save/migrations'
+import { CURRENT_VERSION, MIGRATIONS } from '../../src/save/migrations'
 
 function memory(init: Record<string, string> = {}): Storage & { data: Record<string, string> } {
   const data = { ...init }
@@ -24,10 +24,10 @@ describe('migration v1 -> v2', () => {
   const r = loadGame(m)
 
   it('charge la partie, migrée jusqu à la version courante', () => {
-    expect(CURRENT_VERSION).toBe(3)
+    expect(CURRENT_VERSION).toBe(4)
     expect(r.kind).toBe('ok')
     if (r.kind !== 'ok') return
-    expect(r.state.version).toBe(3)
+    expect(r.state.version).toBe(4)
   })
   it('ajoute la ferme niveau 1, le billet à 5, la réputation à 1, le village niveau 1', () => {
     if (r.kind !== 'ok') throw new Error('illisible')
@@ -78,11 +78,11 @@ const loadV2 = (state: unknown) => loadGame(memory({ [SAVE_KEY]: JSON.stringify(
 
 describe('migration v2 -> v3', () => {
   it('charge la partie au format 3', () => {
-    expect(CURRENT_VERSION).toBe(3)
+    expect(CURRENT_VERSION).toBe(4)
     const r = loadV2(V2_STATE)
     expect(r.kind).toBe('ok')
     if (r.kind !== 'ok') return
-    expect(r.state.version).toBe(3)
+    expect(r.state.version).toBe(4)
   })
   it('compteurs à zéro, sauf les visiteurs (= totalVisitors)', () => {
     const r = loadV2(V2_STATE)
@@ -117,13 +117,24 @@ describe('migration v2 -> v3', () => {
   it('une partie v3 sans missions est illisible', () => {
     const { missions, ...rest } = newGame(1, 1_800_000_000_000)
     const mm = memory()
-    mm.setItem(SAVE_KEY, JSON.stringify({ version: 3, savedAt: 1, state: rest }))
+    mm.setItem(SAVE_KEY, JSON.stringify({ version: 4, savedAt: 1, state: rest }))
     expect(loadGame(mm).kind).toBe('illisible')
     void missions
   })
   it('une partie v3 sans utcOffsetMin valide est illisible', () => {
     const g = { ...newGame(1, 1_800_000_000_000), utcOffsetMin: 'x' }
-    const mm = memory({ [SAVE_KEY]: JSON.stringify({ version: 3, savedAt: 1, state: g }) })
+    const mm = memory({ [SAVE_KEY]: JSON.stringify({ version: 4, savedAt: 1, state: g }) })
     expect(loadGame(mm).kind).toBe('illisible')
+  })
+})
+
+describe('migration v3 -> v4', () => {
+  it('ajoute paths vide, version 4, et garde le reste', () => {
+    const { paths, ...v3 } = { ...newGame(1, 1_800_000_000_000), version: 3 }
+    void paths
+    const out = MIGRATIONS[3](v3) as Record<string, unknown>
+    expect(out.version).toBe(4)
+    expect(out.paths).toEqual([])
+    expect(out).toMatchObject({ ...v3, version: 4 })
   })
 })

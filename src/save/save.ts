@@ -133,6 +133,10 @@ function looksLikeGame(s: unknown): s is GameState {
   for (const k of STAT_KEYS) if (!finite(st.counts[k])) return false
   for (const n of Object.values(st.counts)) if (!finite(n)) return false
   for (const n of Object.values(st.birthsBySpecies)) if (!finite(n)) return false
+  if (!Array.isArray(g.paths)) return false
+  for (const p of g.paths) {
+    if (!p || !finite(p.id) || !p.a || !p.b || !finite(p.a.x) || !finite(p.a.z) || !finite(p.b.x) || !finite(p.b.z)) return false
+  }
   const ms = g.missions
   if (!ms || !ms.tutorial || !intBetween(ms.tutorial.step, 0, TUTORIAL.length) || !ms.story || !intBetween(ms.story.index, 0, STORY.length)) return false
   if (ms.tutorial.current !== null && !validProgress(ms.tutorial.current)) return false

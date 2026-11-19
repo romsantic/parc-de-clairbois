@@ -10,7 +10,7 @@ export const T0 = 1_800_000_000_000 - (1_800_000_000_000 % 600_000) // aligné s
 
 export function emptyState(over: Partial<GameState> = {}): GameState {
   return {
-    version: 3, time: T0, rng: 12345, coins: 1000, nextId: 100,
+    version: 4, time: T0, rng: 12345, coins: 1000, nextId: 100,
     pantry: { fourrage: 0, viande: 0, capacity: 1000 },
     enclosures: [], animals: [],
     ticketPrice: 2, reputation: 1,
@@ -26,6 +26,7 @@ export function emptyState(over: Partial<GameState> = {}): GameState {
       unread: true,
     },
     utcOffsetMin: 0,
+    paths: [],
     ...over,
   }
 }

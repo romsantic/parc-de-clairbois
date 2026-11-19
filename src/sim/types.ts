@@ -3,6 +3,10 @@ import type { Biome, SpeciesId } from '../data/species'
 /** Rectangle au sol, en mètres : coin nord-ouest (x, z) + largeur (w) et profondeur (d). */
 export interface Rect { x: number; z: number; w: number; d: number }
 
+export interface PathPoint { x: number; z: number }
+/** Un tronçon de chemin droit ; id -1 réservé à l'entrée (non sauvegardée). */
+export interface PathSegment { id: number; a: PathPoint; b: PathPoint }
+
 export interface Enclosure {
   id: number
   biome: Biome
@@ -64,7 +68,7 @@ export interface MissionsState {
 }
 
 export interface GameState {
-  version: 3
+  version: 4
   /** Heure du jeu (ms), toujours alignée sur le pas de 10 minutes. */
   time: number
   /** Graine du hasard, sauvegardée avec la partie. */
@@ -85,6 +89,8 @@ export interface GameState {
   missions: MissionsState
   /** Décalage de l'heure locale par rapport à UTC, en minutes (réglé par la session au chargement). */
   utcOffsetMin: number
+  /** Chemins construits par le joueur (l'entrée n'en fait pas partie). */
+  paths: PathSegment[]
 }
 
 export type GameEvent =
