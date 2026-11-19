@@ -213,22 +213,191 @@ export function linkPlan(state: GameState, encId: number): Plan | null {
   return plan ? { segments: plan.segments, cost: plan.cost } : null
 }
 
+const GRID_STEP = 0.5
+/** Au-delà de la marge minimale, les cases à moins de 1,5 m d'un obstacle coûtent plus cher : le trajet s'écarte des coins. */
+const NEAR_M = 1.5
+/** Poids de ce surcoût, essayés dans l'ordre jusqu'à ce que le trajet se réduise en segments valides. */
+const NEAR_WEIGHTS = [2, 6, 0]
+
+/** `free` : la case est libre ; `near` : 0 (loin des obstacles) à 1 (collée à la marge minimale). */
+type Grid = { nx: number; nz: number; free: Uint8Array; near: Float32Array }
+const cellPoint = (g: Grid, i: number): PathPoint => ({ x: PATH_AREA.x + (i % g.nx) * GRID_STEP, z: PATH_AREA.z + Math.floor(i / g.nx) * GRID_STEP })
+
+/** Cases de 0,5 m où l'axe d'un chemin peut passer : mêmes marges que checkSegment (enclos, zones sous la brume). */
+function freeGrid(state: GameState): Grid {
+  const nx = Math.round(PATH_AREA.w / GRID_STEP) + 1, nz = Math.round(PATH_AREA.d / GRID_STEP) + 1
+  const free = new Uint8Array(nx * nz)
+  const half = PATHS_TUNING.WIDTH_M / 2
+  const locked = ZONES.filter((z) => z.unlockLevel > state.village.level)
+  const near = new Float32Array(nx * nz)
+  const grid = { nx, nz, free, near }
+  const rects = [...locked.map((z) => z.rect), ...state.enclosures.map((e) => e.rect)]
+  for (let i = 0; i < free.length; i++) {
+    const p = cellPoint(grid, i)
+    const s = { a: p, b: p }
+    let d = Infinity
+    for (const r of rects) d = Math.min(d, rectSegmentDistance(r, s))
+    free[i] = d < half ? 0 : 1
+    near[i] = Math.max(0, Math.min(1, (half + NEAR_M - d) / NEAR_M))
+  }
+  return grid
+}
+
+/** Tas binaire minimal (file de priorité de l'A*). */
+class MinHeap {
+  private keys: number[] = []
+  private vals: number[] = []
+  get size() { return this.keys.length }
+  push(key: number, val: number) {
+    const k = this.keys, v = this.vals
+    let i = k.length
+    k.push(key); v.push(val)
+    while (i > 0) {
+      const p = (i - 1) >> 1
+      if (k[p] <= key) break
+      k[i] = k[p]; v[i] = v[p]; i = p
+    }
+    k[i] = key; v[i] = val
+  }
+  pop(): number {
+    const k = this.keys, v = this.vals
+    const top = v[0]
+    const lastK = k.pop()!, lastV = v.pop()!
+    const n = k.length
+    if (n > 0) {
+      let i = 0
+      for (;;) {
+        let c = 2 * i + 1
+        if (c >= n) break
+        if (c + 1 < n && k[c + 1] < k[c]) c++
+        if (k[c] >= lastK) break
+        k[i] = k[c]; v[i] = v[c]; i = c
+      }
+      k[i] = lastK; v[i] = lastV
+    }
+    return top
+  }
+}
+
+/**
+ * Plan de secours du chemin offert : recherche A* sur une grille de 0,5 m, puis la suite de cases est réduite
+ * au moins de segments droits possible (chacun vérifié par checkSegment).
+ */
+function gridPlan(state: GameState, enc: Enclosure, grid: Grid): SizedPlan | null {
+  for (const w of NEAR_WEIGHTS) {
+    const plan = gridPlanWith(state, enc, grid, w)
+    if (plan) return plan
+  }
+  return null
+}
+
+function gridPlanWith(state: GameState, enc: Enclosure, grid: Grid, nearWeight: number): SizedPlan | null {
+  const { nx, nz, free, near } = grid
+  const total = nx * nz
+  const reach = reachableIds(state)
+  const net = allSegments(state).filter((s) => reach.has(s.id))
+  const range = PATHS_TUNING.WIDTH_M / 2 + PATHS_TUNING.TOUCH_EXTRA_M - 1e-6
+  const toFence = (i: number) => { const p = cellPoint(grid, i); return rectSegmentDistance(enc.rect, { a: p, b: p }) }
+  const isGoal = new Uint8Array(total)
+  const h = new Float64Array(total)
+  for (let i = 0; i < total; i++) {
+    if (!free[i]) continue
+    const d = toFence(i)
+    h[i] = Math.max(0, d - range)
+    if (d <= range) isGoal[i] = 1
+  }
+  const g = new Float64Array(total).fill(Infinity)
+  const from = new Int32Array(total).fill(-1)
+  const heap = new MinHeap()
+  for (let i = 0; i < total; i++) {
+    if (!free[i]) continue
+    const p = cellPoint(grid, i)
+    if (net.some((s) => pointSegmentDistance(p, s) <= GRID_STEP * Math.SQRT1_2 + 1e-9)) { g[i] = 0; heap.push(h[i], i) }
+  }
+  let goal = -1
+  while (heap.size) {
+    const cur = heap.pop()
+    if (isGoal[cur]) { goal = cur; break }
+    const cx = cur % nx, cz = Math.floor(cur / nx)
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dz = -1; dz <= 1; dz++) {
+        if (!dx && !dz) continue
+        const x = cx + dx, z = cz + dz
+        if (x < 0 || z < 0 || x >= nx || z >= nz) continue
+        const n = z * nx + x
+        if (!free[n]) continue
+        const ng = g[cur] + (dx && dz ? Math.SQRT2 : 1) * GRID_STEP * (1 + nearWeight * near[n])
+        if (ng < g[n] - 1e-12) { g[n] = ng; from[n] = cur; heap.push(ng + h[n], n) }
+      }
+    }
+  }
+  if (goal < 0) return null
+  const cells: PathPoint[] = []
+  for (let i = goal; i >= 0; i = from[i]) cells.push(cellPoint(grid, i))
+  cells.reverse()
+  if (cells.length < 2) return null
+  // Le premier point part du réseau lui-même (la case de départ peut en être à quelques décimètres).
+  let begin = cells[0], bestD = Infinity
+  for (const s of net) { const c = closestPoint(cells[0], s); const d = dist(c, cells[0]); if (d < bestD) { bestD = d; begin = c } }
+  cells[0] = begin
+  // Moins de segments possible : parcours en largeur sur les cases du trajet (un segment relie deux cases quand checkSegment l'accepte).
+  const n = cells.length
+  const prev = new Int32Array(n).fill(-1)
+  const seen = new Uint8Array(n); seen[0] = 1
+  const queue = [0]
+  for (let q = 0; q < queue.length && !seen[n - 1]; q++) {
+    const i = queue[q]
+    // Un départ au milieu du trajet n'est pas encore sur le réseau : on le simule par un point posé là.
+    const from = i === 0 ? state : { ...state, paths: [...state.paths, { id: state.nextId, a: cells[i], b: cells[i] }] }
+    for (let j = n - 1; j > i; j--) {
+      if (seen[j] || !checkSegment(from, cells[i], cells[j], { free: true }).ok) continue
+      seen[j] = 1; prev[j] = i; queue.push(j)
+      if (j === n - 1) break
+    }
+  }
+  if (!seen[n - 1]) return null
+  const chain: number[] = []
+  for (let i = n - 1; i >= 0; i = prev[i]) chain.push(i)
+  chain.reverse()
+  const segments: Seg[] = []
+  let cost = 0, length = 0, cur: GameState = state
+  for (let k = 0; k + 1 < chain.length; k++) {
+    const a = { ...cells[chain[k]] }, b = { ...cells[chain[k + 1]] }
+    const c = checkSegment(cur, a, b, { free: true })
+    if (!c.ok) return null
+    segments.push({ a, b }); cost += c.cost; length += c.length
+    cur = { ...cur, paths: [...cur.paths, { id: cur.nextId + segments.length, a, b }] }
+  }
+  return isLinked(cur, enc.id) ? { segments, cost, length } : null
+}
+
 /**
  * Chemin offert (vieilles parties) : relie gratuitement chaque enclos non relié, le plus facile d'abord ;
- * le réseau grandit à chaque ajout. Ne modifie pas l'état reçu.
+ * le réseau grandit à chaque ajout. Quand ni la ligne droite ni le L ne passent, une recherche sur grille prend le relais.
+ * Ne modifie pas l'état reçu.
  */
 export function giftPaths(state: GameState): { state: GameState; linked: number[]; stuck: number[] } {
   const s = structuredClone(state)
   const todo = s.enclosures.filter((e) => !isLinked(s, e.id)).map((e) => e.id)
+  let grid: Grid | null = null
   for (;;) {
+    const open = todo.filter((id) => !isLinked(s, id))
+    if (open.length === 0) break
     let pick: SizedPlan | null = null
-    for (const id of todo) {
-      if (isLinked(s, id)) continue
+    for (const id of open) {
       const plan = bestPlan(s, s.enclosures.find((e) => e.id === id)!)
       if (plan && (!pick || plan.length < pick.length)) pick = plan
     }
+    if (!pick) {
+      grid ??= freeGrid(s) // ne dépend ni des chemins ni du niveau en cours : calculée une fois
+      for (const id of open) {
+        const plan = gridPlan(s, s.enclosures.find((e) => e.id === id)!, grid)
+        if (plan && (!pick || plan.length < pick.length)) pick = plan
+      }
+    }
     if (!pick) break
     for (const seg of pick.segments) s.paths.push({ id: s.nextId++, a: { ...seg.a }, b: { ...seg.b } })
+    if (open.filter((id) => !isLinked(s, id)).length === open.length) break // un tour qui ne relie rien de neuf : on arrête
   }
   return { state: s, linked: todo.filter((id) => isLinked(s, id)), stuck: todo.filter((id) => !isLinked(s, id)) }
 }

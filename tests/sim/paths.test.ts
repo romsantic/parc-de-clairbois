@@ -200,6 +200,47 @@ describe('relier un enclos et chemin offert', () => {
   })
 })
 
+describe('chemin offert : recherche sur grille', () => {
+  // Deux murs en chicane : l'enclos 1 ne s'atteint qu'en contournant (descente à l'est, long couloir vers l'ouest, descente, retour vers l'enclos).
+  const chicane = () => emptyState({
+    village: { level: 3, clientsServed: 0 },
+    enclosures: [enc(1, -26, -9, 6, 4), enc(2, -34, 3.5, 22, 2), enc(3, -28, -1.5, 24, 2)],
+  })
+  const replay = (s: ReturnType<typeof chicane>, paths: ReturnType<typeof chicane>['paths']) => {
+    let cur = { ...s, paths: [] as typeof paths }
+    for (const p of paths) {
+      expect(checkSegment(cur, p.a, p.b, { free: true }).ok).toBe(true)
+      cur = { ...cur, paths: [...cur.paths, p] }
+    }
+  }
+  it('ni ligne droite ni L : linkPlan abandonne, le chemin offert contourne en plusieurs virages', () => {
+    const s = chicane()
+    expect(linkPlan(s, 1)).toBeNull()
+    const g = giftPaths(s)
+    expect(g.linked).toContain(1)
+    expect(g.stuck).toEqual([])
+    expect(isLinked(g.state, 1)).toBe(true)
+    // le trajet de l'enclos 1 a au moins deux virages : au moins trois segments au-delà de ceux des enclos 2 et 3
+    expect(g.state.paths.length).toBeGreaterThanOrEqual(5)
+  })
+  it('tous les segments offerts passent checkSegment (gratuit), dans l’ordre où ils sont posés', () => {
+    const s = chicane()
+    replay(s, giftPaths(s).state.paths)
+  })
+  it('un enclos vraiment enfermé reste « bloqué », sans que rien ne se bloque', () => {
+    const ring = emptyState({
+      village: { level: 3, clientsServed: 0 },
+      enclosures: [enc(1, -20, -4, 8, 8), enc(2, -26, -12, 20, 8), enc(3, -26, 4, 20, 8), enc(4, -26, -12, 6, 24), enc(5, -12, -12, 6, 24)],
+    })
+    const t0 = performance.now()
+    const g = giftPaths(ring)
+    expect(performance.now() - t0).toBeLessThan(5000)
+    expect(g.stuck).toEqual([1])
+    expect(isLinked(g.state, 1)).toBe(false)
+    replay(ring as ReturnType<typeof chicane>, g.state.paths)
+  })
+})
+
 describe('chemin offert : copies', () => {
   it('les points offerts ne sont jamais partagés avec l’état d’origine ni l’entrée', () => {
     const g = newGame(1, T0)
