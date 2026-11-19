@@ -395,3 +395,7 @@ button.recuperer .cadeau svg { width: 18px; height: 18px; display: block; }
   .volet dl.fiche { grid-template-columns: 1fr; gap: 0; }
   .volet dl.fiche dd { margin-bottom: 4px; }
 }
+
+.zone-selection .alerte { color: #b23a2a; font-size: 13px; white-space: normal; }
+.barre-bas button.vendre { padding: 2px 8px; font-size: 13px; white-space: nowrap; }
+.barre-bas button.vendre.confirmer { background: #f7d6cf; color: #8f2a1a; border-color: #e09484; }

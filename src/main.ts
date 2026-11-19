@@ -125,14 +125,14 @@ async function start(): Promise<void> {
     })
     const pathEditor = createPathEditor(world, canvas, rig, { get: getState, dispatch })
     const pathsView = createPathsView(world)
-    const picker = createPicker(world, canvas, () => park.enclosureMeshes(), () => editor.active() || pathEditor.active(), () => villageView.slotMeshes(), () => decor.propMeshes())
+    const picker = createPicker(world, canvas, () => park.enclosureMeshes(), () => editor.active() || pathEditor.active(), () => villageView.slotMeshes(), () => decor.propMeshes(), getState)
     const bottomBar = mountBottomBar({
       get: getState,
       selection: () => selection,
       dispatch,
       startBuild: (zone, point) => { closeDrawer(); pathEditor.close(); editor.startBuild(zone, point) },
       startResize: (id) => { closeDrawer(); pathEditor.close(); editor.startResize(id) },
-      startPath: () => { closeDrawer(); editor.close(); pathEditor.start() },
+      startPath: (from) => { closeDrawer(); editor.close(); pathEditor.start(from) },
       openGazette: game.openGazette,
       focusMission: () => {
         const spot = markerSpot(getState())
