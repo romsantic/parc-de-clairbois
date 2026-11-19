@@ -412,7 +412,7 @@ button.recuperer .cadeau svg { width: 18px; height: 18px; display: block; }
 /* ---------- Personnel (V2 étape 2) ---------- */
 .ressource.pieces[data-dette="oui"] { color: #b23a2a; }
 .ressource.personnel[data-alerte="oui"] { color: #b23a2a; }
-.zone-selection .soins { font-size: 12px; flex-basis: 100%; }
+.zone-selection .soins { color: #b23a2a; font-weight: 600; font-size: 12px; flex-basis: 100%; }
 .volet .carte-perso { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; padding: 6px 0; border-bottom: 1px solid #e3d8bb; }
 .volet .carte-perso .infos { flex: 1 1 12em; min-width: 0; }
 .volet .carte-perso .boutons { display: flex; flex-wrap: wrap; gap: 6px; }
