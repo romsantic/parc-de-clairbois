@@ -21,6 +21,11 @@ import { buildingInfo, type InfoTarget } from './buildingInfo'
 import { toggleVillagePanel } from './villagePanel'
 import { INFO_LABELS } from '../data/buildingInfo'
 import { VILLAGE_PROPS } from '../data/village'
+import { allSegments, closestPoint, isLinked, linkPlan, signature } from '../sim/paths'
+import type { PathPoint } from '../sim/types'
+import { ENTRANCE_ID } from '../data/paths'
+import { createConfirmGuard } from './confirmGuard'
+import { NO_PATH_TEXT, pathWarning } from './pathModel'
 
 export interface BottomBarContext {
   get(): GameState
@@ -28,6 +33,8 @@ export interface BottomBarContext {
   dispatch(action: Action, from?: HTMLElement | null): boolean
   startBuild(zone: Zone, point: { x: number; z: number }): void
   startResize(encId: number): void
+  /** `from` : point d'un chemin existant d'où repartir (Prolonger) ; sans lui, on choisit le départ sur la carte. */
+  startPath(from?: PathPoint): void
   openGazette(): void
   /** Glisse la caméra jusqu'au « ! » de la mission ; false s'il n'y en a pas. */
   focusMission(): boolean
@@ -58,10 +65,14 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
 
   const marchand = guide(iconButton(ICONS.marchand, 'Marchand d’animaux'), 'marchand')
   marchand.addEventListener('click', () => toggleMerchantPanel({ get: ctx.get, selection: ctx.selection, dispatch: ctx.dispatch }))
+  /** Avertissement de destruction d'un chemin : une bulle au-dessus de la barre, pour ne rien déplacer dans la barre (le 2e clic doit tomber sur le même bouton). */
+  const pathNote = document.createElement('div')
+  pathNote.className = 'note-chemin'; pathNote.setAttribute('role', 'status'); pathNote.hidden = true
+  document.body.append(pathNote)
   const gazette = iconButton(ICONS.gazette, 'La Gazette de Clairbois')
   gazette.addEventListener('click', () => ctx.openGazette())
   const fold = iconButton(ICONS.replier, 'Replier la barre')
-  fold.addEventListener('click', () => { bar.hidden = true; tab.hidden = false; closeDrawer() })
+  fold.addEventListener('click', () => { bar.hidden = true; tab.hidden = false; closeDrawer(); pathNote.hidden = true })
   tab.addEventListener('click', () => { bar.hidden = false; tab.hidden = true })
   right.append(marchand, gazette, fold)
 
@@ -73,6 +84,9 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
   let sellArmed: number | null = null
   let sellArmedAt = 0
   let sellTimer = 0
+  /** Destruction d'un chemin : 1er clic arme (avertissement), 2e clic confirme ; désarmée au bout de 4 s. */
+  const pathGuard = createConfirmGuard()
+  let pathGuardTimer = 0
 
   function enclosureDetails(encId: number) {
     openDrawer(`enclos:${encId}`, 'Animaux de l’enclos', (body) => {
@@ -80,6 +94,7 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
       const enc = s.enclosures.find((e) => e.id === encId)
       body.replaceChildren()
       if (!enc) { body.append(text('p', 'Cet enclos n’existe plus.')); return }
+      if (!isLinked(s, encId)) body.append(text('p', NO_PATH_TEXT, 'rouge'))
       const here = animalsIn(s, encId)
       if (here.length === 0) { body.append(text('p', 'Cet enclos est vide. Le marchand d’animaux arrive bientôt.')); return }
       const table = document.createElement('table')
@@ -169,8 +184,45 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
     return btn
   }
 
+  /** Fiche d'un chemin : longueur, Prolonger, Détruire en deux clics (l'entrée ne se détruit pas). */
+  function disarmPath() { pathGuard.reset(); clearTimeout(pathGuardTimer); pathNote.hidden = true; pathNote.textContent = '' }
+
+  function pathSheet(id: number, point: PathPoint) {
+    disarmPath()
+    const seg = allSegments(ctx.get()).find((x) => x.id === id)
+    if (!seg) { left.append(text('span', 'Clique un enclos ou une zone', 'discret invite')); return }
+    const entrance = id === ENTRANCE_ID
+    left.innerHTML = ICONS.chemin
+    left.append(text('b', entrance ? 'Chemin de l’entrée' : `Chemin · ${Math.round(Math.hypot(seg.b.x - seg.a.x, seg.b.z - seg.a.z))} m`, 'nom'))
+    const extend = document.createElement('button')
+    extend.type = 'button'; extend.className = 'principal'; extend.textContent = 'Prolonger'
+    extend.addEventListener('click', () => ctx.startPath(closestPoint(point, seg)))
+    actions.append(extend)
+    if (entrance) return
+    const del = document.createElement('button')
+    del.type = 'button'; del.className = 'vendre'; del.textContent = 'Détruire'
+    const disarmLook = () => { disarmPath(); del.className = 'vendre'; del.textContent = 'Détruire' }
+    del.addEventListener('click', () => {
+      const r = pathGuard.click()
+      if (r === 'ignored') return
+      clearTimeout(pathGuardTimer)
+      if (r === 'armed') {
+        pathNote.textContent = pathWarning(ctx.get(), id); pathNote.hidden = false
+        del.style.minWidth = `${del.offsetWidth}px` // le bouton ne bouge pas (il ne peut que grandir vers la droite)
+        del.className = 'vendre confirmer'; del.textContent = 'Détruire ?'
+        pathGuardTimer = window.setTimeout(disarmLook, 4000)
+        return
+      }
+      pathNote.hidden = true
+      if (ctx.dispatch({ type: 'detruireChemin', id }, del)) { builtFor = ''; update() } // le chemin n'existe plus : fiche reconstruite
+      else disarmLook() // refusé : le bouton redevient « Détruire »
+    })
+    actions.append(del)
+  }
+
   function build(p: Pick) {
     left.replaceChildren(); actions.replaceChildren(); slotUpdate = null
+    disarmPath() // l'avertissement et son minuteur ne survivent pas à un changement de fiche
     const s = ctx.get()
     if (p.kind === 'enclos') {
       const enc = s.enclosures.find((e) => e.id === p.id)
@@ -193,6 +245,23 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
         ctx.dispatch({ type: 'vu', what: 'ficheEnclos' })
       })
       actions.append(clean, cure, resize, details)
+      // Plan de liaison calculé une seule fois ici (coûteux), pas à chaque rafraîchissement.
+      if (!isLinked(s, p.id)) {
+        left.append(text('span', NO_PATH_TEXT, 'rouge alerte'))
+        const plan = linkPlan(s, p.id)
+        const link = document.createElement('button')
+        link.type = 'button'; link.className = 'principal'
+        if (plan) {
+          link.textContent = `Relier (${plan.cost} pièces)`
+          link.addEventListener('click', () => ctx.dispatch({ type: 'relierEnclos', encId: p.id }, link))
+        } else {
+          link.textContent = 'Tracer un chemin'
+          link.addEventListener('click', () => ctx.startPath())
+        }
+        actions.append(link)
+      }
+    } else if (p.kind === 'chemin') {
+      pathSheet(p.id, p.point)
     } else if (p.kind === 'zone') {
       left.append(text('b', p.zone.name, 'nom'))
       if (p.zone.unlockLevel > s.village.level) {
@@ -201,7 +270,9 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
         const add = iconButton(ICONS.plus, 'Nouvel enclos')
         if (p.zone.id === 'prairie') guide(add, 'prairie')
         add.addEventListener('click', () => ctx.startBuild(p.zone, p.point))
-        actions.append(add)
+        const path = iconButton(ICONS.chemin, 'Tracer un chemin')
+        path.addEventListener('click', () => ctx.startPath())
+        actions.append(add, path)
       }
     } else if (p.kind === 'emplacement') {
       slotUpdate = buildBuildingBar(ctx, p.slot, left, actions)
@@ -253,8 +324,10 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
   function update() {
     updateMission()
     const p = ctx.selection()
-    const kind = p.kind === 'enclos' ? `e${p.id}` : p.kind === 'zone' ? `z${p.zone.id}` : p.kind === 'emplacement' ? `s${p.slot}` : p.kind === 'decor' ? `d${p.index}` : 'rien'
-    const key = p.kind === 'emplacement' ? slotKey(ctx.get(), p.slot) : kind
+    const kind = p.kind === 'enclos' ? `e${p.id}` : p.kind === 'chemin' ? `c${p.id}` : p.kind === 'zone' ? `z${p.zone.id}` : p.kind === 'emplacement' ? `s${p.slot}` : p.kind === 'decor' ? `d${p.index}` : 'rien'
+    // Un enclos change de fiche quand son lien change ; non relié, quand le réseau change (le plan de liaison peut changer).
+    const linkKey = p.kind === 'enclos' ? (isLinked(ctx.get(), p.id) ? ':l' : `:u${signature(ctx.get())}`) : ''
+    const key = p.kind === 'emplacement' ? slotKey(ctx.get(), p.slot) : kind + linkKey
     if (key !== builtFor) {
       builtFor = key; build(p)
       // Le volet ne se ferme que si la sélection change, pas quand le même emplacement évolue (niveau, garde-manger).

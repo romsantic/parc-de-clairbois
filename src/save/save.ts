@@ -1,6 +1,7 @@
 import type { GameState, MissionProgress } from '../sim/types'
 import { SPECIES } from '../data/species'
 import { BUILDINGS, SLOTS } from '../data/economy'
+import { ENTRANCE_ID } from '../data/paths'
 import { TUTORIAL, STORY } from '../data/missions'
 import { STAT_KEYS } from '../sim/stats'
 import { CURRENT_VERSION, MIGRATIONS, type Migration } from './migrations'
@@ -16,7 +17,7 @@ export interface Storage {
 
 export type LoadResult =
   | { kind: 'aucune' }
-  | { kind: 'ok'; state: GameState; savedAt?: number }
+  | { kind: 'ok'; state: GameState; savedAt?: number; fromVersion: number }
   | { kind: 'illisible' }
   | { kind: 'trop-recente'; version: number }
   | { kind: 'migration-impossible'; version: number }
@@ -78,7 +79,7 @@ export function loadGame(store: Storage, migrations: Record<number, Migration> =
     return { kind: 'migration-impossible', version: from }
   }
   const savedAt = (data as { savedAt?: unknown }).savedAt
-  return looksLikeGame(state) ? { kind: 'ok', state, savedAt: typeof savedAt === 'number' && Number.isFinite(savedAt) ? savedAt : undefined } : broken()
+  return looksLikeGame(state) ? { kind: 'ok', state, fromVersion: from, savedAt: typeof savedAt === 'number' && Number.isFinite(savedAt) ? savedAt : undefined } : broken()
 }
 
 const finite = (x: unknown) => typeof x === 'number' && Number.isFinite(x)
@@ -133,6 +134,12 @@ function looksLikeGame(s: unknown): s is GameState {
   for (const k of STAT_KEYS) if (!finite(st.counts[k])) return false
   for (const n of Object.values(st.counts)) if (!finite(n)) return false
   for (const n of Object.values(st.birthsBySpecies)) if (!finite(n)) return false
+  if (!Array.isArray(g.paths)) return false
+  const pathIds = new Set<number>()
+  for (const p of g.paths) {
+    if (!p || !finite(p.id) || p.id === ENTRANCE_ID || pathIds.has(p.id) || !p.a || !p.b || !finite(p.a.x) || !finite(p.a.z) || !finite(p.b.x) || !finite(p.b.z)) return false
+    pathIds.add(p.id)
+  }
   const ms = g.missions
   if (!ms || !ms.tutorial || !intBetween(ms.tutorial.step, 0, TUTORIAL.length) || !ms.story || !intBetween(ms.story.index, 0, STORY.length)) return false
   if (ms.tutorial.current !== null && !validProgress(ms.tutorial.current)) return false

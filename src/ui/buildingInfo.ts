@@ -2,7 +2,7 @@
 import { BUILDINGS, ECONOMY, FARM, SLOTS } from '../data/economy'
 import { BUILDING_ROLE, INFO_LABELS, MAIRIE_INFO } from '../data/buildingInfo'
 import { VILLAGE_PROPS } from '../data/village'
-import { buildingIncomePerHour, spendPerClient } from '../sim/economy'
+import { buildingIncomePerHour, visibleSpecies, spendPerClient } from '../sim/economy'
 import { canLevelUp, missionGateOk, population } from '../sim/village'
 import type { GameState } from '../sim/types'
 import { formatAmount, formatCoins } from './format'
@@ -45,7 +45,7 @@ export function buildingInfo(state: GameState, target: InfoTarget): BuildingInfo
     )
   } else {
     const flow = buildingIncomePerHour(state, target.slot)
-    const especes = new Set(state.animals.map((a) => a.species)).size
+    const especes = visibleSpecies(state)
     rows.push(
       { label: INFO_LABELS.income, value: `≈ ${formatCoins(flow.pieces)} par heure` },
       { label: INFO_LABELS.clients, value: `≈ ${formatAmount(flow.clients)} par heure (maximum ${d.maxClientsPerH[i]})` },

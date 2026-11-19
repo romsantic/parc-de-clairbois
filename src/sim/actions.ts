@@ -1,7 +1,9 @@
 import { SPECIES, type Food } from '../data/species'
 import { BUILDINGS, FARM, SLOTS } from '../data/economy'
 import { TUNING } from '../data/tuning'
-import type { BuildingType, GameState, Rect } from './types'
+import type { BuildingType, GameState, PathPoint, Rect } from './types'
+import { ENTRANCE_ID } from '../data/paths'
+import { checkSegment, isLinked, linkPlan } from './paths'
 import { bump } from './stats'
 import { fairPrice } from './economy'
 import { canLevelUp, farmLevel } from './village'
@@ -215,6 +217,38 @@ export function setTicketPrice(state: GameState, price: number): ActionResult {
   return { ok: true, state: s }
 }
 
+/** Trace un chemin à partir d'un chemin existant. */
+export function traceChemin(state: GameState, a: PathPoint, b: PathPoint): ActionResult {
+  const c = checkSegment(state, a, b)
+  if (!c.ok) return { ok: false, reason: c.reason }
+  const s = structuredClone(state)
+  s.coins -= c.cost
+  s.paths.push({ id: s.nextId++, a: { ...a }, b: { ...b } })
+  return { ok: true, state: s }
+}
+
+/** Détruit un chemin construit (rien n'est remboursé) ; l'entrée est indestructible. */
+export function destroyPath(state: GameState, id: number): ActionResult {
+  if (id === ENTRANCE_ID) return { ok: false, reason: "Le chemin de l'entrée ne peut pas être détruit." }
+  if (!state.paths.some((p) => p.id === id)) return NOT_FOUND
+  const s = structuredClone(state)
+  s.paths = s.paths.filter((p) => p.id !== id)
+  return { ok: true, state: s }
+}
+
+/** Relie un enclos au réseau par le plus court chemin possible. */
+export function linkEnclosure(state: GameState, encId: number): ActionResult {
+  if (!state.enclosures.some((e) => e.id === encId)) return NOT_FOUND
+  if (isLinked(state, encId)) return { ok: false, reason: 'Cet enclos est déjà relié.' }
+  const plan = linkPlan(state, encId)
+  if (!plan) return { ok: false, reason: "Aucun chemin possible jusqu'à cet enclos." }
+  if (state.coins < plan.cost) return noMoney(plan.cost)
+  const s = structuredClone(state)
+  s.coins -= plan.cost
+  for (const seg of plan.segments) s.paths.push({ id: s.nextId++, a: { ...seg.a }, b: { ...seg.b } })
+  return { ok: true, state: s }
+}
+
 /** Toutes les actions du joueur, pour l'interface. */
 export type Action =
   | { type: 'nettoyer'; encId: number }
@@ -236,6 +270,9 @@ export type Action =
   /** Récupère la récompense d'une mission réussie (id : celle visée, utile pour les quotidiennes). */
   | { type: 'recuperer'; track: 'tutoriel' | 'histoire' | 'quotidienne'; id?: string }
   | { type: 'passerTutoriel' }
+  | { type: 'tracerChemin'; a: PathPoint; b: PathPoint }
+  | { type: 'detruireChemin'; id: number }
+  | { type: 'relierEnclos'; encId: number }
   /** Le joueur a lu la nouvelle mission : le « ! » s'éteint (silencieux). */
   | { type: 'lireMission' }
 
@@ -279,6 +316,9 @@ function run(state: GameState, a: Action): ActionResult {
     case 'vu': return { ok: true, state: structuredClone(state) }
     case 'recuperer': return claimMission(state, a.track, a.id)
     case 'passerTutoriel': return skipTutorial(state)
+    case 'tracerChemin': return traceChemin(state, a.a, a.b)
+    case 'detruireChemin': return destroyPath(state, a.id)
+    case 'relierEnclos': return linkEnclosure(state, a.encId)
     case 'lireMission': { const s = structuredClone(state); s.missions.unread = false; return { ok: true, state: s } }
   }
 }

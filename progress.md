@@ -90,8 +90,8 @@
 
 | Étape V2 | Contenu | État |
 |---|---|---|
-| 1 | Chemins à construire | à lancer (session d'étape) |
-| 2 | Personnel et maison du personnel | plan prêt et voté (branche `etape-v2-2-personnel`) |
+| 1 | Chemins à construire | ✅ fusionnée dans `main` (4935132) avec l'accord de Romain le 19/11/2026, publiée et vérifiée en ligne |
+| 2 | Personnel et maison du personnel | plan prêt et voté (branche `etape-v2-2-personnel`) — **en cours** (session d'étape lancée le 19/11/2026, `main` fusionné dans la branche) |
 | 3 | Maladies et centre vétérinaire | plan prêt et voté (branche `etape-v2-3-maladies`) |
 | 4 | Ferme qui produit (parcelles, fermier, grange) | plan prêt et voté (branche `etape-v2-4-ferme`) |
 | 5 | Confort, décoration, déchets, satisfaction, animateur | plan prêt et voté (branche `etape-v2-5-confort`) |
@@ -99,6 +99,34 @@
 | 7 | Trophées, musée, équilibrage, finition | plan prêt et voté (branche `etape-v2-7-trophees`) |
 
 **Préparation des étapes 2 à 7 (19/11/2026, pendant l'étape 1)** — Romain a voté les détails de chaque étape (§12 de la conception V2, 21 espèces choisies, CC-BY accepté pour ours, lynx, bison, élan et une fontaine) et validé la maquette de l'interface V2 (`docs/maquettes/v2-interface.png`). Les plans `docs/superpowers/plans/2026-11-19-v2-etape-{2..7}-*.md` sont écrits, avec les votes en tête. Chaque étape a sa branche `etape-v2-N-…`, partie de `plans-v2` (conception + plans + maquette, **aucun code**). **Au lancement d'une étape** : fusionner `main` (avec les étapes précédentes) dans sa branche, puis revérifier le tableau « ce qu'on attend des étapes précédentes » en tête du plan avant de coder. Emplacements de village réservés : 6 maison du personnel, 7 centre vétérinaire, 8 grange, puis restaurant et musée au prochain numéro libre.
+
+**V2 — étape 1 : chemins à construire** (branche `etape-v2-1-chemins`, plan `docs/superpowers/plans/2026-11-19-v2-etape-1-chemins.md`) — plan écrit et **validé par Romain le 19/11/2026** (décisions D1 à D8 acceptées telles quelles)
+
+| # | Sous-tâche | Agent · modèle | État |
+|---|---|---|---|
+| 1 | État v4, données et liaison des enclos | agent · Sonnet | faite (4284bc7) — relue (0 critique, 0 important) — 659 tests |
+| 2 | Tracer, détruire, relier, chemin offert (règles) | agent · Sonnet | faite (9829e52) — relue (0 critique, 0 important) — 684 tests |
+| 3 | Visiteurs, ancienne partie, joueur automatique | agent · Sonnet | faite (8bec3f3 + 521c884) — relue ; joueur automatique : Village jour 3, Bourg 7, fin 18-19 (il laisse des allées de 2,5 m et fait des enclos plus petits : place plus serrée, à regarder avec Romain) — 694 tests |
+| 4 | Chemins en 3D et éditeur de tracé | agent · Sonnet | faite (bfa99fa + 6d67385) — relue ; pas encore vue dans le navigateur — 698 tests |
+| 5 | Fiches : chemin, enclos non relié | agent · Sonnet | faite (93f9016) — relue (0 critique, 0 important) ; pas encore vue dans le navigateur — 701 tests |
+| 6 | Promeneurs sur le réseau réel | agent · Sonnet | faite (4582e62) — relue (0 critique, 0 important) ; pas encore vus marcher dans le navigateur — 707 tests |
+| 7 | Vérification d'ensemble, relecture et publication | chef (Opus) + relecture · Opus | vérifiée dans le navigateur (tracé vert/rouge et raisons, fiche chemin, Détruire, Relier, ancienne partie v3 → chemins offerts + message, pavés et lanternes, téléphone) ; relecture finale Opus (0 critique, 3 importants) corrigée en 1c8cdd6, 0304292, d00cb11, f2c7cf7, relue à nouveau (approuvée) — 713 tests ; **fusionnée dans `main` (4935132) avec l'accord de Romain le 19/11/2026, publiée et vérifiée en ligne** |
+
+**Décisions de l'étape V2-1 (en plus de la spec)** : D1–D8 du plan acceptées par Romain. Chemin de l'entrée = allée entrée → pont + rues du village (fixes) ; on ne trace que côté zoo ; relié = chemin à moins de 1 m de la clôture ; 3 pièces/m, non remboursé ; bouton « Relier (N pièces) » ; chemin offert aux anciennes parties (droit, en L, sinon recherche sur grille) avec un message unique. À regarder par Romain : la place plus serrée (il faut laisser des allées entre les enclos), la tolérance du doigt pour toucher un chemin sur téléphone, les promeneurs sur un embranchement (pas vus marcher, panneau masqué). Laissé pour plus tard : couloirs de 2,2 à 3 m que la recherche du chemin offert ne voit pas (l'avis nomme alors les enclos à relier), chargement d'une vieille partie un peu lent sur téléphone (une seule fois).
+
+**V2 — étape 2 : personnel et maison du personnel** (branche `etape-v2-2-personnel`, plan `docs/superpowers/plans/2026-11-19-v2-etape-2-personnel.md`, **voté par Romain le 19/11/2026**, D1–D12) — travail dans le dossier à part `D:/Claude IA Dossier/parc-clairbois-v2-2` (le dossier principal reste sur `main`)
+
+| # | Sous-tâche | Agent · modèle | État |
+|---|---|---|---|
+| 1 | État v5, données du personnel, nouvelle partie | agent · Sonnet | — |
+| 2 | Soigneurs et agents : qui suit quoi, effets, affectation | agent · Sonnet | — |
+| 3 | Paie, dette, expérience et candidats | agent · Sonnet | — |
+| 4 | Maison du personnel | agent · Sonnet | — |
+| 5 | Actions, dette, ancienne partie, joueur automatique | agent · Sonnet | — |
+| 6 | Petits textes du personnel et de la Gazette | agent · Haiku | — |
+| 7 | Interface : volet Personnel, fiches, barre du haut | agent · Sonnet | — |
+| 8 | Employés visibles sur la carte | agent · Sonnet | — |
+| 9 | Vérification d'ensemble, relecture et publication | chef (Opus) + relecture · Opus | — |
 
 ## Liens
 
@@ -202,4 +230,4 @@ Après la V1 : V2 à V5 décrites en fin de spec (personnel et centre vétérina
 
 ## Suite
 
-- La V1 est publiée. La V2 est conçue et validée (19/11/2026) ; étape 1 (chemins à construire) à faire dans sa propre session.
+- La V1 est publiée. V2 : étape 1 (chemins à construire) fusionnée et publiée le 19/11/2026 ; étape 2 (personnel et maison du personnel) à faire dans sa propre session.

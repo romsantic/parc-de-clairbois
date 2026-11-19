@@ -10,7 +10,7 @@ export const T0 = 1_800_000_000_000 - (1_800_000_000_000 % 600_000) // aligné s
 
 export function emptyState(over: Partial<GameState> = {}): GameState {
   return {
-    version: 3, time: T0, rng: 12345, coins: 1000, nextId: 100,
+    version: 4, time: T0, rng: 12345, coins: 1000, nextId: 100,
     pantry: { fourrage: 0, viande: 0, capacity: 1000 },
     enclosures: [], animals: [],
     ticketPrice: 2, reputation: 1,
@@ -26,6 +26,7 @@ export function emptyState(over: Partial<GameState> = {}): GameState {
       unread: true,
     },
     utcOffsetMin: 0,
+    paths: [],
     ...over,
   }
 }
@@ -53,6 +54,22 @@ export function animal(id: number, species: SpeciesId, sex: 'F' | 'M', encId: nu
 }
 
 /**
+ * Relie tous les enclos (pour les tests de charge) : une chaîne de chemins de l'allée jusqu'au centre de chaque enclos.
+ * Pas réaliste (les chemins traversent les enclos, les parcs tassés n'ont pas de place pour de vrais chemins) : seule la liaison compte ici.
+ */
+function linkedPark(s: GameState): GameState {
+  let prev = { x: -20, z: 10 } // sur l'allée d'entrée
+  const paths = [...s.paths]
+  let nextId = s.nextId
+  for (const e of s.enclosures) {
+    const c = { x: e.rect.x + e.rect.w / 2, z: e.rect.z + e.rect.d / 2 }
+    paths.push({ id: nextId++, a: prev, b: c })
+    prev = c
+  }
+  return { ...s, paths, nextId }
+}
+
+/**
  * Parc de stress (pas réaliste) : village niveau 3, 15 enclos de 6 m dans leur zone, 150 animaux des 10 espèces
  * (10 par enclos, donc très surpeuplé), en bonne santé, garde-manger de capacité 800 plein, bâtiments construits.
  */
@@ -72,7 +89,7 @@ export function crowdedPark(): GameState {
       encId++
     })
   }
-  return emptyState({
+  return linkedPark(emptyState({
     coins: 5000, nextId: animalId,
     pantry: { fourrage: 400, viande: 400, capacity: 800 },
     village: { level: 3, clientsServed: 0 },
@@ -81,7 +98,7 @@ export function crowdedPark(): GameState {
       { slot: 2, type: 'boutique', level: 1 }, { slot: 3, type: 'auberge', level: 1 },
     ],
     enclosures, animals, missions: storyAt(8),
-  })
+  }))
 }
 
 /**
@@ -118,7 +135,7 @@ export function bigPark(): GameState {
   })
   const capacityTotal = 800
   const scale = Math.min(1, capacityTotal / (3 * (perDay.fourrage + perDay.viande)))
-  return emptyState({
+  return linkedPark(emptyState({
     coins: 5000, nextId: animalId,
     pantry: { fourrage: 3 * perDay.fourrage * scale, viande: 3 * perDay.viande * scale, capacity: capacityTotal },
     village: { level: 3, clientsServed: 0 },
@@ -127,5 +144,5 @@ export function bigPark(): GameState {
       { slot: 2, type: 'boutique', level: 1 }, { slot: 3, type: 'auberge', level: 1 },
     ],
     enclosures, animals, missions: storyAt(8),
-  })
+  }))
 }

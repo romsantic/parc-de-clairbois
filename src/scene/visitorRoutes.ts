@@ -1,7 +1,10 @@
-import type { Animal, Building, Enclosure } from '../sim/types'
+import type { Building, GameState } from '../sim/types'
 import { SLOTS } from '../data/economy'
+import { ENTRANCE_PATH } from '../data/paths'
 import { villagePaths } from '../data/zones'
-import { WALK_ROUTE, WALKERS } from '../data/visuals'
+import { WALK_ROUTE } from '../data/visuals'
+import { allSegments, closestPoint, linkedEnclosureIds, reachableIds } from '../sim/paths'
+import { buildPathGraph, dijkstra, shortestPath } from './pathGraph'
 import { BRIDGE_Z, BRIDGE_DECK_Y, BRIDGE_HALF_SPAN } from './decor'
 
 /** Point d'un trajet. Avec `faceX/faceZ` : arrêt possible, en regardant ce point. */
@@ -15,21 +18,6 @@ export function bridgeX(riverDistance: (x: number, z: number) => number): number
   let bx = 0, best = Infinity
   for (let x = -2; x <= 10; x += 0.1) { const d = riverDistance(x, BRIDGE_Z); if (d < best) { best = d; bx = x } }
   return bx
-}
-
-/** Arrêts devant les enclos occupés, sur l'allée du zoo, triés d'ouest en est. */
-export function alleyStops(enclosures: Enclosure[], animals: Animal[], bx: number): RoutePoint[] {
-  const occupied = new Set(animals.map((a) => a.enclosureId))
-  const out: RoutePoint[] = []
-  for (const e of enclosures) {
-    if (!occupied.has(e.id)) continue
-    const r = e.rect
-    const gap = r.z + r.d <= BRIDGE_Z ? BRIDGE_Z - (r.z + r.d) : Math.max(0, r.z - BRIDGE_Z)
-    if (gap > WALKERS.STOP_MAX_GAP) continue
-    const cx = r.x + r.w / 2
-    out.push({ x: Math.min(bx - WALK_ROUTE.STOP_BEFORE_BRIDGE, Math.max(WALK_ROUTE.STOP_WEST_LIMIT, cx)), z: BRIDGE_Z, faceX: cx, faceZ: r.z + r.d / 2 })
-  }
-  return out.sort((a, b) => a.x - b.x)
 }
 
 /** Les deux chemins du village sous forme de polylignes qui partent toutes de la sortie du pont. */
@@ -70,20 +58,66 @@ export function cafeRoute(buildings: Building[], bx: number): RoutePoint[] | nul
 }
 
 /**
- * Trajet complet : bout de la route → allée du zoo (arrêts devant les enclos occupés) → pont →
- * chemin du village → café (ou bout du chemin sans café) → retour par le même chemin.
+ * Prépare les trajets sur le réseau réel (le graphe n'est construit qu'une fois) : renvoie une fonction qui,
+ * à chaque appel, tire un trajet propre à un promeneur. Bout de la route → jusqu'à MAX_STOPS arrêts devant
+ * des enclos occupés et reliés (du plus proche au plus lointain) → bout de l'allée → pont → chemin du village
+ * → café (ou bout du chemin sans café) → retour par le même chemin.
  */
-export function buildRoute(bx: number, alley: RoutePoint[], cafe: RoutePoint[] | null): RoutePoint[] {
-  const village = cafe ?? villageLines(bx)[0].map((p) => ({ x: p.x, z: p.z }))
-  const out: RoutePoint[] = [
-    { x: ROUTE_START_X, z: BRIDGE_Z },
-    ...alley,
-    { x: bx - WALK_ROUTE.BRIDGE_APPROACH, z: BRIDGE_Z },
-    { x: bx + WALK_ROUTE.BRIDGE_APPROACH, z: BRIDGE_Z },
-    ...village,
-  ]
-  const back = out.slice(0, -1).reverse().map((p) => ({ x: p.x, z: p.z }))
-  return [...out, ...back]
+export function networkPlan(state: GameState, bx: number): (rng: () => number) => RoutePoint[] {
+  const reach = reachableIds(state)
+  const segs = allSegments(state).filter((s) => reach.has(s.id))
+  const linked = linkedEnclosureIds(state)
+  const occupied = new Set(state.animals.map((a) => a.enclosureId))
+  const stops: RoutePoint[] = []
+  for (const e of state.enclosures) {
+    if (!occupied.has(e.id) || !linked.has(e.id)) continue
+    const c = { x: e.rect.x + e.rect.w / 2, z: e.rect.z + e.rect.d / 2 }
+    let best: { x: number; z: number } | null = null, bd = Infinity
+    for (const s of segs) {
+      const p = closestPoint(c, s)
+      const d = Math.hypot(c.x - p.x, c.z - p.z)
+      if (d < bd) { bd = d; best = p }
+    }
+    if (best) stops.push({ x: best.x, z: best.z, faceX: c.x, faceZ: c.z })
+  }
+  const g = buildPathGraph(segs, stops)
+  const entrance = ENTRANCE_PATH[0]
+  const start = g.nodeAt(entrance.a), end = g.nodeAt(entrance.b)
+  const { dist } = dijkstra(g, start)
+  const ordered = stops
+    .map((p) => ({ p, node: g.nodeAt(p) }))
+    .filter((c) => dist[c.node] < Infinity)
+  const village = cafeRoute(state.buildings, bx) ?? villageLines(bx)[0].map((p) => ({ x: p.x, z: p.z }))
+
+  return (rng) => {
+    const pool = [...ordered]
+    const picked: typeof ordered = []
+    while (picked.length < WALK_ROUTE.MAX_STOPS && pool.length) picked.push(pool.splice(Math.floor(rng() * pool.length), 1)[0])
+    picked.sort((a, b) => dist[a.node] - dist[b.node])
+    const out: RoutePoint[] = [{ x: ROUTE_START_X, z: BRIDGE_Z }]
+    let at = start
+    const go = (to: number, face?: RoutePoint) => {
+      const path = shortestPath(g, at, to)
+      for (const n of path.slice(1)) out.push({ x: g.nodes[n].x, z: g.nodes[n].z })
+      if (face) out[out.length - 1] = { x: face.x, z: face.z, faceX: face.faceX, faceZ: face.faceZ }
+      if (path.length) at = to
+    }
+    for (const c of picked) go(c.node, c.p)
+    go(end)
+    const tail: RoutePoint[] = [{ x: bx - WALK_ROUTE.BRIDGE_APPROACH, z: BRIDGE_Z }, { x: bx + WALK_ROUTE.BRIDGE_APPROACH, z: BRIDGE_Z }, ...village]
+    for (const p of tail) {
+      const last = out[out.length - 1]
+      if (p.faceX === undefined && Math.hypot(last.x - p.x, last.z - p.z) < 0.01) continue
+      out.push(p)
+    }
+    const back = out.slice(0, -1).reverse().map((p) => ({ x: p.x, z: p.z }))
+    return [...out, ...back]
+  }
+}
+
+/** Un trajet de promeneur sur le réseau réel (voir networkPlan). */
+export function networkRoute(state: GameState, bx: number, rng: () => number): RoutePoint[] {
+  return networkPlan(state, bx)(rng)
 }
 
 /** Hauteur des pieds : celle du sol, ou celle du tablier sur le pont (rampe douce depuis chaque berge). */

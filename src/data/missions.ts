@@ -135,7 +135,7 @@ export const TUTORIAL: MissionDef[] = [
   },
   {
     id: 'pas-enclos', title: 'Pose un deuxième enclos dans la prairie', giver: MARGAUX, highlight: 'prairie',
-    text: "Il faut de la place pour de nouveaux animaux. Touche la prairie et dessine un deuxième enclos.",
+    text: "Il faut de la place pour de nouveaux animaux. Touche la prairie et dessine un deuxième enclos, puis relie-le à l'allée par un chemin pour que les visiteurs le voient.",
     objective: { kind: 'enclos', biome: 'prairie', n: 2 }, reward: { coins: 150 },
   },
   {

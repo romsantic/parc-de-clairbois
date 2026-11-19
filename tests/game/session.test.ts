@@ -184,3 +184,55 @@ describe('resume (onglet repris sans rechargement)', () => {
     expect(resume(g, NOW + 60_000).state.utcOffsetMin).toBe(-new Date(NOW + 60_000).getTimezoneOffset())
   })
 })
+
+describe('chemins : chemin offert aux anciennes parties', () => {
+  const v3 = () => {
+    const g = newGame(5, NOW)
+    g.ticketPrice = fairPrice(g)
+    g.enclosures.push({ id: 900, biome: 'prairie', species: null, rect: { x: -34, z: -8, w: 6, d: 6 }, cleanedAt: NOW })
+    return g
+  }
+  const asV3 = (g: ReturnType<typeof newGame>) => { const s = structuredClone(g) as unknown as Record<string, unknown>; delete s.paths; s.version = 3; return s }
+  it('sauvegarde v3 : enclos relié, message avec le nombre', () => {
+    const m = memory()
+    const g = v3()
+    m.data[SAVE_KEY] = JSON.stringify({ version: 3, savedAt: NOW, state: asV3(g) })
+    const r = startSession(m, NOW)
+    expect(r.state.paths.length).toBeGreaterThan(1)
+    expect(r.pathsNotice).toContain('Nouveau à Clairbois : les chemins !')
+    expect(r.pathsNotice).toContain('offert un chemin à 2 enclos') // l'enclos de départ (sans chemin en v3) et le nouveau
+    const again = startSession(m, NOW)
+    expect(again.pathsNotice).toBeNull() // déjà réécrite en v4
+  })
+  it('sauvegarde v3 avec un seul enclos : « à 1 enclos »', () => {
+    const m = memory()
+    m.data[SAVE_KEY] = JSON.stringify({ version: 3, savedAt: NOW, state: asV3(newGame(5, NOW)) })
+    const r = startSession(m, NOW)
+    expect(r.pathsNotice).toContain('offert un chemin à 1 enclos')
+    expect(r.pathsNotice).not.toContain('À relier')
+  })
+  it('sauvegarde v3 : les enclos enfermés sont nommés à la main (espèce, « Enclos vide »)', () => {
+    const m = memory()
+    const g = newGame(5, NOW)
+    const sheep = g.enclosures[0]
+    sheep.rect = { x: -20, z: -4, w: 3.5, d: 8 } // enfermé au milieu d'un anneau d'enclos
+    const wall = (id: number, x: number, z: number, w: number, d: number) =>
+      ({ id, biome: 'prairie' as const, species: null, rect: { x, z, w, d }, cleanedAt: NOW })
+    g.enclosures.push(
+      wall(900, -16, -4, 4, 8), // vide, enfermé lui aussi
+      wall(901, -26, -12, 20, 8), wall(902, -26, 4, 20, 8), wall(903, -26, -12, 6, 24), wall(904, -12, -12, 6, 24),
+    )
+    g.nextId = 1000
+    m.data[SAVE_KEY] = JSON.stringify({ version: 3, savedAt: NOW, state: asV3(g) })
+    const r = startSession(m, NOW)
+    expect(r.pathsNotice).toContain(' À relier toi-même : Mouton, Enclos vide.')
+  })
+  it('sauvegarde v4 : pas de message', () => {
+    const m = memory()
+    saveGame(m, v3(), NOW)
+    expect(startSession(m, NOW).pathsNotice).toBeNull()
+  })
+  it('partie neuve : pas de message', () => {
+    expect(startSession(memory(), NOW).pathsNotice).toBeNull()
+  })
+})

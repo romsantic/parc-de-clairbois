@@ -15,7 +15,7 @@ function cpuMs<T>(fn: () => T): { ms: number; value: T } {
 }
 
 const validPlacements = (s: GameState) => s.enclosures.every((e) =>
-  checkPlacement({ ...s, enclosures: s.enclosures.filter((x) => x.id !== e.id) }, e.rect).ok)
+  checkPlacement({ ...s, paths: [], enclosures: s.enclosures.filter((x) => x.id !== e.id) }, e.rect).ok) // chemins des parcs de test : liaison seule, ignorés ici
 
 describe('bigPark (parc réaliste)', () => {
   it('15 enclos valides, des animaux dans la capacité, les 10 espèces, garde-manger rempli', () => {

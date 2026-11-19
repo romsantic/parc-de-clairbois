@@ -6,7 +6,7 @@ import { WALKERS, visitorsShown } from '../data/visuals'
 import type { ModelKey } from '../assets/manifest'
 import type { World } from './world'
 import { fitHeight } from './animalActor'
-import { alleyStops, bridgeX, buildRoute, cafeRoute, cachedWalkHeight, type RoutePoint } from './visitorRoutes'
+import { bridgeX, cachedWalkHeight, networkPlan, type RoutePoint } from './visitorRoutes'
 
 /** Les six modèles de promeneurs, chargés en arrière-plan après l'affichage du parc. */
 export const WALKER_MODELS: ModelKey[] = [
@@ -155,7 +155,7 @@ export function createVisitorsView(
   const bx = bridgeX(world.riverDistance)
   const height = cachedWalkHeight(bx, world.groundHeight)
   const walkers: Walker[] = []
-  let route: RoutePoint[] = buildRoute(bx, [], null)
+  let plan: (r: () => number) => RoutePoint[] = networkPlan(getState(), bx)
   let routeKey = ''
   let target = 0
   let refresh = 0
@@ -164,9 +164,11 @@ export function createVisitorsView(
 
   function refreshPlan(): void {
     const s = getState()
-    const alley = alleyStops(s.enclosures, s.animals, bx)
-    const key = alley.map((p) => `${p.x},${p.faceX},${p.faceZ}`).join('|') + s.buildings.map((b) => (b.type === 'cafe' ? b.slot : '')).join('')
-    if (key !== routeKey) { routeKey = key; route = buildRoute(bx, alley, cafeRoute(s.buildings, bx)) }
+    const key = s.enclosures.map((e) => `${e.id}:${e.rect.x},${e.rect.z},${e.rect.w},${e.rect.d}`).join(';')
+      + '|' + [...new Set(s.animals.map((a) => a.enclosureId))].sort((a, b) => a - b).join(',')
+      + '|' + s.paths.map((p) => `${p.a.x},${p.a.z},${p.b.x},${p.b.z}`).join(';')
+      + '|' + s.buildings.map((b) => (b.type === 'cafe' ? b.slot : '')).join('')
+    if (key !== routeKey) { routeKey = key; plan = networkPlan(s, bx) }
     target = visitorsShown(incomePerHour(s).visiteurs, opts.hour(), opts.mobile)
   }
 
@@ -192,7 +194,7 @@ export function createVisitorsView(
         let w: Walker | undefined
         for (const x of walkers) if (x.phase === 'off') { w = x; break }
         w = w ?? grow()
-        if (w) { w.start(route); spawn = WALKERS.SPAWN_EVERY_S }
+        if (w) { w.start(plan(rng)); spawn = WALKERS.SPAWN_EVERY_S }
       } else if (active > target) {
         for (const x of walkers) if (x.phase === 'walk' || x.phase === 'stop' || x.phase === 'in') { x.leave(); spawn = WALKERS.SPAWN_EVERY_S; break }
       }
