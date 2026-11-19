@@ -91,7 +91,7 @@
 | Étape V2 | Contenu | État |
 |---|---|---|
 | 1 | Chemins à construire | ✅ fusionnée dans `main` (4935132) avec l'accord de Romain le 19/11/2026, publiée et vérifiée en ligne |
-| 2 | Personnel et maison du personnel | plan prêt et voté (branche `etape-v2-2-personnel`) — **en cours** (session d'étape lancée le 19/11/2026, `main` fusionné dans la branche) |
+| 2 | Personnel et maison du personnel | plan prêt et voté (branche `etape-v2-2-personnel`) — construite, relue et vérifiée le 19/11/2026, **en attente de fusion** |
 | 3 | Maladies et centre vétérinaire | plan prêt et voté (branche `etape-v2-3-maladies`) |
 | 4 | Ferme qui produit (parcelles, fermier, grange) | plan prêt et voté (branche `etape-v2-4-ferme`) |
 | 5 | Confort, décoration, déchets, satisfaction, animateur | plan prêt et voté (branche `etape-v2-5-confort`) |
@@ -126,7 +126,9 @@
 | 6 | Petits textes du personnel et de la Gazette | agent · Haiku | faite (f5124e7) — relue (0 critique, 0 important) — 820 tests |
 | 7 | Interface : volet Personnel, fiches, barre du haut | agent · Sonnet | faite (f6c5099 + 6b354ae) — relue, 1 correction (alerte de soins en rouge) ; vue par l’agent dans le navigateur (volet, cases d’enclos, Licencier, 375 × 812) sauf Embaucher — 820 tests |
 | 8 | Employés visibles sur la carte | agent · Sonnet | faite (d51d3f6) — relue (0 critique, 0 important) — 826 tests |
-| 9 | Vérification d’ensemble, relecture et publication | chef (Opus) + relecture · Opus | en cours |
+| 9 | Vérification d’ensemble, relecture et publication | chef (Opus) + relecture · Opus | vérifiée dans le navigateur (Léa, embauche, limite 3, maison sur l’emplacement 6, dette −102 → blocage → remboursement, ancienne partie v4 + 3 jours : Léa, message, Gazette, 0 mort ; téléphone 375 × 812) ; relecture finale Opus (0 critique, 5 importants) corrigée en 099bad5 et relue (tout corrigé) — 835 tests ; **en attente de l’accord de Romain pour fusionner** |
+
+**Décisions de l'étape V2-2 (en plus du plan voté)** : maison du personnel au fond du village, derrière les emplacements du Bourg, en (17, −19) (choix de Romain : pas de place près de la mairie) ; paie « versée » = argent vraiment pris dans la caisse (la Gazette dit ce qui manque) ; pas de salaire pendant le rattrapage d'une ancienne partie (règles V1 jusqu'au retour du joueur) ; la paie ne peut jamais effacer une dette ; candidats tirés dès la nouvelle partie et à l'arrivée de Léa ; avis uniques affichés 20 s. Joueur automatique avec le personnel : Village jour 2-3, Bourg 5-6, fin 16-17 (un peu plus rapide qu'avant : les agents nettoient sans arrêt — à rééquilibrer à l'étape 7), ~460 pièces de salaires par jour en fin. À regarder par Romain : l'allure de la maison du personnel, les employés qui marchent (pas vus en mouvement, panneau masqué). Laissé pour plus tard : un enclos peut dépasser sa capacité quand plusieurs mères attendent des petits en même temps (règle V1, à traiter avec les blessures de l'étape 3) ; plus de place dans x 8–24 pour les emplacements 7 et 8 (étapes 3 et 4) ; deux candidats peuvent porter le même prénom.
 
 ## Liens
 
