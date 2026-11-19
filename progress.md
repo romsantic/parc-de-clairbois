@@ -90,7 +90,7 @@
 
 | Étape V2 | Contenu | État |
 |---|---|---|
-| 1 | Chemins à construire | plan validé le 19/11/2026, construction en cours |
+| 1 | Chemins à construire | construite, relue et vérifiée le 19/11/2026 — **en attente de l'accord de Romain pour fusionner** |
 | 2 | Personnel et maison du personnel | — |
 | 3 | Maladies et centre vétérinaire | — |
 | 4 | Ferme qui produit (parcelles, fermier, grange) | — |
@@ -108,7 +108,9 @@
 | 4 | Chemins en 3D et éditeur de tracé | agent · Sonnet | faite (bfa99fa + 6d67385) — relue ; pas encore vue dans le navigateur — 698 tests |
 | 5 | Fiches : chemin, enclos non relié | agent · Sonnet | faite (93f9016) — relue (0 critique, 0 important) ; pas encore vue dans le navigateur — 701 tests |
 | 6 | Promeneurs sur le réseau réel | agent · Sonnet | faite (4582e62) — relue (0 critique, 0 important) ; pas encore vus marcher dans le navigateur — 707 tests |
-| 7 | Vérification d'ensemble, relecture et publication | chef (Opus) + relecture · Opus | — |
+| 7 | Vérification d'ensemble, relecture et publication | chef (Opus) + relecture · Opus | vérifiée dans le navigateur (tracé vert/rouge et raisons, fiche chemin, Détruire, Relier, ancienne partie v3 → chemins offerts + message, pavés et lanternes, téléphone) ; relecture finale Opus (0 critique, 3 importants) corrigée en 1c8cdd6, 0304292, d00cb11, f2c7cf7, relue à nouveau (approuvée) — 713 tests ; **fusion en attente de l'accord de Romain** |
+
+**Décisions de l'étape V2-1 (en plus de la spec)** : D1–D8 du plan acceptées par Romain. Chemin de l'entrée = allée entrée → pont + rues du village (fixes) ; on ne trace que côté zoo ; relié = chemin à moins de 1 m de la clôture ; 3 pièces/m, non remboursé ; bouton « Relier (N pièces) » ; chemin offert aux anciennes parties (droit, en L, sinon recherche sur grille) avec un message unique. À regarder par Romain : la place plus serrée (il faut laisser des allées entre les enclos), la tolérance du doigt pour toucher un chemin sur téléphone, les promeneurs sur un embranchement (pas vus marcher, panneau masqué). Laissé pour plus tard : couloirs de 2,2 à 3 m que la recherche du chemin offert ne voit pas (l'avis nomme alors les enclos à relier), chargement d'une vieille partie un peu lent sur téléphone (une seule fois).
 
 ## Liens
 
