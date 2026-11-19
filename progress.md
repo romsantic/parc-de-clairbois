@@ -118,8 +118,8 @@
 
 | # | Sous-tâche | Agent · modèle | État |
 |---|---|---|---|
-| 1 | État v5, données du personnel, nouvelle partie | agent · Sonnet | — |
-| 2 | Soigneurs et agents : qui suit quoi, effets, affectation | agent · Sonnet | — |
+| 1 | État v5, données du personnel, nouvelle partie | agent · Sonnet | faite (d325d6c) — relue (0 critique, 0 important) — 733 tests |
+| 2 | Soigneurs et agents : qui suit quoi, effets, affectation | agent · Sonnet | en cours |
 | 3 | Paie, dette, expérience et candidats | agent · Sonnet | — |
 | 4 | Maison du personnel | agent · Sonnet | — |
 | 5 | Actions, dette, ancienne partie, joueur automatique | agent · Sonnet | — |
