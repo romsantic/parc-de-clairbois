@@ -122,8 +122,8 @@
 | 2 | Soigneurs et agents : qui suit quoi, effets, affectation | agent · Sonnet | faite (3d4e41d) — relue (0 critique, 0 important) ; joueur automatique rouge jusqu’à la tâche 5 (il n’embauche pas encore) — 750 tests verts + 6 du joueur automatique |
 | 3 | Paie, dette, expérience et candidats | agent · Sonnet | faite (cbed073) — relue (0 critique, 0 important) — 764 tests verts + 3 du joueur automatique |
 | 4 | Maison du personnel | agent · Sonnet | faite (d8a3d80) — relue (0 critique, 0 important) ; emplacement 6 en (17, −19) ; pas encore vue dans le navigateur — 774 tests verts + 3 du joueur automatique |
-| 5 | Actions, dette, ancienne partie, joueur automatique | agent · Sonnet | en cours |
-| 6 | Petits textes du personnel et de la Gazette | agent · Haiku | — |
+| 5 | Actions, dette, ancienne partie, joueur automatique | agent · Sonnet | faite (da2b633) — relue Opus (0 critique, 0 important) ; joueur automatique : Village j2-3, Bourg j5-6, fin j16-17 (avant j3/j7/j18-19), ~460 pièces de salaires/jour en fin — 797 tests |
+| 6 | Petits textes du personnel et de la Gazette | agent · Haiku | en cours |
 | 7 | Interface : volet Personnel, fiches, barre du haut | agent · Sonnet | — |
 | 8 | Employés visibles sur la carte | agent · Sonnet | — |
 | 9 | Vérification d'ensemble, relecture et publication | chef (Opus) + relecture · Opus | — |
