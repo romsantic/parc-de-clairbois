@@ -14,7 +14,7 @@ describe('sauvegarde', () => {
   it('aller-retour fidèle', () => {
     const m = memory()
     saveGame(m, g, 1_800_000_123_000)
-    expect(loadGame(m)).toEqual({ kind: 'ok', state: g, savedAt: 1_800_000_123_000, fromVersion: 4 })
+    expect(loadGame(m)).toEqual({ kind: 'ok', state: g, savedAt: 1_800_000_123_000, fromVersion: 5 })
     expect(JSON.parse(m.data[SAVE_KEY]).savedAt).toBe(1_800_000_123_000)
   })
   it('aucune sauvegarde', () => {
@@ -31,9 +31,9 @@ describe('sauvegarde', () => {
     expect(m.data[BROKEN_KEY]).toBe('cassé 1')
   })
   it('sauvegarde d’une version plus récente : refusée sans rien écraser', () => {
-    const raw = JSON.stringify({ version: 5, savedAt: 1, state: {} })
+    const raw = JSON.stringify({ version: 6, savedAt: 1, state: {} })
     const m = memory({ [SAVE_KEY]: raw })
-    expect(loadGame(m)).toEqual({ kind: 'trop-recente', version: 5 })
+    expect(loadGame(m)).toEqual({ kind: 'trop-recente', version: 6 })
     expect(m.data[SAVE_KEY]).toBe(raw)
   })
   it('applique les migrations en chaîne', () => {
@@ -42,6 +42,6 @@ describe('sauvegarde', () => {
     const migrations = { ...MIGRATIONS, 0: (o: any) => { const { argent, ...rest } = o; return { ...rest, coins: argent, version: 1 } } }
     const r = loadGame(m, migrations)
     expect(r.kind === 'ok' && r.state.coins).toBe(42)
-    expect(r.kind === 'ok' && r.state.version).toBe(4)
+    expect(r.kind === 'ok' && r.state.version).toBe(5)
   })
 })

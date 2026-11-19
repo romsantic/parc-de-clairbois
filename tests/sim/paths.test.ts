@@ -57,7 +57,7 @@ describe('liaison des enclos par les chemins', () => {
   })
   it('nouvelle partie : v4, un segment de départ, enclos des moutons relié', () => {
     const g = newGame(1, T0)
-    expect(g.version).toBe(4)
+    expect(g.version).toBe(5)
     expect(g.paths).toHaveLength(1)
     expect(g.paths[0]).toMatchObject(START_PATH)
     expect(isLinked(g, g.enclosures[0].id)).toBe(true)

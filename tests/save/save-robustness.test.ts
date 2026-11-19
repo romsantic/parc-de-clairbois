@@ -17,7 +17,7 @@ describe('sauvegarde : ne jamais perdre la partie', () => {
     expect(JSON.parse(m.data[SAVE_KEY]).state.coins).toBe(1)
   })
   it("un vieil onglet n'écrase pas une sauvegarde d'une version plus récente", () => {
-    const raw = JSON.stringify({ version: 5, savedAt: 1, owner: 'onglet-B', state: {} })
+    const raw = JSON.stringify({ version: 6, savedAt: 1, owner: 'onglet-B', state: {} })
     const m = memory({ [SAVE_KEY]: raw })
     expect(saveGame(m, g, 3, 'onglet-A', true)).toBe('trop-recente')
     expect(m.data[SAVE_KEY]).toBe(raw)
@@ -85,6 +85,18 @@ describe('sauvegarde v2 abîmée (relecture)', () => {
     'série non finie': (g) => { g.missions.daily.streak = 'x' },
     'bons non finis': (g) => { g.missions.daily.coupons = undefined },
     'unread non booléen': (g) => { g.missions.unread = 1 },
+    'staff absent': (g) => { delete g.staff },
+    'staff non objet': (g) => { g.staff = 'x' },
+    'employé : métier inconnu': (g) => { g.staff.employees = [{ id: 9, name: 'A', job: 'pilote', xpH: 0, hiredAt: 0, encIds: [] }] },
+    'employé : xpH non fini': (g) => { g.staff.employees[0].xpH = 'a' },
+    'employé : xpH négatif': (g) => { g.staff.employees[0].xpH = -1 },
+    'employé : encIds non tableau': (g) => { g.staff.employees[0].encIds = 'x' },
+    'employé : encIds non finis': (g) => { g.staff.employees[0].encIds = ['a'] },
+    'candidat : niveau 7': (g) => { g.staff.candidates = [{ id: 9, name: 'B', job: 'soigneur', level: 7 }] },
+    'candidat : métier inconnu': (g) => { g.staff.candidates = [{ id: 9, name: 'B', job: 'pilote', level: 1 }] },
+    'payDay NaN': (g) => { g.staff.payDay = null },
+    'coverAllUntil non fini': (g) => { g.staff.coverAllUntil = 'x' },
+    'renewAt non fini': (g) => { g.staff.renewAt = undefined },
     'paths absent': (g) => { delete g.paths },
     'paths non tableau': (g) => { g.paths = 'x' },
     "segment portant l'id de l'entrée": (g) => { g.paths = [{ id: -1, a: { x: 1, z: 2 }, b: { x: 1, z: 5 } }] },
@@ -95,7 +107,7 @@ describe('sauvegarde v2 abîmée (relecture)', () => {
     it(`met de côté une partie avec : ${name}`, () => {
       const g = structuredClone(g0) as any // eslint-disable-line @typescript-eslint/no-explicit-any
       corrupt(g)
-      const m = memory({ [SAVE_KEY]: JSON.stringify({ version: 4, savedAt: 1, state: g }) })
+      const m = memory({ [SAVE_KEY]: JSON.stringify({ version: 5, savedAt: 1, state: g }) })
       expect(loadGame(m).kind).toBe('illisible')
       expect(m.data[BROKEN_KEY]).toBeDefined()
     })
@@ -104,19 +116,29 @@ describe('sauvegarde v2 abîmée (relecture)', () => {
     const g = structuredClone(g0) as any // eslint-disable-line @typescript-eslint/no-explicit-any
     g.missions.tutorial = { step: 3, current: { id: 'pas-billet', base: 0, done: true, claimed: false }, skipped: false }
     g.missions.daily.list = [{ id: 'quot-pieces#1', base: 4, done: false, claimed: false }]
-    const m = memory({ [SAVE_KEY]: JSON.stringify({ version: 4, savedAt: 1, state: g }) })
+    const m = memory({ [SAVE_KEY]: JSON.stringify({ version: 5, savedAt: 1, state: g }) })
     expect(loadGame(m).kind).toBe('ok')
   })
   it('une quotidienne tirée (cible et récompense gardées) reste lisible', () => {
     const g = structuredClone(g0) as any // eslint-disable-line @typescript-eslint/no-explicit-any
     g.missions.daily.list = [{ id: 'quot-pieces', base: 4, done: false, claimed: false, n: 1350, reward: { coins: 450, fourrage: 25 } }]
-    const m = memory({ [SAVE_KEY]: JSON.stringify({ version: 4, savedAt: 1, state: g }) })
+    const m = memory({ [SAVE_KEY]: JSON.stringify({ version: 5, savedAt: 1, state: g }) })
     const r = loadGame(m)
     expect(r.kind).toBe('ok')
     if (r.kind === 'ok') expect(r.state.missions.daily.list[0]).toMatchObject({ n: 1350, reward: { coins: 450, fourrage: 25 } })
   })
+  it('une v4 valide (sans personnel) se charge en v5', () => {
+    const { staff, ...v4 } = { ...structuredClone(g0), version: 4 } as any // eslint-disable-line @typescript-eslint/no-explicit-any
+    void staff
+    const r = loadGame(memory({ [SAVE_KEY]: JSON.stringify({ version: 4, savedAt: 1, state: v4 }) }))
+    expect(r.kind).toBe('ok')
+    if (r.kind === 'ok') {
+      expect(r.state.version).toBe(5)
+      expect(r.state.staff.employees).toEqual([])
+    }
+  })
   it('une partie neuve reste lisible', () => {
-    const m = memory({ [SAVE_KEY]: JSON.stringify({ version: 4, savedAt: 1, state: g0 }) })
+    const m = memory({ [SAVE_KEY]: JSON.stringify({ version: 5, savedAt: 1, state: g0 }) })
     expect(loadGame(m).kind).toBe('ok')
   })
 })

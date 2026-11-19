@@ -7,3 +7,11 @@ export const ANIMAL_NAMES: readonly string[] = [
   'Gaston', 'Marcel', 'Léon', 'Firmin', 'Hector', 'Octave', 'Basile', 'Achille', 'Anatole', 'Célestin',
   'Rosalie', 'Suzon', 'Léontine', 'Albertine', 'Philomène', 'Ernestine', 'Georgette', 'Mimosa', 'Câline', 'Ficelle',
 ]
+
+/** Prénoms du personnel (« Léa », la première soigneuse, n'y figure pas). */
+export const STAFF_NAMES: string[] = [
+  'Camille', 'Hugo', 'Jade', 'Louis', 'Manon', 'Théo', 'Inès', 'Noé', 'Chloé', 'Jules',
+  'Alice', 'Arthur', 'Zoé', 'Gabin', 'Lou', 'Paul', 'Eva', 'Tom', 'Anna', 'Nathan',
+  'Clara', 'Maël', 'Sarah', 'Raphaël', 'Juliette', 'Axel', 'Lucie', 'Samuel', 'Elsa', 'Victor',
+  'Romane', 'Baptiste', 'Agathe', 'Émile', 'Nina', 'Adrien',
+]

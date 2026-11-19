@@ -48,6 +48,8 @@ export function advanceTo(state: GameState, nowMs: number): { state: GameState; 
 function shiftDates(s: GameState, ms: number): void {
   s.time += ms
   s.merchant.restockAt += ms
+  s.staff.renewAt += ms // pas coverAllUntil : le délai de grâce ne doit pas s'allonger
+  for (const e of s.staff.employees) e.hiredAt += ms
   for (const e of s.enclosures) e.cleanedAt += ms
   for (const a of s.animals) {
     a.bornAt += ms

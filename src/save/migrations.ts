@@ -3,7 +3,7 @@
  * À chaque changement du format de GameState, on augmente CURRENT_VERSION et on ajoute ici
  * la fonction qui convertit l'ancien format, pour que les parties en cours survivent aux mises à jour.
  */
-export const CURRENT_VERSION = 4
+export const CURRENT_VERSION = 5
 
 export type Migration = (old: any) => unknown // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -45,4 +45,6 @@ export const MIGRATIONS: Record<number, Migration> = {
   },
   // v3 -> v4 (V2 étape 1, chemins à construire). Écrite en clair : aucun chemin construit au départ.
   3: (old) => ({ ...old, version: 4, paths: [] }),
+  // v4 -> v5 (V2 étape 2, personnel). Écrite en clair : aucun employé, le premier pas tire les candidats.
+  4: (old) => ({ ...old, version: 5, staff: { employees: [], candidates: [], renewAt: old.time, renewals: 0, payDay: -1, coverAllUntil: 0 } }),
 }

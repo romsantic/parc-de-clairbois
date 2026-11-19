@@ -20,7 +20,7 @@ const ok = (s: GameState, a: Parameters<typeof applyAction>[1]): GameState => {
 describe('compteurs (stats)', () => {
   it('une nouvelle partie a tous ses compteurs à zéro', () => {
     const g = newGame(1, T0)
-    expect(g.version).toBe(4)
+    expect(g.version).toBe(5)
     expect(Object.values(g.stats.counts).every((n) => n === 0)).toBe(true)
     expect(g.stats.birthsBySpecies).toEqual({})
     expect(g.missions.story.index).toBe(0)

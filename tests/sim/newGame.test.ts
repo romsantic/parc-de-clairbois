@@ -25,11 +25,17 @@ describe('newGame', () => {
       expect(a.lastFedAt).toBe(g.time)
     }
   })
+  it("embauche Léa, affectée à l'enclos de départ", () => {
+    expect(g.staff.employees).toHaveLength(1)
+    expect(g.staff.employees[0]).toMatchObject({ name: 'Léa', job: 'soigneur', encIds: [g.enclosures[0].id], xpH: 0 })
+    expect(g.staff).toMatchObject({ candidates: [], renewAt: g.time, renewals: 0, payDay: -1, coverAllUntil: 0 })
+    expect(new Set([...g.animals.map((a) => a.id), g.staff.employees[0].id]).size).toBe(3)
+  })
   it('remplit un peu le garde-manger', () => {
     expect(g.pantry).toEqual({ fourrage: 30, viande: 0, capacity: 200 })
   })
   it("crée directement l'état version 4", () => {
-    expect(g.version).toBe(4)
+    expect(g.version).toBe(5)
     expect(g.ticketPrice).toBe(2)
     expect(g.reputation).toBe(1)
     expect(g.village).toEqual({ level: 1, clientsServed: 0 })

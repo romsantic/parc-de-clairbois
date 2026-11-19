@@ -7,12 +7,13 @@ import { random } from './random'
 import { restock } from './merchant'
 import { emptyStats } from './stats'
 import { updateMissions } from './missions'
+import { firstKeeper } from './staff'
 
 /** Nouvelle partie : un enclos de prairie, un couple de moutons adultes, un peu de fourrage. */
 export function newGame(seed: number, nowMs: number): GameState {
   const time = Math.floor(nowMs / TUNING.STEP_MS) * TUNING.STEP_MS
   const state: GameState = {
-    version: 4, time, rng: seed >>> 0, coins: TUNING.START_COINS, nextId: 1,
+    version: 5, time, rng: seed >>> 0, coins: TUNING.START_COINS, nextId: 1,
     pantry: { fourrage: TUNING.START_FOURRAGE, viande: 0, capacity: TUNING.START_PANTRY_CAPACITY },
     enclosures: [], animals: [],
     ticketPrice: 2, reputation: 1,
@@ -29,6 +30,7 @@ export function newGame(seed: number, nowMs: number): GameState {
     },
     utcOffsetMin: 0,
     paths: [],
+    staff: { employees: [], candidates: [], renewAt: time, renewals: 0, payDay: -1, coverAllUntil: 0 },
   }
   state.paths.push({ id: state.nextId++, a: { ...START_PATH.a }, b: { ...START_PATH.b } })
   const encId = state.nextId++
@@ -41,6 +43,7 @@ export function newGame(seed: number, nowMs: number): GameState {
       lastFedAt: time, health: { status: 'ok' }, pregnantSince: null, lastBirthAt: null,
     })
   }
+  state.staff.employees.push(firstKeeper(state, [encId])) // Léa, affectée à l'enclos de départ
   restock(state) // premier stock : le couple de cochons
   updateMissions(state, []) // le premier des premiers pas démarre tout de suite
   return state

@@ -3,6 +3,7 @@ import { SPECIES } from '../data/species'
 import { BUILDINGS, SLOTS } from '../data/economy'
 import { ENTRANCE_ID } from '../data/paths'
 import { TUTORIAL, STORY } from '../data/missions'
+import { JOBS } from '../data/staff'
 import { STAT_KEYS } from '../sim/stats'
 import { CURRENT_VERSION, MIGRATIONS, type Migration } from './migrations'
 
@@ -139,6 +140,16 @@ function looksLikeGame(s: unknown): s is GameState {
   for (const p of g.paths) {
     if (!p || !finite(p.id) || p.id === ENTRANCE_ID || pathIds.has(p.id) || !p.a || !p.b || !finite(p.a.x) || !finite(p.a.z) || !finite(p.b.x) || !finite(p.b.z)) return false
     pathIds.add(p.id)
+  }
+  const sf = g.staff
+  if (!sf || typeof sf !== 'object' || !Array.isArray(sf.employees) || !Array.isArray(sf.candidates)) return false
+  if (!finite(sf.renewAt) || !finite(sf.renewals) || !finite(sf.payDay) || !finite(sf.coverAllUntil)) return false
+  for (const e of sf.employees) {
+    if (!e || !finite(e.id) || typeof e.name !== 'string' || !(e.job in JOBS) || !finite(e.xpH) || e.xpH < 0 || !finite(e.hiredAt)) return false
+    if (!Array.isArray(e.encIds) || !e.encIds.every(finite)) return false
+  }
+  for (const c of sf.candidates) {
+    if (!c || !finite(c.id) || typeof c.name !== 'string' || !(c.job in JOBS) || !intBetween(c.level, 1, 5)) return false
   }
   const ms = g.missions
   if (!ms || !ms.tutorial || !intBetween(ms.tutorial.step, 0, TUTORIAL.length) || !ms.story || !intBetween(ms.story.index, 0, STORY.length)) return false

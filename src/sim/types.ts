@@ -67,8 +67,24 @@ export interface MissionsState {
   unread: boolean
 }
 
+export type JobId = 'soigneur' | 'entretien' | 'veterinaire' | 'fermier' | 'animateur'
+export type StaffLevel = 1 | 2 | 3 | 4 | 5
+/** Un employé ; son niveau se déduit de xpH (jamais stocké). */
+export interface Employee { id: number; name: string; job: JobId; xpH: number; hiredAt: number; encIds: number[] }
+export interface Candidate { id: number; name: string; job: JobId; level: StaffLevel }
+export interface Staff {
+  employees: Employee[]
+  candidates: Candidate[]
+  renewAt: number
+  renewals: number
+  /** Jour du dernier salaire noté ; -1 : pas encore de jour noté (le premier pas note le jour sans payer). */
+  payDay: number
+  /** Jusqu'à cette heure du jeu, tous les animaux comptent comme suivis. */
+  coverAllUntil: number
+}
+
 export interface GameState {
-  version: 4
+  version: 5
   /** Heure du jeu (ms), toujours alignée sur le pas de 10 minutes. */
   time: number
   /** Graine du hasard, sauvegardée avec la partie. */
@@ -91,6 +107,7 @@ export interface GameState {
   utcOffsetMin: number
   /** Chemins construits par le joueur (l'entrée n'en fait pas partie). */
   paths: PathSegment[]
+  staff: Staff
 }
 
 export type GameEvent =
