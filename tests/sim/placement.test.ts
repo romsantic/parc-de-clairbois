@@ -90,3 +90,16 @@ describe('allée parcourue par les promeneurs', () => {
       expect(checkPlacement(emptyState(), { x, z: 8.5, w: 6, d: 3 }).ok).toBe(false)
   })
 })
+
+describe('enclos et chemins construits', () => {
+  const path = { id: 2, a: { x: -20, z: 10 }, b: { x: -20, z: -3 } }
+  it('poser un enclos sur un chemin construit est refusé', () => {
+    const s = emptyState({ paths: [path] })
+    expect(checkPlacement(s, R(-26, -6, 12, 6))).toEqual({ ok: false, reason: 'Il chevauche un chemin.' })
+  })
+  it('redimensionner un enclos sur un chemin construit est refusé', () => {
+    const s = emptyState({ paths: [path], enclosures: [enclosure(1, null, 6, 6, { rect: R(-32, -6, 6, 6) })] })
+    expect(checkPlacement(s, R(-32, -6, 12, 6), 1)).toEqual({ ok: false, reason: 'Il chevauche un chemin.' })
+    expect(checkPlacement(s, R(-32, -6, 8, 6), 1).ok).toBe(true)
+  })
+})

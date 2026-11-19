@@ -1,5 +1,7 @@
 import { TUNING } from '../data/tuning'
 import { PATHS, ZONES, type Zone } from '../data/zones'
+import { PATHS_TUNING } from '../data/paths'
+import { rectSegmentDistance } from './paths'
 import type { GameState, Rect } from './types'
 
 const EPS = 1e-9
@@ -46,6 +48,7 @@ export function checkPlacement(state: GameState, r: Rect, ignoreId?: number): Pl
   if (state.enclosures.some((e) => e.id !== ignoreId && overlaps(e.rect, r)))
     return { ok: false, reason: 'Il chevauche un autre enclos.' }
   if (PATHS.some((p) => overlaps(p, r))) return { ok: false, reason: 'Il chevauche un chemin.' }
+  if (state.paths.some((p) => rectSegmentDistance(r, p) < PATHS_TUNING.WIDTH_M / 2)) return { ok: false, reason: 'Il chevauche un chemin.' }
   return { ok: true, zone }
 }
 

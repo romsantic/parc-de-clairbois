@@ -87,6 +87,8 @@ describe('sauvegarde v2 abîmée (relecture)', () => {
     'unread non booléen': (g) => { g.missions.unread = 1 },
     'paths absent': (g) => { delete g.paths },
     'paths non tableau': (g) => { g.paths = 'x' },
+    "segment portant l'id de l'entrée": (g) => { g.paths = [{ id: -1, a: { x: 1, z: 2 }, b: { x: 1, z: 5 } }] },
+    'segments aux ids en double': (g) => { g.paths = [{ id: 7, a: { x: 1, z: 2 }, b: { x: 1, z: 5 } }, { id: 7, a: { x: 2, z: 2 }, b: { x: 2, z: 5 } }] },
     'segment sans coordonnée valide': (g) => { g.paths = [{ id: 1, a: { x: 'a' }, b: { x: 1, z: 2 } }] },
   }
   for (const [name, corrupt] of Object.entries(cases)) {
