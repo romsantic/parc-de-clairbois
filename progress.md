@@ -91,7 +91,7 @@
 | Étape V2 | Contenu | État |
 |---|---|---|
 | 1 | Chemins à construire | ✅ fusionnée dans `main` (4935132) avec l'accord de Romain le 19/11/2026, publiée et vérifiée en ligne |
-| 2 | Personnel et maison du personnel | plan prêt et voté (branche `etape-v2-2-personnel`) — construite, relue et vérifiée le 19/11/2026, **en attente de fusion** |
+| 2 | Personnel et maison du personnel | plan prêt et voté (branche `etape-v2-2-personnel`) — ✅ fusionnée dans `main` (9ccfb50) avec l'accord de Romain le 19/11/2026, publiée et vérifiée en ligne |
 | 3 | Maladies et centre vétérinaire | plan prêt et voté (branche `etape-v2-3-maladies`) |
 | 4 | Ferme qui produit (parcelles, fermier, grange) | plan prêt et voté (branche `etape-v2-4-ferme`) |
 | 5 | Confort, décoration, déchets, satisfaction, animateur | plan prêt et voté (branche `etape-v2-5-confort`) |
@@ -114,7 +114,7 @@
 
 **Décisions de l'étape V2-1 (en plus de la spec)** : D1–D8 du plan acceptées par Romain. Chemin de l'entrée = allée entrée → pont + rues du village (fixes) ; on ne trace que côté zoo ; relié = chemin à moins de 1 m de la clôture ; 3 pièces/m, non remboursé ; bouton « Relier (N pièces) » ; chemin offert aux anciennes parties (droit, en L, sinon recherche sur grille) avec un message unique. À regarder par Romain : la place plus serrée (il faut laisser des allées entre les enclos), la tolérance du doigt pour toucher un chemin sur téléphone, les promeneurs sur un embranchement (pas vus marcher, panneau masqué). Laissé pour plus tard : couloirs de 2,2 à 3 m que la recherche du chemin offert ne voit pas (l'avis nomme alors les enclos à relier), chargement d'une vieille partie un peu lent sur téléphone (une seule fois).
 
-**V2 — étape 2 : personnel et maison du personnel** (branche `etape-v2-2-personnel`, plan `docs/superpowers/plans/2026-11-19-v2-etape-2-personnel.md`, **voté par Romain le 19/11/2026**, D1–D12) — travail dans le dossier à part `D:/Claude IA Dossier/parc-clairbois-v2-2` (le dossier principal reste sur `main`)
+**V2 — étape 2 : personnel et maison du personnel** (branche `etape-v2-2-personnel`, plan `docs/superpowers/plans/2026-11-19-v2-etape-2-personnel.md`, **voté par Romain le 19/11/2026**, D1–D12) — branche fusionnée et supprimée ; le dossier à part `D:/Claude IA Dossier/parc-clairbois-v2-2` est vide (verrouillé par Windows au moment du rangement, à supprimer)
 
 | # | Sous-tâche | Agent · modèle | État |
 |---|---|---|---|
@@ -126,7 +126,7 @@
 | 6 | Petits textes du personnel et de la Gazette | agent · Haiku | faite (f5124e7) — relue (0 critique, 0 important) — 820 tests |
 | 7 | Interface : volet Personnel, fiches, barre du haut | agent · Sonnet | faite (f6c5099 + 6b354ae) — relue, 1 correction (alerte de soins en rouge) ; vue par l’agent dans le navigateur (volet, cases d’enclos, Licencier, 375 × 812) sauf Embaucher — 820 tests |
 | 8 | Employés visibles sur la carte | agent · Sonnet | faite (d51d3f6) — relue (0 critique, 0 important) — 826 tests |
-| 9 | Vérification d’ensemble, relecture et publication | chef (Opus) + relecture · Opus | vérifiée dans le navigateur (Léa, embauche, limite 3, maison sur l’emplacement 6, dette −102 → blocage → remboursement, ancienne partie v4 + 3 jours : Léa, message, Gazette, 0 mort ; téléphone 375 × 812) ; relecture finale Opus (0 critique, 5 importants) corrigée en 099bad5 et relue (tout corrigé) — 835 tests ; **en attente de l’accord de Romain pour fusionner** |
+| 9 | Vérification d’ensemble, relecture et publication | chef (Opus) + relecture · Opus | vérifiée dans le navigateur (Léa, embauche, limite 3, maison sur l’emplacement 6, dette −102 → blocage → remboursement, ancienne partie v4 + 3 jours : Léa, message, Gazette, 0 mort ; téléphone 375 × 812) ; relecture finale Opus (0 critique, 5 importants) corrigée en 099bad5 et relue (tout corrigé) — 835 tests ; **fusionnée dans `main` (9ccfb50) avec l’accord de Romain le 19/11/2026, publiée et vérifiée en ligne** (ancienne partie convertie : Léa, message, candidats) |
 
 **Décisions de l'étape V2-2 (en plus du plan voté)** : maison du personnel au fond du village, derrière les emplacements du Bourg, en (17, −19) (choix de Romain : pas de place près de la mairie) ; paie « versée » = argent vraiment pris dans la caisse (la Gazette dit ce qui manque) ; pas de salaire pendant le rattrapage d'une ancienne partie (règles V1 jusqu'au retour du joueur) ; la paie ne peut jamais effacer une dette ; candidats tirés dès la nouvelle partie et à l'arrivée de Léa ; avis uniques affichés 20 s. Joueur automatique avec le personnel : Village jour 2-3, Bourg 5-6, fin 16-17 (un peu plus rapide qu'avant : les agents nettoient sans arrêt — à rééquilibrer à l'étape 7), ~460 pièces de salaires par jour en fin. À regarder par Romain : l'allure de la maison du personnel, les employés qui marchent (pas vus en mouvement, panneau masqué). Laissé pour plus tard : un enclos peut dépasser sa capacité quand plusieurs mères attendent des petits en même temps (règle V1, à traiter avec les blessures de l'étape 3) ; plus de place dans x 8–24 pour les emplacements 7 et 8 (étapes 3 et 4) ; deux candidats peuvent porter le même prénom.
 
@@ -232,4 +232,4 @@ Après la V1 : V2 à V5 décrites en fin de spec (personnel et centre vétérina
 
 ## Suite
 
-- La V1 est publiée. V2 : étape 1 (chemins à construire) fusionnée et publiée le 19/11/2026 ; étape 2 (personnel et maison du personnel) à faire dans sa propre session.
+- La V1 est publiée. V2 : étapes 1 (chemins) et 2 (personnel) fusionnées et publiées le 19/11/2026 ; étape 3 (maladies et centre vétérinaire) à lancer dans sa propre session (attention : plus de place pour les emplacements 7 et 8 dans x 8–24, voir les décisions de V2-2).
