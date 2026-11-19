@@ -18,10 +18,14 @@ export interface GazetteEdition {
 const plural = (n: number, one: string, many: string) => `${formatThousands(n)} ${n < 2 ? one : many}`
 const ago = (n: number) => Math.round(n)
 
-/** Le titre à la une : le plus marquant (une mort > des naissances > les recettes > une journée calme). */
+/** Salaires dus mais non payés, en pièces (0 sans dette de salaires). */
+const unpaidWages = (s: Summary): number => ago(s.salairesDus) - ago(s.salaires)
+
+/** Le titre à la une : le plus marquant (une mort > une caisse vide > des naissances > les recettes > une journée calme). */
 export function gazetteHeadline(s: Summary): string {
   if (s.morts.length === 1) return `Triste nouvelle : ${s.morts[0].name} nous a quittés`
   if (s.morts.length > 1) return `Triste nouvelle : ${s.morts.length} animaux nous ont quittés`
+  if (unpaidWages(s) > 0) return 'Caisse vide : les salaires n’ont pas été payés en entier'
   if (s.naissances === 1) return 'Un heureux événement au parc !'
   if (s.naissances > 1) return `${s.naissances} naissances au parc !`
   const coins = ago(s.pieces)
@@ -33,6 +37,10 @@ export function gazetteHeadline(s: Summary): string {
 export function gazetteEdition(s: Summary, absentMs: number, state?: GameState): GazetteEdition {
   const items: GazetteItem[] = []
   items.push({ label: 'Caisse', text: `${plural(ago(s.pieces), 'pièce gagnée', 'pièces gagnées')} · ${plural(ago(s.visiteurs), 'visiteur', 'visiteurs')}` })
+  const paid = ago(s.salaires), unpaid = unpaidWages(s)
+  if (paid > 0) items.push({ label: 'Personnel', text: `Salaires versés : ${plural(paid, 'pièce', 'pièces')}.` })
+  if (unpaid > 0) items.push({ label: 'Personnel', text: `Caisse vide à minuit : il manque ${plural(unpaid, 'pièce', 'pièces')} de salaires.` })
+  for (const n of s.niveaux) items.push({ label: 'Personnel', text: `${n.name} passe au niveau ${n.level}.` })
   if (s.naissances > 0) items.push({ label: 'Naissances', text: plural(s.naissances, 'naissance', 'naissances') })
   const fourrage = ago(s.fourrage), viande = ago(s.viande)
   if (fourrage > 0 || viande > 0) {

@@ -72,3 +72,40 @@ describe('garde-manger', () => {
     expect(gazetteEdition(eaten, H, s).items.find((i) => i.label === 'Garde-manger')!.text).toMatch(/Il reste .+ d'autonomie\.$/)
   })
 })
+
+describe('personnel : résumé', () => {
+  it('salaires payés, dus et montées de niveau', () => {
+    const s = summarize([
+      { kind: 'paie', at: H, due: 100, paid: 80 },
+      { kind: 'paie', at: 2 * H, due: 20, paid: 20 },
+      { kind: 'niveauEmploye', at: 2 * H, employeeId: 1, name: 'Léa', level: 2 },
+    ])
+    expect(s.salaires).toBe(100)
+    expect(s.salairesDus).toBe(120)
+    expect(s.niveaux).toEqual([{ name: 'Léa', level: 2 }])
+  })
+  it('sans événement : zéro', () => {
+    expect(summarize([])).toMatchObject({ salaires: 0, salairesDus: 0, niveaux: [] })
+  })
+})
+
+describe('personnel : Gazette', () => {
+  const staffItems = (s: Summary) => gazetteEdition(s, H).items.filter((i) => i.label === 'Personnel').map((i) => i.text)
+  it('salaires versés et montées de niveau', () => {
+    const s = { ...calm(), salaires: 120, salairesDus: 120, niveaux: [{ name: 'Léa', level: 2 as const }] }
+    expect(staffItems(s)).toEqual(['Salaires versés : 120 pièces.', 'Léa passe au niveau 2.'])
+  })
+  it('sans salaire ni montée : pas de rubrique', () => {
+    expect(staffItems(calm())).toEqual([])
+  })
+  it('caisse vide : dit combien de salaires manquent', () => {
+    const s = { ...calm(), salaires: 75, salairesDus: 120 }
+    expect(staffItems(s)).toEqual(['Salaires versés : 75 pièces.', 'Caisse vide à minuit : il manque 45 pièces de salaires.'])
+  })
+  it('à la une : caisse vide après les morts, avant les naissances', () => {
+    const debt = { ...calm(), salaires: 0, salairesDus: 40, naissances: 2 }
+    expect(gazetteHeadline(debt)).toBe('Caisse vide : les salaires n’ont pas été payés en entier')
+    expect(gazetteHeadline({ ...debt, morts: [{ name: 'Rex', species: 'loup' as const }] })).toBe('Triste nouvelle : Rex nous a quittés')
+    expect(gazetteHeadline({ ...calm(), salaires: 40, salairesDus: 40, naissances: 2 })).toBe('2 naissances au parc !')
+  })
+})

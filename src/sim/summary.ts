@@ -1,5 +1,5 @@
 import type { SpeciesId } from '../data/species'
-import type { GameEvent, GameState } from './types'
+import type { GameEvent, GameState, StaffLevel } from './types'
 import { missionDef } from './missions'
 
 export interface Summary {
@@ -18,11 +18,17 @@ export interface Summary {
   quotidiennesRenouvelees: boolean
   /** Série de jours (lue dans l'état final ; 0 sans état). */
   serie: number
+  /** Salaires réellement payés pendant la période. */
+  salaires: number
+  /** Salaires dus pendant la période (payés ou non). */
+  salairesDus: number
+  /** Montées de niveau des employés pendant la période. */
+  niveaux: { name: string; level: StaffLevel }[]
 }
 
 /** Résumé de ce qui s'est passé (pendant une absence, par exemple). */
 export function summarize(events: GameEvent[], state?: GameState): Summary {
-  const s: Summary = { naissances: 0, morts: [], malades: 0, fourrage: 0, viande: 0, pieces: 0, visiteurs: 0, missions: [], missionsVersees: [], quotidiennesRenouvelees: false, serie: state?.missions.daily.streak ?? 0 }
+  const s: Summary = { naissances: 0, morts: [], malades: 0, fourrage: 0, viande: 0, pieces: 0, visiteurs: 0, missions: [], missionsVersees: [], quotidiennesRenouvelees: false, serie: state?.missions.daily.streak ?? 0, salaires: 0, salairesDus: 0, niveaux: [] }
   for (const e of events) {
     if (e.kind === 'naissance') s.naissances++
     else if (e.kind === 'malade') s.malades++
@@ -32,6 +38,8 @@ export function summarize(events: GameEvent[], state?: GameState): Summary {
     else if (e.kind === 'quotidiennes') s.quotidiennesRenouvelees = true
     else if (e.kind === 'missionVersee') s.missionsVersees.push(e.title ?? missionDef('quotidienne', e.id)?.title ?? e.id)
     else if (e.kind === 'mission') s.missions.push(e.title ?? missionDef(e.track, e.id)?.title ?? e.id)
+    else if (e.kind === 'paie') { s.salaires += e.paid; s.salairesDus += e.due }
+    else if (e.kind === 'niveauEmploye') s.niveaux.push({ name: e.name, level: e.level })
   }
   return s
 }
