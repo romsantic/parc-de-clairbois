@@ -3,7 +3,7 @@ import { isPhone } from '../core/device'
 import type { GameState, PathPoint } from '../sim/types'
 import type { Action } from '../sim/actions'
 import { PATHS_TUNING } from '../data/paths'
-import { allSegments, checkSegment, closestPoint, nearestOnNetwork } from '../sim/paths'
+import { allSegments, checkSegment, closestPoint, nearestOnNetwork, pointSegmentDistance } from '../sim/paths'
 import type { World } from './world'
 import type { CameraRig } from './cameraRig'
 import { ribbonEdges } from './path'
@@ -24,8 +24,9 @@ export function snapEnd(state: GameState, p: PathPoint, start: PathPoint, snap: 
   let best: PathPoint | null = null
   let bestD = snap
   for (const s of allSegments(state)) {
+    // Pas de point sur un segment qui porte le départ : sinon Valider poserait un doublon payant par-dessus.
+    if (pointSegmentDistance(start, s) <= PATHS_TUNING.ON_PATH_EPS) continue
     const c = closestPoint(p, s)
-    if (Math.hypot(c.x - start.x, c.z - start.z) <= PATHS_TUNING.ON_PATH_EPS) continue
     const d = Math.hypot(p.x - c.x, p.z - c.z)
     if (d <= bestD) { best = c; bestD = d }
   }
