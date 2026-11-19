@@ -117,4 +117,13 @@ describe('repos après une naissance', () => {
     run(s, 12)
     expect(s.animals[0].lastBirthAt).toBe(s.time)
   })
+  it('une femelle non suivie ne conçoit jamais ; suivie, elle conçoit', () => {
+    const sans = couple()
+    sans.staff.coverAllUntil = 0
+    expect(run(sans, 30 * 144).some((e) => e.kind === 'gestation')).toBe(false)
+    const avec = couple()
+    avec.staff.coverAllUntil = 0
+    avec.staff.employees.push({ id: 5, name: 'Léa', job: 'soigneur', xpH: 0, hiredAt: T0, encIds: [1] })
+    expect(run(avec, 30 * 144).some((e) => e.kind === 'gestation')).toBe(true)
+  })
 })

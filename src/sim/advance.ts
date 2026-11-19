@@ -1,17 +1,19 @@
 import { TUNING, DAY_MS } from '../data/tuning'
 import type { GameEvent, GameState } from './types'
 import { feedStep } from './feeding'
+import { careStep } from './care'
 import { healthStep } from './health'
 import { breedingStep } from './breeding'
 import { economyStep } from './economy'
 import { merchantStep } from './merchant'
 import { missionsStep } from './missions'
 
-/** Un pas de 10 minutes, en place : repas, santé, puis naissances et conceptions, puis recettes et marchand. */
+/** Un pas de 10 minutes, en place : repas, soins du personnel, santé, puis naissances et conceptions, puis recettes et marchand. */
 export function step(state: GameState): GameEvent[] {
   const events: GameEvent[] = []
   state.time += TUNING.STEP_MS
   feedStep(state, events)
+  careStep(state, events)
   healthStep(state, events)
   breedingStep(state, events)
   economyStep(state, events)

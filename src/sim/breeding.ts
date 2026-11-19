@@ -43,6 +43,7 @@ export function breedingStep(state: GameState, events: GameEvent[]): void {
     const hasMale = here.some((a) => a.sex === 'M' && ageStage(a, now) === 'adulte' && a.health.status === 'ok')
     if (!hasMale) continue
     for (const f of here) {
+      if (!roster.covered.has(f.id)) continue // pas de soigneur : pas de petit
       if (f.sex !== 'F' || f.pregnantSince !== null || f.health.status !== 'ok') continue
       if (ageStage(f, now) !== 'adulte' || isHungry(f, now)) continue
       // Repos après une mise bas

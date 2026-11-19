@@ -3,6 +3,7 @@ import { DAILY_LEGACY, DAILY_POOL, MISSIONS_TUNING, STORY, TUTORIAL, type DailyC
 import { DAY_MS } from '../data/tuning'
 import type { ActionResult } from './actions'
 import { ageStage } from './animal'
+import { careCoverage } from './care'
 import { incomePerHour, parkPace } from './economy'
 import { autonomyHours } from './feeding'
 import { sellPrice } from './merchant'
@@ -129,10 +130,13 @@ const POSSIBLE: Record<DailyCondition, (s: GameState) => boolean> = {
   toujours: () => true,
   ferme: (s) => s.buildings.some((b) => b.type === 'ferme'),
   animalVendable: (s) => s.animals.some((a) => a.health.status === 'ok' && sellPrice(s, a) !== null),
-  couple: (s) => s.enclosures.some((e) => {
-    const adults = s.animals.filter((a) => a.enclosureId === e.id && ageStage(a, s.time) === 'adulte')
-    return adults.some((a) => a.sex === 'F') && adults.some((a) => a.sex === 'M')
-  }),
+  couple: (s) => {
+    const { covered } = careCoverage(s)
+    return s.enclosures.some((e) => {
+      const adults = s.animals.filter((a) => a.enclosureId === e.id && ageStage(a, s.time) === 'adulte')
+      return adults.some((a) => a.sex === 'F' && covered.has(a.id)) && adults.some((a) => a.sex === 'M')
+    })
+  },
   malade: (s) => s.animals.some((a) => a.health.status === 'malade'),
 }
 

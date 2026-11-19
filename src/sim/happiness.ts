@@ -2,12 +2,14 @@ import { SPECIES } from '../data/species'
 import { TUNING } from '../data/tuning'
 import type { Animal, GameState } from './types'
 import { isHungry, satiety } from './animal'
+import { STAFF_TUNING } from '../data/staff'
+import { careCoverage } from './care'
 import { animalsIn, capacity, cleanliness, countSpecies, type Roster } from './enclosure'
 
 /**
  * (`roster` : animaux déjà regroupés par enclos pour ce pas ; même résultat, sans parcourir tous les animaux.)
  * Bonheur de 0 à 1 : 0,35 satiété + 0,25 propreté + 0,2 espace + 0,2 santé ;
- * × 0,6 pour une espèce sociale seule de son espèce ; 0 s'il est affamé.
+ * × 0,6 pour une espèce sociale seule de son espèce ; × 0,7 sans soigneur ; 0 s'il est affamé.
  */
 export function happiness(state: GameState, a: Animal, roster?: Roster): number {
   const now = state.time
@@ -23,5 +25,7 @@ export function happiness(state: GameState, a: Animal, roster?: Roster): number 
     const sameSpecies = roster && enc ? countSpecies(roster, enc.id, a.species) : mates.filter((m) => m.species === a.species).length
     if (sameSpecies < 2) h *= TUNING.SOCIAL_ALONE_FACTOR
   }
+  const followed = roster ? roster.covered.has(a.id) : state.time <= state.staff.coverAllUntil || careCoverage(state).covered.has(a.id)
+  if (!followed) h *= STAFF_TUNING.UNCOVERED_HAPPINESS
   return Math.max(0, Math.min(1, h))
 }

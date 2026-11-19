@@ -364,3 +364,23 @@ describe('résumé d\'absence : missions', () => {
     expect(summarize(r.events, r.state).missions).toContain('Attends la première gestation')
   })
 })
+
+describe('quotidienne « Une naissance »', () => {
+  const drawn = (withKeeper: boolean): boolean => {
+    for (let rng = 1; rng <= 40; rng++) {
+      const s = emptyState({
+        rng, missions: storyAt(8), enclosures: [enclosure(1, 'mouton')],
+        animals: [animal(1, 'mouton', 'F', 1), animal(2, 'mouton', 'M', 1)],
+      })
+      s.staff.coverAllUntil = 0
+      if (withKeeper) s.staff.employees.push({ id: 5, name: 'Léa', job: 'soigneur', xpH: 0, hiredAt: T0, encIds: [1] })
+      updateMissions(s, [])
+      if (s.missions.daily.list.some((m) => m.id === 'quot-naissance')) return true
+    }
+    return false
+  }
+  it("n'est pas tirée quand le seul couple n'est pas suivi", () => {
+    expect(drawn(false)).toBe(false)
+    expect(drawn(true)).toBe(true)
+  })
+})

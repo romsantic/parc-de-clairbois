@@ -30,4 +30,13 @@ describe('happiness', () => {
       animals: [1, 2, 3, 4].map((i) => animal(i, 'mouton', i % 2 ? 'F' : 'M', 1)) })
     expect(happiness(s, s.animals[0])).toBeCloseTo(0.8 + 0.2 * 0.5)
   })
+  it('animal non suivi = suivi × 0,7', () => {
+    const s = pair()
+    s.staff.coverAllUntil = 0
+    s.staff.employees.push({ id: 5, name: 'Léa', job: 'soigneur', xpH: 0, hiredAt: T0, encIds: [1] })
+    const suivi = happiness(s, s.animals[0])
+    expect(suivi).toBeCloseTo(1)
+    s.staff.employees = []
+    expect(happiness(s, s.animals[0])).toBeCloseTo(suivi * 0.7)
+  })
 })

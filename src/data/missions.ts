@@ -110,7 +110,7 @@ const GARDE = 'La garde forestière'
 export const TUTORIAL: MissionDef[] = [
   {
     id: 'pas-fiche', title: "Ouvre la fiche de l'enclos des moutons", giver: MARGAUX, highlight: 'detailsEnclos',
-    text: "Bienvenue à Clairbois, je suis Margaux, la maire du village ! Je vais te guider pas à pas dans la création et l'évolution de ton village et de ton zoo. Pour commencer, touche l'enclos des moutons, puis le bouton Détails pour voir qui y vit.",
+    text: "Bienvenue à Clairbois, je suis Margaux, la maire du village ! Je vais te guider pas à pas dans la création et l'évolution de ton village et de ton zoo. Je t'envoie Léa, notre soigneuse : elle s'occupe déjà de tes moutons. Pour commencer, touche l'enclos des moutons, puis le bouton Détails pour voir qui y vit.",
     objective: { kind: 'compteur', stat: 'ficheEnclosVue', n: 1 }, reward: { coins: 20 },
   },
   {
@@ -145,7 +145,7 @@ export const TUTORIAL: MissionDef[] = [
   },
   {
     id: 'pas-gestation', title: 'Attends la première gestation', giver: MARGAUX,
-    text: "Pour qu'une femelle attende un petit, il faut un mâle et une femelle adultes, de la place dans l'enclos, et des animaux heureux et bien nourris. Sois patient, ça vient tout seul !",
+    text: "Pour qu'une femelle attende un petit, il faut un mâle et une femelle adultes, de la place dans l'enclos, un soigneur qui les suit, et des animaux heureux et bien nourris. Sois patient, ça vient tout seul !",
     objective: { kind: 'compteur', stat: 'gestations', n: 1 }, reward: { fourrage: 20 },
   },
   {
@@ -163,7 +163,7 @@ export const TUTORIAL: MissionDef[] = [
 export const STORY: MissionDef[] = [
   {
     id: 'hist-naissance', title: 'Première naissance au parc', giver: MARGAUX,
-    text: "Un parc vit quand les petits arrivent. Prends soin de tes couples et attends ta première naissance.",
+    text: "Un parc vit quand les petits arrivent. Veille à ce que tes couples aient un soigneur, et attends ta première naissance.",
     objective: { kind: 'compteur', stat: 'naissances', n: 1 }, reward: { coins: 150, fourrage: 30 },
   },
   {

@@ -1,6 +1,7 @@
 import { SPECIES, type SpeciesId } from '../data/species'
 import { TUNING, HOUR_MS } from '../data/tuning'
 import type { Animal, Enclosure, GameState, Rect } from './types'
+import { careCoverage } from './care'
 
 export const area = (r: Rect): number => r.w * r.d
 
@@ -24,6 +25,8 @@ export interface Roster {
   enclosureById: Map<number, Enclosure>
   /** Nombre d'animaux de chaque espèce, par enclos (calculé à la demande, une fois par pas). */
   speciesCount: Map<number, Map<SpeciesId, number>>
+  /** Animaux suivis par un soigneur. */
+  covered: Set<number>
 }
 
 /** Effectif d'une espèce dans un enclos, sans reparcourir les occupants à chaque animal. */
@@ -44,5 +47,5 @@ export function buildRoster(state: GameState): Roster {
     if (list) list.push(a)
     else byEnclosure.set(a.enclosureId, [a])
   }
-  return { byEnclosure, enclosureById: new Map(state.enclosures.map((e) => [e.id, e])), speciesCount: new Map() }
+  return { byEnclosure, enclosureById: new Map(state.enclosures.map((e) => [e.id, e])), speciesCount: new Map(), covered: careCoverage(state).covered }
 }
