@@ -171,3 +171,10 @@ Tous les chiffres (prix, salaires, durées des stades, taux de maladie, producti
 - Modèles 3D des nouvelles espèces et objets de décoration **cherchés dès maintenant** (liste à télécharger par Romain).
 
 **Interface d'ensemble** : avant de créer les branches des étapes, Romain veut voir une **image du parc V2** montrant toutes les icônes, barres et volets.
+
+**Espèces des niveaux 4 à 6 (choix de Romain, 19/11/2026)** — 21 nouvelles espèces, soit 31 au total :
+- **Étang (niv. 4)** : castor, canard, oie, cygne, loutre (modèle de loutre de mer), grenouille, martin-pêcheur.
+- **Forêt profonde (niv. 5)** : sanglier, hibou, lièvre, hérisson, écureuil, biche *(espèce à part du cerf V1)*, **ours brun, lynx, bison d'Europe, élan**.
+- **Haute montagne (niv. 6)** : aigle, marmotte, chèvre des montagnes, mouflon.
+- Modèles : packs **Gobkit** (CC0, GLB animés : clips `idle`/`walk`, cloner avec `SkeletonUtils.clone()`, orientés +Z, style à vérifier à l'œil à côté de Quaternius) et grenouille Quaternius. **Ours, lynx, bison et élan n'existent pas en CC0 : Romain accepte des modèles CC-BY**, avec l'auteur cité dans `CREDITS.md` et dans un écran de crédits du jeu (volet Options). C'est une exception à la règle « CC0 uniquement » de la V1, limitée à ces espèces.
+- Décoration et bâtiments : Quaternius (bancs, poubelles, lampadaires, statues, fleurs, stands, Farm Buildings Pack pour grange/silo, Ultimate Fantasy RTS ou Medieval Village pour centre vétérinaire, maison du personnel, restaurant, musée). Pas de fontaine CC0 : un puits ou un modèle CC-BY la remplace (à décider à l'étape 5).
