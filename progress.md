@@ -105,7 +105,7 @@
 | 1 | État v4, données et liaison des enclos | agent · Sonnet | faite (4284bc7) — relue (0 critique, 0 important) — 659 tests |
 | 2 | Tracer, détruire, relier, chemin offert (règles) | agent · Sonnet | faite (9829e52) — relue (0 critique, 0 important) — 684 tests |
 | 3 | Visiteurs, ancienne partie, joueur automatique | agent · Sonnet | faite (8bec3f3 + 521c884) — relue ; joueur automatique : Village jour 3, Bourg 7, fin 18-19 (il laisse des allées de 2,5 m et fait des enclos plus petits : place plus serrée, à regarder avec Romain) — 694 tests |
-| 4 | Chemins en 3D et éditeur de tracé | agent · Sonnet | — |
+| 4 | Chemins en 3D et éditeur de tracé | agent · Sonnet | faite (bfa99fa + 6d67385) — relue ; pas encore vue dans le navigateur — 698 tests |
 | 5 | Fiches : chemin, enclos non relié | agent · Sonnet | — |
 | 6 | Promeneurs sur le réseau réel | agent · Sonnet | — |
 | 7 | Vérification d'ensemble, relecture et publication | chef (Opus) + relecture · Opus | — |
