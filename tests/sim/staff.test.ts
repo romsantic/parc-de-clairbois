@@ -175,3 +175,142 @@ describe('staffCap', () => {
     expect(staffCap(s)).toBe(15)
   })
 })
+
+import { applyAction } from '../../src/sim/actions'
+import { careCoverage } from '../../src/sim/care'
+import type { GameState } from '../../src/sim/types'
+
+const hireState = (over: Partial<GameState> = {}): GameState => {
+  const s = emptyState({
+    coins: 1000,
+    enclosures: [enclosure(1, 'mouton'), enclosure(2, 'cochon')],
+    animals: [animal(1, 'mouton', 'F', 1), animal(2, 'mouton', 'M', 1), animal(3, 'cochon', 'F', 2)],
+    buildings: [{ slot: 0, type: 'ferme', level: 1 }, { slot: 4, type: 'personnel', level: 1 }],
+    ...over,
+  })
+  s.staff.coverAllUntil = 0
+  s.staff.candidates = [
+    { id: 50, name: 'Hugo', job: 'soigneur', level: 2 },
+    { id: 51, name: 'Jade', job: 'entretien', level: 1 },
+  ]
+  return s
+}
+const ok = (r: ReturnType<typeof applyAction>) => { if (!r.ok) throw new Error(r.reason); return r.state }
+const refused = (r: ReturnType<typeof applyAction>) => (r.ok ? 'ok' : r.reason)
+
+describe('embaucher', () => {
+  it('candidat inconnu : Introuvable', () => {
+    expect(refused(applyAction(hireState(), { type: 'embaucher', candidateId: 999 }))).toBe('Introuvable.')
+  })
+  it("un soigneur de niveau 2 arrive avec 72 h d'expérience et reçoit les enclos non suivis", () => {
+    const s = ok(applyAction(hireState(), { type: 'embaucher', candidateId: 50 }))
+    const e = s.staff.employees[0]
+    expect(e).toMatchObject({ name: 'Hugo', job: 'soigneur', xpH: 72, hiredAt: s.time })
+    expect(employeeLevel(e)).toBe(2)
+    expect(s.staff.candidates.map((c) => c.id)).toEqual([51])
+    expect(e.encIds).toEqual([1, 2])
+  })
+  it('plein : refus avec le plafond (3 sans maison)', () => {
+    const s = hireState({ buildings: [{ slot: 0, type: 'ferme', level: 1 }] })
+    s.staff.employees = [1, 2, 3].map((i) => ({ id: i, name: 'X', job: 'soigneur' as const, xpH: 0, hiredAt: T0, encIds: [] }))
+    expect(refused(applyAction(s, { type: 'embaucher', candidateId: 50 })))
+      .toBe('Plus de place à la maison du personnel (3 employés au plus).')
+  })
+})
+
+describe('licencier', () => {
+  it("retire l'employé sans indemnité ; le dernier soigneur parti, plus personne ne suit", () => {
+    let s = ok(applyAction(hireState(), { type: 'embaucher', candidateId: 50 }))
+    const coins = s.coins
+    s = ok(applyAction(s, { type: 'licencier', employeeId: s.staff.employees[0].id }))
+    expect(s.staff.employees).toEqual([])
+    expect(s.coins).toBe(coins)
+    expect(careCoverage(s).covered.size).toBe(0)
+  })
+  it('inconnu : Introuvable', () => {
+    expect(refused(applyAction(hireState(), { type: 'licencier', employeeId: 1 }))).toBe('Introuvable.')
+  })
+})
+
+describe('affecter', () => {
+  const withTeam = () => {
+    let s = ok(applyAction(hireState(), { type: 'embaucher', candidateId: 50 }))
+    s = ok(applyAction(s, { type: 'embaucher', candidateId: 51 }))
+    return s
+  }
+  it('refus : métier sans enclos, enclos inconnu, agent trop chargé', () => {
+    const s = withTeam()
+    s.staff.employees.push({ id: 77, name: 'V', job: 'veterinaire', xpH: 0, hiredAt: T0, encIds: [] })
+    expect(refused(applyAction(s, { type: 'affecter', employeeId: 77, encIds: [1] }))).toBe("Ce métier ne s'occupe pas d'un enclos.")
+    expect(refused(applyAction(s, { type: 'affecter', employeeId: s.staff.employees[0].id, encIds: [1, 99] }))).toBe('Introuvable.')
+    const agent = s.staff.employees.find((e) => e.job === 'entretien')!
+    s.enclosures.push(...[3, 4, 5, 6].map((i) => enclosure(i, null)))
+    expect(refused(applyAction(s, { type: 'affecter', employeeId: agent.id, encIds: [1, 2, 3, 4, 5] }))).toBe('Il ne peut entretenir que 4 enclos.')
+    expect(refused(applyAction(s, { type: 'affecter', employeeId: 4242, encIds: [1] }))).toBe('Introuvable.')
+  })
+  it("la capacité de l'agent ignore la dette", () => {
+    const s = withTeam()
+    s.coins = -10
+    s.enclosures.push(...[3, 4].map((i) => enclosure(i, null)))
+    const agent = s.staff.employees.find((e) => e.job === 'entretien')!
+    expect(applyAction(s, { type: 'affecter', employeeId: agent.id, encIds: [1, 2, 3, 4] }).ok).toBe(true)
+  })
+  it("retire les doublons en gardant l'ordre", () => {
+    const s = withTeam()
+    const k = s.staff.employees.find((e) => e.job === 'soigneur')!
+    const r = ok(applyAction(s, { type: 'affecter', employeeId: k.id, encIds: [2, 1, 2] }))
+    expect(r.staff.employees.find((e) => e.id === k.id)!.encIds).toEqual([2, 1])
+  })
+  it('choix manuel gardé : un animal acheté dans A ne déplace pas Léa de B', () => {
+    let s = hireState()
+    s.staff.employees = [{ id: 1, name: 'Léa', job: 'soigneur', xpH: 0, hiredAt: T0, encIds: [] }]
+    s = ok(applyAction(s, { type: 'affecter', employeeId: 1, encIds: [2] }))
+    s.merchant.offers = [{ id: 900, species: 'mouton', sex: 'F', stage: 'adulte', price: 10 }]
+    s = ok(applyAction(s, { type: 'acheterAnimal', offerId: 900, encId: 1 }))
+    expect(s.staff.employees[0].encIds[0]).toBe(2)
+  })
+})
+
+describe('repartir', () => {
+  it("redistribue : le plus peuplé d'abord", () => {
+    let s = ok(applyAction(hireState(), { type: 'embaucher', candidateId: 50 }))
+    s = ok(applyAction(s, { type: 'affecter', employeeId: s.staff.employees[0].id, encIds: [2] }))
+    s = ok(applyAction(s, { type: 'repartir' }))
+    expect(s.staff.employees[0].encIds).toEqual([1, 2])
+  })
+})
+
+describe('dette', () => {
+  const debt = () => hireState({ coins: -10 })
+  const msg = "Rembourse d'abord la dette : il manque 10 pièces."
+  it('refuse les dépenses avec « il manque N pièces »', () => {
+    const s = debt()
+    for (const a of [
+      { type: 'embaucher', candidateId: 50 },
+      { type: 'acheterAnimal', offerId: 1, encId: 1 },
+      { type: 'batir', slot: 1, building: 'cafe' },
+      { type: 'ameliorer', slot: 0 },
+      { type: 'agrandirGardeManger' },
+      { type: 'construire', rect: { x: 0, z: 0, w: 6, d: 6 } },
+      { type: 'tracerChemin', a: { x: 0, z: 0 }, b: { x: 1, z: 0 } },
+      { type: 'relierEnclos', encId: 1 },
+    ] as const) expect(refused(applyAction(s, a)), a.type).toBe(msg)
+  })
+  it('arrondit au-dessus', () => {
+    expect(refused(applyAction(hireState({ coins: -9.2 }), { type: 'embaucher', candidateId: 50 }))).toBe(msg)
+  })
+  it('acheterRations : seulement le manque de pièces ; vendre et licencier passent', () => {
+    const s = debt()
+    expect(refused(applyAction(s, { type: 'acheterRations', food: 'fourrage', n: 1 }))).not.toContain('dette')
+    s.staff.employees = [{ id: 1, name: 'Léa', job: 'soigneur', xpH: 0, hiredAt: T0, encIds: [] }]
+    expect(applyAction(s, { type: 'licencier', employeeId: 1 }).ok).toBe(true)
+    expect(refused(applyAction(s, { type: 'vendre', animalId: 3 }))).not.toContain('dette')
+  })
+  it("redimensionner : refusé seulement s'il coûte", () => {
+    const s = debt()
+    const free = refused(applyAction(s, { type: 'redimensionner', encId: 1, rect: { x: 0, z: 0, w: 11, d: 10 } }))
+    const costly = refused(applyAction(s, { type: 'redimensionner', encId: 1, rect: { x: 0, z: 0, w: 14, d: 12 } }))
+    expect(free).not.toContain('dette')
+    expect(costly).toBe(msg)
+  })
+})

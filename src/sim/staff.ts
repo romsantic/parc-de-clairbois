@@ -2,7 +2,8 @@ import { JOBS, STAFF_TUNING, FIRST_KEEPER } from '../data/staff'
 import { STAFF_NAMES } from '../data/names'
 import { TUNING, HOUR_MS } from '../data/tuning'
 import type { Candidate, Employee, GameEvent, GameState, JobId, StaffLevel } from './types'
-import { assignGaps } from './care'
+import { assignGaps, redistribute } from './care'
+import type { ActionResult } from './actions'
 import { dayKey } from './missions'
 import { random } from './random'
 
@@ -83,4 +84,57 @@ export function staffStep(state: GameState, events: GameEvent[]): void {
   }
   if (state.time >= st.renewAt) renewCandidates(state, events)
   if (events.some((e) => e.kind === 'naissance')) assignGaps(state)
+}
+
+const NOT_FOUND: ActionResult = { ok: false, reason: 'Introuvable.' }
+
+/** Refus d'une dépense tant que la caisse est dans le rouge ; null si la caisse est à zéro ou au-dessus. */
+export function debtRefusal(state: GameState): ActionResult | null {
+  if (state.coins >= 0) return null
+  return { ok: false, reason: `Rembourse d'abord la dette : il manque ${Math.ceil(-state.coins)} pièces.` }
+}
+
+/** Embauche un candidat (avec l'expérience de son niveau) ; les trous d'affectation sont comblés. */
+export function hire(state: GameState, candidateId: number): ActionResult {
+  const c = state.staff.candidates.find((x) => x.id === candidateId)
+  if (!c) return NOT_FOUND
+  const cap = staffCap(state)
+  if (state.staff.employees.length >= cap) return { ok: false, reason: `Plus de place à la maison du personnel (${cap} employés au plus).` }
+  const s = structuredClone(state)
+  s.staff.employees.push({ id: s.nextId++, name: c.name, job: c.job, xpH: STAFF_TUNING.XP_LEVEL_H[c.level - 1], hiredAt: s.time, encIds: [] })
+  s.staff.candidates = s.staff.candidates.filter((x) => x.id !== candidateId)
+  assignGaps(s)
+  return { ok: true, state: s }
+}
+
+/** Licencie un employé (aucune indemnité) ; ses enclos passent à d'autres s'il y a de la place. */
+export function fire(state: GameState, employeeId: number): ActionResult {
+  if (!state.staff.employees.some((e) => e.id === employeeId)) return NOT_FOUND
+  const s = structuredClone(state)
+  s.staff.employees = s.staff.employees.filter((e) => e.id !== employeeId)
+  assignGaps(s)
+  return { ok: true, state: s }
+}
+
+/** Confie des enclos à un soigneur ou à un agent d'entretien (choix du joueur, gardé tel quel). */
+export function assign(state: GameState, employeeId: number, encIds: number[]): ActionResult {
+  const e = state.staff.employees.find((x) => x.id === employeeId)
+  if (!e) return NOT_FOUND
+  if (e.job !== 'soigneur' && e.job !== 'entretien') return { ok: false, reason: "Ce métier ne s'occupe pas d'un enclos." }
+  if (encIds.some((id) => !state.enclosures.some((x) => x.id === id))) return NOT_FOUND
+  const ids = [...new Set(encIds)]
+  if (e.job === 'entretien') {
+    const max = STAFF_TUNING.CLEANER_ENCLOSURES[employeeLevel(e) - 1] // hors dette
+    if (ids.length > max) return { ok: false, reason: `Il ne peut entretenir que ${max} enclos.` }
+  }
+  const s = structuredClone(state)
+  s.staff.employees.find((x) => x.id === employeeId)!.encIds = ids
+  return { ok: true, state: s }
+}
+
+/** Redistribue tout le personnel : le plus peuplé d'abord. */
+export function redistributeAll(state: GameState): ActionResult {
+  const s = structuredClone(state)
+  redistribute(s)
+  return { ok: true, state: s }
 }

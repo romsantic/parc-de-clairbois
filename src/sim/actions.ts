@@ -10,6 +10,8 @@ import { canLevelUp, farmLevel } from './village'
 import { animalsIn, capacity, cleanliness } from './enclosure'
 import { buyAnimal, restock, sellAnimal } from './merchant'
 import { claimMission, skipTutorial, updateMissions } from './missions'
+import { assign, debtRefusal, fire, hire, redistributeAll } from './staff'
+import { assignGaps } from './care'
 import { checkPlacement, enclosureCost, resizeCost, snapRect } from './placement'
 
 /** Résultat d'une action : nouvel état, ou raison du refus (en français, affichable telle quelle). */
@@ -275,6 +277,10 @@ export type Action =
   | { type: 'tracerChemin'; a: PathPoint; b: PathPoint }
   | { type: 'detruireChemin'; id: number }
   | { type: 'relierEnclos'; encId: number }
+  | { type: 'embaucher'; candidateId: number }
+  | { type: 'licencier'; employeeId: number }
+  | { type: 'affecter'; employeeId: number; encIds: number[] }
+  | { type: 'repartir' }
   /** Le joueur a lu la nouvelle mission : le « ! » s'éteint (silencieux). */
   | { type: 'lireMission' }
 
@@ -287,7 +293,8 @@ export function applyAction(state: GameState, a: Action): ActionResult {
     case 'nettoyer': bump(s.stats, 'nettoyages'); break
     case 'acheterRations': bump(s.stats, a.food === 'fourrage' ? 'fourrageAchete' : 'viandeAchetee', a.n); break
     case 'vendre': bump(s.stats, 'ventes'); break
-    case 'acheterAnimal': bump(s.stats, 'achatsAnimaux'); break
+    case 'acheterAnimal': bump(s.stats, 'achatsAnimaux'); assignGaps(s); break
+    case 'construire': assignGaps(s); break
     case 'soigner': bump(s.stats, 'soins'); break
     case 'soignerTout': bump(s.stats, 'soins', state.animals.filter((x) => x.enclosureId === a.encId && x.health.status === 'malade').length); break
     case 'billet': bump(s.stats, 'billetsRegles'); break
@@ -299,7 +306,15 @@ export function applyAction(state: GameState, a: Action): ActionResult {
   return r
 }
 
+/** Actions qui dépensent : refusées tant que la caisse est dans le rouge. */
+const SPENDING = new Set<Action['type']>(['construire', 'batir', 'ameliorer', 'agrandirGardeManger', 'acheterAnimal', 'tracerChemin', 'relierEnclos', 'embaucher'])
+
 function run(state: GameState, a: Action): ActionResult {
+  const debt = debtRefusal(state)
+  if (debt) {
+    if (SPENDING.has(a.type)) return debt
+    if (a.type === 'redimensionner' && previewEnclosure(state, a.rect, a.encId).cost > 0) return debt
+  }
   switch (a.type) {
     case 'nettoyer': return cleanEnclosure(state, a.encId)
     case 'soignerTout': return cureAllInEnclosure(state, a.encId)
@@ -321,6 +336,10 @@ function run(state: GameState, a: Action): ActionResult {
     case 'tracerChemin': return traceChemin(state, a.a, a.b)
     case 'detruireChemin': return destroyPath(state, a.id)
     case 'relierEnclos': return linkEnclosure(state, a.encId)
+    case 'embaucher': return hire(state, a.candidateId)
+    case 'licencier': return fire(state, a.employeeId)
+    case 'affecter': return assign(state, a.employeeId, a.encIds)
+    case 'repartir': return redistributeAll(state)
     case 'lireMission': { const s = structuredClone(state); s.missions.unread = false; return { ok: true, state: s } }
   }
 }

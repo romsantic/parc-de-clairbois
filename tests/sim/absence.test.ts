@@ -3,8 +3,8 @@ import { advanceTo } from '../../src/sim/advance'
 import { summarize } from '../../src/sim/summary'
 import { newGame } from '../../src/sim/newGame'
 import { DAY_MS, HOUR_MS } from '../../src/data/tuning'
-import { efficiency } from '../../src/sim/care'
-import { animal, emptyState, enclosure, T0 } from './helpers'
+import { efficiency, careCoverage, redistribute } from '../../src/sim/care'
+import { animal, bigPark, emptyState, enclosure, T0 } from './helpers'
 
 /** Couple de moutons dans un enclos plein (pas de naissance), propreté neutralisée. */
 function sheepFor(days: number, fourrageHours: number) {
@@ -73,5 +73,24 @@ describe('dette du personnel', () => {
     st = advanceTo(st, st.time + DAY_MS).state
     expect(st.coins).toBeGreaterThan(0)
     expect(efficiency(st)).toBe(1)
+  })
+})
+
+describe('parc bien tenu', () => {
+  it('un parc moyen avec assez de soigneurs et d\'agents tient 3 jours sans le joueur', () => {
+    const s = bigPark()
+    s.pantry = { fourrage: 400, viande: 400, capacity: 800 }
+    s.staff.coverAllUntil = 0
+    s.staff.payDay = Math.floor(s.time / DAY_MS)
+    s.staff.renewAt = Number.MAX_SAFE_INTEGER
+    const keepers = Math.ceil(s.animals.length / 12)
+    for (let i = 0; i < keepers + 4; i++) {
+      s.staff.employees.push({ id: 5000 + i, name: 'E' + i, job: i < keepers ? 'soigneur' : 'entretien', xpH: 0, hiredAt: s.time, encIds: [] })
+    }
+    redistribute(s)
+    expect(careCoverage(s).covered.size).toBe(s.animals.length)
+    const r = advanceTo(s, s.time + 3 * DAY_MS)
+    expect(summarize(r.events).morts).toEqual([])
+    expect(r.state.coins).toBeGreaterThanOrEqual(0)
   })
 })

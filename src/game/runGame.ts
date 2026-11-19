@@ -55,6 +55,7 @@ export function runGame(store: Storage, storageOk = true, audio: AudioController
   }
   if (session.priceNotice) showNotice(session.priceNotice)
   if (session.pathsNotice) showNotice(session.pathsNotice)
+  if (session.staffNotice) showNotice(session.staffNotice)
   if (!storageOk) showNotice('Ton navigateur bloque la sauvegarde : la partie ne sera pas conservée après fermeture.')
 
   let state = session.state
@@ -193,6 +194,10 @@ function successMessage(a: Action, s: GameState, before: GameState): string {
     case 'tracerChemin': return 'Chemin tracé'
     case 'detruireChemin': return 'Chemin détruit'
     case 'relierEnclos': return 'Enclos relié'
+    case 'embaucher': return 'Employé embauché'
+    case 'licencier': return 'Employé licencié'
+    case 'affecter': return 'Affectation changée'
+    case 'repartir': return 'Personnel redistribué'
     case 'recuperer': return `Récompense récupérée : ${rewardText(s.coins - before.coins, s.pantry.fourrage - before.pantry.fourrage, s.pantry.viande - before.pantry.viande)}`
     case 'monterNiveau': return s.village.level === 3 ? 'Clairbois devient un bourg !' : 'Clairbois devient un village !'
   }

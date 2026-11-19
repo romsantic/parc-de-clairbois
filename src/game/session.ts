@@ -7,6 +7,8 @@ import { MISSIONS_TUNING } from '../data/missions'
 import { HOUR_MS } from '../data/tuning'
 import { population, newcomers } from '../sim/village'
 import { giftPaths } from '../sim/paths'
+import { assignGaps, careCoverage } from '../sim/care'
+import { firstKeeper } from '../sim/staff'
 import { SPECIES } from '../data/species'
 import { loadGame, saveGame, SAVE_KEY, type Storage } from '../save/save'
 
@@ -33,6 +35,8 @@ export interface Session {
   priceNotice: string | null
   /** Message à montrer une fois (chemins offerts à une ancienne partie) ; null sinon. */
   pathsNotice: string | null
+  /** Message à montrer une fois (première soigneuse offerte à une ancienne partie) ; null sinon. */
+  staffNotice: string | null
   /** Identifiant de cet onglet : seul lui sauvegarde tant qu'aucun autre n'a repris la partie. */
   owner: string
 }
@@ -87,10 +91,29 @@ function pathsMessage(state: GameState, linked: number[], stuck: number[]): stri
   return msg
 }
 
+/** Offre Léa à une partie sans soigneur : elle prend les enclos libres, et tous les animaux comptent comme suivis jusqu'à `nowMs` (le rattrapage de l'absence se fait sans pénalité). */
+export function giftFirstKeeper(state: GameState, nowMs: number): GameState {
+  if (state.staff.employees.some((e) => e.job === 'soigneur')) return state
+  const s = structuredClone(state)
+  s.staff.employees.push(firstKeeper(s, []))
+  assignGaps(s)
+  s.staff.coverAllUntil = nowMs
+  return s
+}
+
+/** Texte de la première soigneuse offerte ; ajoute le nombre d'animaux qui attendent un soigneur. */
+function staffMessage(state: GameState): string {
+  let msg = "Nouveau à Clairbois : le personnel ! Margaux t'envoie Léa, ta première soigneuse. Sans soigneur, un enclos se salit plus vite et ses animaux n'ont plus de petits. Embauche la suite dans le volet Personnel (icône en haut)."
+  const followed = careCoverage({ ...state, staff: { ...state.staff, coverAllUntil: 0 } }).covered.size // sans le délai de grâce
+  const waiting = state.animals.length - followed
+  if (waiting > 0) msg += ` Léa ne peut suivre que ${followed} animaux : ${waiting} attendent un soigneur.`
+  return msg
+}
+
 /** Charge la partie (ou en crée une), rattrape le temps d'absence et prend la main sur la sauvegarde. */
 export function startSession(store: Storage, nowMs: number, storageOk = true): Session {
   const owner = newOwner()
-  const base = { summary: null, skippedMs: 0, absentMs: 0, owner, priceNotice: null as string | null, pathsNotice: null as string | null }
+  const base = { summary: null, skippedMs: 0, absentMs: 0, owner, priceNotice: null as string | null, pathsNotice: null as string | null, staffNotice: null as string | null }
   if (!storageOk) return { ...base, state: freshGame(nowMs), problem: null, canSave: false }
   const loaded = loadGame(store, undefined, nowMs)
   if (loaded.kind === 'trop-recente' || loaded.kind === 'migration-impossible') {
@@ -109,6 +132,11 @@ export function startSession(store: Storage, nowMs: number, storageOk = true): S
     start = g.state
     pathsNotice = pathsMessage(g.state, g.linked, g.stuck)
   }
+  let staffNotice: string | null = null
+  if (loaded.fromVersion < 5) { // avant le rattrapage : l'absence se passe sans pénalité
+    start = giftFirstKeeper(start, nowMs)
+    staffNotice = staffMessage(start)
+  }
   start.utcOffsetMin = localOffset(nowMs) // l'heure locale, avant le rattrapage
   const notice = applyStep6Adjustments(store, start) // avant le rattrapage : l'absence ne se passe pas à un prix démesuré
   const r = advanceTo(start, nowMs)
@@ -118,7 +146,7 @@ export function startSession(store: Storage, nowMs: number, storageOk = true): S
     restock(r.state)
   }
   const canSave = saveGame(store, r.state, nowMs, owner) === 'ok'
-  return { ...base, state: r.state, summary: summarize(r.events, r.state), skippedMs: r.skippedMs, absentMs: loaded.savedAt === undefined ? 0 : Math.max(0, nowMs - loaded.savedAt), problem: null, canSave, priceNotice: notice, pathsNotice }
+  return { ...base, state: r.state, summary: summarize(r.events, r.state), skippedMs: r.skippedMs, absentMs: loaded.savedAt === undefined ? 0 : Math.max(0, nowMs - loaded.savedAt), problem: null, canSave, priceNotice: notice, pathsNotice, staffNotice }
 }
 
 /**

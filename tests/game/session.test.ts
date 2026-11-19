@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { startSession, resume, restartState, STEP6_MARKER_KEY } from '../../src/game/session'
+import { startSession, resume, restartState, giftFirstKeeper, STEP6_MARKER_KEY } from '../../src/game/session'
+import { bigPark } from '../sim/helpers'
+import { advanceTo } from '../../src/sim/advance'
+import { summarize } from '../../src/sim/summary'
 import { saveGame, loadGame, SAVE_KEY, type Storage } from '../../src/save/save'
 import { newGame } from '../../src/sim/newGame'
 import { DAY_MS } from '../../src/data/tuning'
@@ -234,5 +237,45 @@ describe('chemins : chemin offert aux anciennes parties', () => {
   })
   it('partie neuve : pas de message', () => {
     expect(startSession(memory(), NOW).pathsNotice).toBeNull()
+  })
+})
+
+describe('le personnel : ancienne partie', () => {
+  const asV4 = (g: ReturnType<typeof bigPark>) => { const s = structuredClone(g) as unknown as Record<string, unknown>; delete s.staff; s.version = 4; return s }
+  const save = (g: ReturnType<typeof bigPark>, version: 4 | 5 = 4) => {
+    const m = memory()
+    m.data[SAVE_KEY] = JSON.stringify({ version, savedAt: g.time, state: version === 4 ? asV4(g) : g })
+    return m
+  }
+  it('sauvegarde v4 : Léa arrive, le message le dit, et le rattrapage ne fait ni mort ni malade de plus', () => {
+    const g = bigPark()
+    const now = g.time + 3 * DAY_MS
+    const r = startSession(save(g), now)
+    const lea = r.state.staff.employees.find((e) => e.name === 'Léa')
+    expect(lea).toBeDefined()
+    expect(r.staffNotice).toContain('Margaux t\'envoie Léa')
+    expect(r.staffNotice).toContain('attendent un soigneur')
+    // même parc, sans personnel, tout suivi : référence
+    const ref = advanceTo({ ...structuredClone(g), staff: { ...g.staff, employees: [], coverAllUntil: Number.MAX_SAFE_INTEGER } }, now)
+    const refSum = summarize(ref.events, ref.state)
+    expect(r.summary!.morts.length).toBeLessThanOrEqual(refSum.morts.length)
+    expect(r.summary!.malades).toBeLessThanOrEqual(refSum.malades)
+    expect(r.state.animals.filter((a) => a.health.status === 'malade').length)
+      .toBeLessThanOrEqual(ref.state.animals.filter((a) => a.health.status === 'malade').length)
+  })
+  it('sauvegarde v5 : pas de message', () => {
+    const m = save(bigPark(), 5)
+    expect(startSession(m, bigPark().time + DAY_MS).staffNotice).toBeNull()
+  })
+  it('partie neuve : pas de message', () => {
+    expect(startSession(memory(), NOW).staffNotice).toBeNull()
+  })
+  it('giftFirstKeeper : sans soigneur seulement', () => {
+    const g = bigPark()
+    g.staff.coverAllUntil = 0
+    const a = giftFirstKeeper(g, 123_000)
+    expect(a.staff.employees).toHaveLength(1)
+    expect(a.staff.coverAllUntil).toBe(123_000)
+    expect(giftFirstKeeper(a, 999_000)).toBe(a)
   })
 })

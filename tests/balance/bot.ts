@@ -15,6 +15,9 @@ import { checkPlacement, enclosureCost } from '../../src/sim/placement'
 import { isLinked, removalImpact } from '../../src/sim/paths'
 import { START_PATH } from '../../src/data/paths'
 import { canLevelUp, population } from '../../src/sim/village'
+import { careCoverage } from '../../src/sim/care'
+import { dailyWages, staffCap } from '../../src/sim/staff'
+import { STAFF_TUNING } from '../../src/data/staff'
 import type { BuildingType, GameState, Rect } from '../../src/sim/types'
 
 /**
@@ -356,6 +359,38 @@ function upgradeBuildings(c: Ctx): boolean {
 }
 
 // ---------------------------------------------------------------------------------------------
+// Personnel
+
+/** Le meilleur candidat d'un métier (niveau le plus haut, puis le premier de la liste). */
+function bestCandidate(s: GameState, job: 'soigneur' | 'entretien'): number | null {
+  let best: { id: number; level: number } | null = null
+  for (const c of s.staff.candidates) if (c.job === job && (!best || c.level > best.level)) best = c
+  return best ? best.id : null
+}
+
+/** Agents voulus : un dès 3 enclos, puis un par `CLEANER_ENCLOSURES[0]` enclos. */
+const agentsWanted = (s: GameState): number => (s.enclosures.length >= 3 ? Math.ceil(s.enclosures.length / STAFF_TUNING.CLEANER_ENCLOSURES[0]) : 0)
+
+/** Il embauche un soigneur si des animaux ne sont pas suivis, un agent s'il en manque ; maison pleine : il la construit ou l'améliore. */
+function hireStaff(c: Ctx): boolean {
+  const s = c.s
+  // il ne s'engage que s'il peut payer quelques jours de salaires en plus du nouveau venu
+  if (s.coins - reserve() < 3 * dailyWages(s) + 200) return false
+  const uncovered = s.animals.length - careCoverage(s).covered.size
+  const agents = s.staff.employees.filter((e) => e.job === 'entretien').length
+  const job = uncovered > 0 ? 'soigneur' : agents < agentsWanted(s) ? 'entretien' : null
+  if (!job) return false
+  const id = bestCandidate(s, job)
+  if (id === null) return false
+  if (s.staff.employees.length >= staffCap(s)) {
+    const house = s.buildings.find((b) => b.type === 'personnel')
+    if (!house) return act(c, { type: 'batir', slot: 6, building: 'personnel' })
+    return house.level < 3 && act(c, { type: 'ameliorer', slot: house.slot })
+  }
+  return act(c, { type: 'embaucher', candidateId: id })
+}
+
+// ---------------------------------------------------------------------------------------------
 // Un passage
 
 /** Les premiers pas, un à un, comme un joueur qui suit Margaux. Vrai si quelque chose a été fait. */
@@ -404,6 +439,7 @@ function visit(c: Ctx): void {
     if (step >= 7) {
       if (canLevelUp(c.s).ok && act(c, { type: 'monterNiveau' })) changed = true
       else if (buildBuildings(c)) changed = true
+      else if (hireStaff(c)) changed = true
       else if (buyAnimals(c)) changed = true
       else if (upgradeBuildings(c)) changed = true
       else if (sellSurplus(c)) changed = true

@@ -4,6 +4,7 @@ import { capacity } from '../../src/sim/enclosure'
 import { checkPlacement } from '../../src/sim/placement'
 import { DAY_MS } from '../../src/data/tuning'
 import { bigPark, crowdedPark, emptyState, T0 } from './helpers'
+import { redistribute } from '../../src/sim/care'
 import type { GameState } from '../../src/sim/types'
 
 /** Temps de calcul (pas de montre) : insensible aux autres tests qui tournent en parallèle. */
@@ -73,4 +74,20 @@ describe('crowdedPark (150 animaux, test de charge)', () => {
   it('un parc vide reste instantané', () => {
     expect(cpuMs(() => advanceTo(emptyState(), T0 + 30 * DAY_MS)).ms).toBeLessThan(500)
   })
+})
+
+describe('bigPark avec personnel', () => {
+  it('30 jours d\'absence avec 6 employés : moins de 2 s', () => {
+    const mk = () => {
+      const s = bigPark()
+      s.staff.coverAllUntil = 0
+      s.staff.renewAt = Number.MAX_SAFE_INTEGER
+      for (let i = 0; i < 6; i++) s.staff.employees.push({ id: 6000 + i, name: 'E' + i, job: i < 4 ? 'soigneur' : 'entretien', xpH: 700, hiredAt: s.time, encIds: [] })
+      redistribute(s)
+      return s
+    }
+    const a = cpuMs(() => advanceTo(mk(), T0 + 30 * DAY_MS))
+    expect(a.ms).toBeLessThan(2000)
+    expect(a.value.state.time).toBe(T0 + 30 * DAY_MS)
+  }, 30_000)
 })
