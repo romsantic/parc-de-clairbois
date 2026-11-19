@@ -30,6 +30,12 @@ L'étape 2 n'est pas encore codée. Ce plan suppose qu'elle livre ce qui suit. *
 | Fabriques de test | `employee(id, job, over?)` dans `tests/sim/helpers.ts`, et `emptyState()` en v5 avec `staff: []` | tâches 1 à 4 |
 | Joueur automatique | il embauche et affecte déjà soigneurs et agents d'entretien | tâche 4 |
 
+### Écarts tranchés par Romain (19/11/2026, « Oui, lance »)
+
+- **E1 — Vétérinaires recrutables dès que le centre existe** : tant qu'il n'y a pas de centre, aucun candidat vétérinaire ; avec le centre, `veterinaire` entre dans le tirage des candidats avec un poids de **0,2** (soigneur et agent gardent leurs poids relatifs). Le volet du personnel n'affiche plus « Bientôt » pour le vétérinaire quand le centre existe. → sim en **tâche 3** (`renewCandidates`), données en tâche 1 (`VET_CENTER.CANDIDATE_WEIGHT: 0.2`), affichage en tâche 7.
+- **E2 — Un vétérinaire expérimenté soigne plus vite** : vitesse × (1 + `VET_CENTER.LEVEL_SPEEDUP` × (niveau − 1)), `LEVEL_SPEEDUP = 0.1` (niveau 5 = 40 % plus vite). `careDurationMs = careH × SPEED[niveau centre − 1] / (efficiency(state) × (1 + 0,1 × (employeeLevel(vet) − 1))) × HOUR_MS`. → données tâche 1, calcul tâche 3.
+- **D8 (premier pas `pas-centre`)** : n'était dans aucune tâche → **tâche 5**. Les premiers pas sont rangés par **index** (`missions.tutorial.step`) : la tâche 5 insère `pas-centre` (« Construis le centre vétérinaire », Margaux, surbrillance de l'emplacement 7) juste après `pas-cafe`, et ajoute à `MIGRATIONS[5]` : `tutorial.step += 1` si `step` > index de `pas-cafe` (partie finie ou au-delà du café : on ne recule personne). Une partie migrée a le centre offert, donc si elle tombe sur ce pas, il réussit aussitôt.
+
 ### Revérifié contre le vrai code de l'étape 2 (19/11/2026, après fusion de `main`) — **ces lignes font foi**
 
 | Attendu | Réalité dans le code | Conséquence pour ce plan |
