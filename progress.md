@@ -102,7 +102,7 @@
 
 | # | Sous-tâche | Agent · modèle | État |
 |---|---|---|---|
-| 1 | État v4, données et liaison des enclos | agent · Sonnet | — |
+| 1 | État v4, données et liaison des enclos | agent · Sonnet | faite (4284bc7) — relue (0 critique, 0 important) — 659 tests |
 | 2 | Tracer, détruire, relier, chemin offert (règles) | agent · Sonnet | — |
 | 3 | Visiteurs, ancienne partie, joueur automatique | agent · Sonnet | — |
 | 4 | Chemins en 3D et éditeur de tracé | agent · Sonnet | — |
