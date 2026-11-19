@@ -203,3 +203,34 @@ describe('relecture : Bourg et marchand', () => {
     expect(before.state.merchant.restockAt).toBeGreaterThan(before.state.time)
   })
 })
+
+describe('buildBuilding : centre vétérinaire', () => {
+  it("construit le centre sur l'emplacement 7 au Hameau : -250 pièces", () => {
+    const s = ok(buildBuilding(emptyState({ coins: 1000 }), 7, 'centreVeto'))
+    expect(s.coins).toBe(750)
+    expect(s.buildings.find((b) => b.slot === 7)).toEqual({ slot: 7, type: 'centreVeto', level: 1 })
+  })
+  it("refuse un café sur l'emplacement 7", () => {
+    expect(buildBuilding(emptyState({ coins: 5000 }), 7, 'cafe')).toEqual({ ok: false, reason: 'Cet emplacement est réservé au centre vétérinaire.' })
+  })
+  it('refuse le centre ailleurs que sur l’emplacement 7', () => {
+    expect(buildBuilding(emptyState({ coins: 5000 }), 1, 'centreVeto')).toEqual({ ok: false, reason: 'Le centre vétérinaire se construit sur son emplacement, au village.' })
+    expect(buildBuilding(emptyState({ coins: 5000 }), 6, 'centreVeto')).toEqual({ ok: false, reason: 'Cet emplacement est réservé à la maison du personnel.' })
+  })
+  it('refuse un second centre', () => {
+    const s = emptyState({ coins: 5000, buildings: [{ slot: 0, type: 'ferme', level: 1 }, { slot: 7, type: 'centreVeto', level: 1 }] })
+    const refus = { ok: false, reason: 'Clairbois a déjà un centre vétérinaire.' }
+    expect(buildBuilding(s, 7, 'centreVeto')).toEqual(refus)
+    expect(buildBuilding(s, 1, 'centreVeto')).toEqual(refus)
+  })
+  it('le centre monte jusqu’au niveau 5 (4 améliorations : 500, 1 200, 2 500, 5 000)', () => {
+    let s = emptyState({ coins: 20000, buildings: [{ slot: 0, type: 'ferme', level: 1 }, { slot: 7, type: 'centreVeto', level: 1 }] })
+    for (const cost of [500, 1200, 2500, 5000]) {
+      const before = s.coins
+      s = ok(upgradeBuilding(s, 7))
+      expect(before - s.coins).toBe(cost)
+    }
+    expect(s.buildings.find((b) => b.slot === 7)?.level).toBe(5)
+    expect(upgradeBuilding(s, 7)).toEqual({ ok: false, reason: 'Ce bâtiment est déjà au niveau maximum.' })
+  })
+})

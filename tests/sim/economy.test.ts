@@ -119,7 +119,7 @@ describe('seuls les enclos reliés attirent', () => {
   const deuxEnclos = () => {
     const g = newGame(3, T0)
     const a = g.enclosures[0]
-    g.enclosures.push({ id: 900, biome: 'prairie', species: 'mouton', rect: { x: -34, z: -8, w: 6, d: 6 }, cleanedAt: T0 })
+    g.enclosures.push({ id: 900, biome: 'prairie', species: 'mouton', rect: { x: -34, z: -8, w: 6, d: 6 }, cleanedAt: T0, vaccinatedUntil: null })
     for (const n of [1, 2]) g.animals.push(animal(900 + n, 'mouton', n === 1 ? 'F' : 'M', 900))
     return { g, a }
   }

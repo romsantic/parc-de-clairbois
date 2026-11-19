@@ -14,7 +14,7 @@ import { firstKeeper } from './staff'
 export function newGame(seed: number, nowMs: number): GameState {
   const time = Math.floor(nowMs / TUNING.STEP_MS) * TUNING.STEP_MS
   const state: GameState = {
-    version: 5, time, rng: seed >>> 0, coins: TUNING.START_COINS, nextId: 1,
+    version: 6, time, rng: seed >>> 0, coins: TUNING.START_COINS, nextId: 1,
     pantry: { fourrage: TUNING.START_FOURRAGE, viande: 0, capacity: TUNING.START_PANTRY_CAPACITY },
     enclosures: [], animals: [],
     ticketPrice: 2, reputation: 1,
@@ -35,7 +35,7 @@ export function newGame(seed: number, nowMs: number): GameState {
   }
   state.paths.push({ id: state.nextId++, a: { ...START_PATH.a }, b: { ...START_PATH.b } })
   const encId = state.nextId++
-  state.enclosures.push({ id: encId, biome: 'prairie', species: 'mouton', rect: { ...TUNING.START_ENCLOSURE }, cleanedAt: time - TUNING.START_DIRT_H * HOUR_MS })
+  state.enclosures.push({ id: encId, biome: 'prairie', species: 'mouton', rect: { ...TUNING.START_ENCLOSURE }, cleanedAt: time - TUNING.START_DIRT_H * HOUR_MS, vaccinatedUntil: null })
   const adultBorn = time - 2 * SPECIES.mouton.gestationH * HOUR_MS
   for (const sex of ['F', 'M'] as const) {
     const name = ANIMAL_NAMES[Math.floor(random(state) * ANIMAL_NAMES.length)]

@@ -4,6 +4,7 @@ import type { StatKey, Stats } from './types'
 export const STAT_KEYS: StatKey[] = [
   'nettoyages', 'fourrageAchete', 'viandeAchetee', 'ventes', 'achatsAnimaux', 'naissances', 'gestations',
   'visiteurs', 'piecesGagnees', 'soins', 'billetsRegles', 'ficheEnclosVue', 'autonomieVue', 'ameliorations',
+  'vaccinations',
 ]
 
 export function emptyStats(): Stats {

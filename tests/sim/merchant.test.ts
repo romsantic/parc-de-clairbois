@@ -7,7 +7,7 @@ import { ageStage } from '../../src/sim/animal'
 import { SPECIES } from '../../src/data/species'
 import { HOUR_MS } from '../../src/data/tuning'
 import type { GameEvent, GameState } from '../../src/sim/types'
-import { animal, emptyState, enclosure, T0 } from './helpers'
+import { animal, sick, emptyState, enclosure, T0 } from './helpers'
 
 const ok = (r: ReturnType<typeof buyAnimal>): GameState => { if (!r.ok) throw new Error(r.reason); return r.state }
 
@@ -122,7 +122,7 @@ describe('revente', () => {
       animal(10, 'mouton', 'F', 1),
       animal(11, 'mouton', 'M', 1, { bornAt: T0 - 1.5 * 2 * HOUR_MS }),
       animal(12, 'mouton', 'F', 1, { bornAt: T0 }),
-      animal(13, 'mouton', 'F', 1, { health: { status: 'malade', since: T0 } }),
+      animal(13, 'mouton', 'F', 1, { health: sick(T0) }),
     ],
   })
   it('prix : adulte 72, jeune 48, bébé aucun', () => {

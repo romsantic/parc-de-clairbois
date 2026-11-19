@@ -9,7 +9,7 @@ import { emptyState } from '../sim/helpers'
 
 const bx = bridgeX(riverDistance)
 const enc = (id: number, x: number, z: number, w = 8, d = 6): Enclosure =>
-  ({ id, biome: 'prairie', species: 'lion' as never, rect: { x, z, w, d }, cleanedAt: 0 })
+  ({ id, biome: 'prairie', species: 'lion' as never, rect: { x, z, w, d }, cleanedAt: 0, vaccinatedUntil: null })
 const animal = (id: number, enclosureId: number) => ({ id, enclosureId }) as Animal
 const enclosures = [enc(1, -30, 2.5), enc(2, -20, 11.5), enc(3, -12, -20, 8, 6)] // 3 : trop loin de l'allée, non relié
 const animals = [animal(1, 1), animal(2, 2), animal(3, 3)]

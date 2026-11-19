@@ -68,7 +68,7 @@ export function visitorsPerHour(state: GameState, price: number = state.ticketPr
 }
 
 /** Dépense d'un client dans un bâtiment (boutique : selon le nombre d'espèces du parc). */
-export function spendPerClient(type: BuildingType, level: 1 | 2 | 3, especes: number): number {
+export function spendPerClient(type: BuildingType, level: number, especes: number): number {
   const data = BUILDINGS[type]
   return type === 'boutique'
     ? (ECONOMY.BOUTIQUE_BASE + ECONOMY.BOUTIQUE_PER_SPECIES * especes) * data.spend[level - 1]
@@ -76,7 +76,7 @@ export function spendPerClient(type: BuildingType, level: 1 | 2 | 3, especes: nu
 }
 
 /** Clients et recettes par heure d'un bâtiment, pour un nombre de visiteurs et d'espèces donnés. */
-function buildingFlow(b: { type: BuildingType; level: 1 | 2 | 3 }, visiteurs: number, especes: number): { clients: number; pieces: number } {
+function buildingFlow(b: { type: BuildingType; level: number }, visiteurs: number, especes: number): { clients: number; pieces: number } {
   const data = BUILDINGS[b.type]
   const i = b.level - 1
   const clients = Math.min(visiteurs * data.share, data.maxClientsPerH[i])

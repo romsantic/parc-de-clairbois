@@ -7,7 +7,7 @@ import type { Building, Employee, Enclosure } from '../../src/sim/types'
 import { emptyState } from '../sim/helpers'
 
 const enc = (id: number, x: number, z: number, w = 8, d = 6): Enclosure =>
-  ({ id, biome: 'prairie', species: 'lion' as never, rect: { x, z, w, d }, cleanedAt: 0 })
+  ({ id, biome: 'prairie', species: 'lion' as never, rect: { x, z, w, d }, cleanedAt: 0, vaccinatedUntil: null })
 const emp = (encIds: number[]): Employee => ({ id: 1, name: 'Léa', job: 'soigneur', xpH: 0, hiredAt: 0, encIds })
 const house = SLOTS.find((s) => s.id === 6)!
 const withHouse: { buildings: Building[] } = { buildings: [{ slot: 6, type: 'personnel', level: 1 }] }

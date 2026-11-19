@@ -1,5 +1,5 @@
 import { SPECIES, type Food } from '../data/species'
-import { BUILDINGS, FARM, SLOTS } from '../data/economy'
+import { BUILDINGS, FARM, SLOTS, maxBuildingLevel } from '../data/economy'
 import { TUNING } from '../data/tuning'
 import type { BuildingType, GameState, PathPoint, Rect } from './types'
 import { ENTRANCE_ID } from '../data/paths'
@@ -43,7 +43,7 @@ export function cureAnimal(state: GameState, animalId: number): ActionResult {
   const s = structuredClone(state)
   s.coins -= cost
   const b = s.animals.find((x) => x.id === animalId)!
-  b.health = { status: 'ok' }
+  b.health = { status: 'ok' } // V1 : disparaît avec le bouton « Soigner » (tâche 3)
   b.lastFedAt = s.time
   return { ok: true, state: s }
 }
@@ -96,7 +96,7 @@ export function buildEnclosure(state: GameState, rect: Rect): ActionResult {
   const zone = checkPlacement(state, r)
   const s = structuredClone(state)
   s.coins -= p.cost
-  s.enclosures.push({ id: s.nextId++, biome: zone.ok ? zone.zone.id : 'prairie', species: null, rect: r, cleanedAt: s.time })
+  s.enclosures.push({ id: s.nextId++, biome: zone.ok ? zone.zone.id : 'prairie', species: null, rect: r, cleanedAt: s.time, vaccinatedUntil: null })
   return { ok: true, state: s }
 }
 
@@ -126,15 +126,24 @@ export function cureAllInEnclosure(state: GameState, encId: number): ActionResul
   return { ok: true, state: s }
 }
 
+/** Bâtiments qui ont leur propre emplacement (champ `only` de SLOTS), avec les textes de refus. */
+const RESERVED_TYPES: BuildingType[] = ['personnel', 'centreVeto']
+const RESERVED_TEXT: Partial<Record<BuildingType, string>> = { personnel: 'à la maison du personnel', centreVeto: 'au centre vétérinaire' }
+const RESERVED_ELSEWHERE: Partial<Record<BuildingType, string>> = {
+  personnel: 'La maison du personnel se construit sur son emplacement, au fond du village.',
+  centreVeto: 'Le centre vétérinaire se construit sur son emplacement, au village.',
+}
+
 /** Bâtit un bâtiment (unique dans le village) sur un emplacement libre et débloqué. */
 export function buildBuilding(state: GameState, slot: number, type: BuildingType): ActionResult {
   const sl = SLOTS.find((x) => x.id === slot)
   if (!sl) return NOT_FOUND
   if (state.village.level < sl.unlockLevel) return { ok: false, reason: `Cet emplacement se débloque au niveau ${sl.unlockLevel} du village.` }
   if (sl.unlockLevel === 3) return { ok: false, reason: 'De nouveaux bâtiments arriveront bientôt ici.' } // pas de bâtiment au Bourg en V1
+  if (RESERVED_TYPES.includes(type) && state.buildings.some((b) => b.type === type)) return { ok: false, reason: `Clairbois a déjà ${BUILDINGS[type].withArticle}.` }
   if (state.buildings.some((b) => b.slot === slot)) return { ok: false, reason: 'Cet emplacement est déjà pris.' }
-  if (sl.only && sl.only !== type) return { ok: false, reason: 'Cet emplacement est réservé à la maison du personnel.' }
-  if (!sl.only && type === 'personnel') return { ok: false, reason: 'La maison du personnel se construit sur son emplacement, au fond du village.' }
+  if (sl.only && sl.only !== type) return { ok: false, reason: `Cet emplacement est réservé ${RESERVED_TEXT[sl.only]}.` }
+  if (!sl.only && RESERVED_TYPES.includes(type)) return { ok: false, reason: RESERVED_ELSEWHERE[type]! }
   const data = BUILDINGS[type]
   if (state.village.level < data.unlockLevel) return { ok: false, reason: `Ce bâtiment se débloque au niveau ${data.unlockLevel} du village.` }
   if (state.buildings.some((b) => b.type === type)) return { ok: false, reason: `Clairbois a déjà ${data.withArticle}.` }
@@ -160,12 +169,12 @@ export function levelUp(state: GameState): ActionResult {
 export function upgradeBuilding(state: GameState, slot: number): ActionResult {
   const b = state.buildings.find((x) => x.slot === slot)
   if (!b) return NOT_FOUND
-  if (b.level >= 3) return { ok: false, reason: 'Ce bâtiment est déjà au niveau maximum.' }
+  if (b.level >= maxBuildingLevel(b.type)) return { ok: false, reason: 'Ce bâtiment est déjà au niveau maximum.' }
   const cost = BUILDINGS[b.type].upgradeCost[b.level - 1]
   if (state.coins < cost) return noMoney(cost)
   const s = structuredClone(state)
   s.coins -= cost
-  s.buildings.find((x) => x.slot === slot)!.level = (b.level + 1) as 2 | 3
+  s.buildings.find((x) => x.slot === slot)!.level = b.level + 1
   return { ok: true, state: s }
 }
 

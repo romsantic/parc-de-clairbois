@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { healthStep } from '../../src/sim/health'
 import type { GameEvent } from '../../src/sim/types'
 import { HOUR_MS } from '../../src/data/tuning'
-import { animal, emptyState, enclosure, T0 } from './helpers'
+import { animal, sick, emptyState, enclosure, T0 } from './helpers'
 
 const MIN10 = 600_000
 
@@ -17,13 +17,13 @@ describe('healthStep', () => {
     }
     expect(at(24 * HOUR_MS - MIN10).s.animals[0].health.status).toBe('ok')
     const r = at(24 * HOUR_MS)
-    expect(r.s.animals[0].health).toEqual({ status: 'malade', since: T0 + 24 * HOUR_MS })
-    expect(r.ev).toContainEqual({ kind: 'malade', at: T0 + 24 * HOUR_MS, animalId: 1, cause: 'faim' })
+    expect(r.s.animals[0].health).toEqual(sick(T0 + 24 * HOUR_MS))
+    expect(r.ev).toContainEqual({ kind: 'malade', at: T0 + 24 * HOUR_MS, animalId: 1, disease: 'indigestion' })
   })
   it('meurt après 48 h de maladie sans soin, pas avant', () => {
     const at = (h: number) => {
       const s = emptyState({ time: T0 + h, enclosures: [enclosure(1, 'mouton', 12, 10, { cleanedAt: T0 + h })],
-        animals: [animal(1, 'mouton', 'F', 1, { lastFedAt: T0 + h, health: { status: 'malade', since: T0 } })] })
+        animals: [animal(1, 'mouton', 'F', 1, { lastFedAt: T0 + h, health: sick(T0) })] })
       const ev: GameEvent[] = []
       healthStep(s, ev)
       return { s, ev }
@@ -31,7 +31,7 @@ describe('healthStep', () => {
     expect(at(48 * HOUR_MS - MIN10).s.animals).toHaveLength(1)
     const r = at(48 * HOUR_MS)
     expect(r.s.animals).toHaveLength(0)
-    expect(r.ev).toContainEqual({ kind: 'mort', at: T0 + 48 * HOUR_MS, animalId: 1, name: 'Bête1', species: 'mouton' })
+    expect(r.ev).toContainEqual({ kind: 'mort', at: T0 + 48 * HOUR_MS, animalId: 1, name: 'Bête1', species: 'mouton', cause: 'indigestion' })
   })
   it('un enclos propre ne rend jamais malade', () => {
     const s = emptyState({ enclosures: [enclosure(1, 'mouton')], animals: [animal(1, 'mouton', 'F', 1)] })

@@ -37,6 +37,10 @@ const LOOKS: Record<BuildingType, { signY: number; parts: Part[] }> = {
     { key: 'tonneau', x: 2.9, z: 0.6, h: 1 },
     { key: 'caisse', x: -2.8, z: 1.8, h: 0.7, rot: 0.5, minLevel: 3 },
   ] },
+  // Provisoire (tâche 6 : vraie allure du centre) : une maison du village.
+  centreVeto: { signY: 4.8, parts: [
+    { key: 'maison2', x: 0, z: -0.6, h: 3.6, rot: Math.PI },
+  ] },
   auberge: { signY: 5.6, parts: [
     { key: 'auberge', x: 0, z: -0.6, h: 4.6, rot: Math.PI },
     { key: 'tonneau', x: 2.9, z: 1.6, h: 1 },
@@ -190,7 +194,7 @@ export function createVillageView(world: World, getState: () => GameState) {
     own.set(g, st)
     if (type) {
       const look = LOOKS[type]
-      const scale = LEVEL_SCALE[level - 1]
+      const scale = LEVEL_SCALE[Math.min(level, 3) - 1]
       const inner = new THREE.Group()
       inner.rotation.y = def.rot
       inner.scale.setScalar(scale)

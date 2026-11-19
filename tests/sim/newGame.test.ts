@@ -38,7 +38,7 @@ describe('newGame', () => {
     expect(g.pantry).toEqual({ fourrage: 30, viande: 0, capacity: 200 })
   })
   it("crée directement l'état version 4", () => {
-    expect(g.version).toBe(5)
+    expect(g.version).toBe(6)
     expect(g.ticketPrice).toBe(2)
     expect(g.reputation).toBe(1)
     expect(g.village).toEqual({ level: 1, clientsServed: 0 })

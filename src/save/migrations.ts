@@ -3,7 +3,7 @@
  * À chaque changement du format de GameState, on augmente CURRENT_VERSION et on ajoute ici
  * la fonction qui convertit l'ancien format, pour que les parties en cours survivent aux mises à jour.
  */
-export const CURRENT_VERSION = 5
+export const CURRENT_VERSION = 6
 
 export type Migration = (old: any) => unknown // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -47,4 +47,34 @@ export const MIGRATIONS: Record<number, Migration> = {
   3: (old) => ({ ...old, version: 4, paths: [] }),
   // v4 -> v5 (V2 étape 2, personnel). Écrite en clair : aucun employé, le premier pas tire les candidats.
   4: (old) => ({ ...old, version: 5, staff: { employees: [], candidates: [], renewAt: old.time, renewals: 0, payDay: -1, coverAllUntil: 0 } }),
+  // v5 -> v6 (V2 étape 3, maladies et centre vétérinaire). Écrite en clair, sans importer les données ni appeler le jeu :
+  // les chiffres ci-dessous (24 h, emplacement 7, nom de la vétérinaire) ne doivent jamais changer.
+  5: (old) => {
+    const H = 3_600_000
+    const enclosures = old.enclosures as { id: number; cleanedAt: number }[]
+    const animals = (old.animals as { enclosureId: number; lastFedAt: number; health: { status: string; since?: number } }[]).map((a) => {
+      if (a.health.status !== 'malade') return a
+      const enc = enclosures.find((e) => e.id === a.enclosureId)
+      // Même règle que la V1 pour deviner la cause : la faim d'abord, puis la saleté ; sinon indigestion.
+      const disease = old.time - a.lastFedAt >= 24 * H ? 'indigestion'
+        : enc && old.time - enc.cleanedAt >= 24 * H ? 'parasites' : 'indigestion'
+      const stage = old.time - (a.health.since as number) >= 24 * H ? 2 : 1
+      // Le stade repart du début, repéré : aucun malade ne meurt à cause de la mise à jour.
+      return { ...a, health: { status: 'malade', disease, stage, stageSince: old.time, detectedAt: old.time, careUntil: null, vetId: null, quarantined: false } }
+    })
+    const buildings = [...(old.buildings as { slot: number; type: string; level: number }[])]
+    if (!buildings.some((b) => b.type === 'centreVeto') && !buildings.some((b) => b.slot === 7)) buildings.push({ slot: 7, type: 'centreVeto', level: 1 })
+    const employees = [...(old.staff.employees as { job: string }[])]
+    let nextId = old.nextId as number
+    if (!employees.some((e) => e.job === 'veterinaire')) {
+      employees.push({ id: nextId, name: 'Élise Fontaine', job: 'veterinaire', xpH: 0, hiredAt: old.time, encIds: [] } as never)
+      nextId += 1
+    }
+    return {
+      ...old, version: 6, nextId, animals, buildings,
+      enclosures: (old.enclosures as object[]).map((e) => ({ ...e, vaccinatedUntil: null })),
+      stats: { ...old.stats, counts: { ...old.stats.counts, vaccinations: 0 } },
+      staff: { ...old.staff, employees },
+    }
+  },
 }

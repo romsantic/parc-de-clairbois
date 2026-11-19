@@ -35,7 +35,7 @@ export function slotCanBuild(state: GameState, slotId: number): boolean {
   const sl = SLOTS.find((x) => x.id === slotId)
   if (!sl || sl.unlockLevel === 3) return false
   return (Object.keys(BUILDINGS) as BuildingType[]).some((t) =>
-    (sl.only ? t === sl.only : t !== 'personnel') && BUILDINGS[t].buildCost !== null && BUILDINGS[t].unlockLevel <= state.village.level && !state.buildings.some((b) => b.type === t))
+    (sl.only ? t === sl.only : t !== 'personnel' && t !== 'centreVeto') && BUILDINGS[t].buildCost !== null && BUILDINGS[t].unlockLevel <= state.village.level && !state.buildings.some((b) => b.type === t))
 }
 
 /** Le village peut-il passer au niveau suivant ? (Simple question : le niveau ne change que par une action.) */
@@ -51,6 +51,6 @@ export function canLevelUp(state: GameState): { ok: true; level: 2 | 3 } | { ok:
 
 /** Niveau de la ferme : 0 sans ferme. */
 export function farmLevel(state: GameState): 0 | 1 | 2 | 3 {
-  return state.buildings.find((b) => b.type === 'ferme')?.level ?? 0
+  return (state.buildings.find((b) => b.type === 'ferme')?.level ?? 0) as 0 | 1 | 2 | 3 // la ferme n'a que 3 niveaux
 }
 

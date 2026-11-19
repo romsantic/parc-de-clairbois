@@ -14,10 +14,22 @@ export interface Enclosure {
   rect: Rect
   /** Dernier nettoyage (ms). */
   cleanedAt: number
+  /** Protégé de la grippe jusqu'à cette heure du jeu (ms), ou null si l'enclos n'est pas vacciné. */
+  vaccinatedUntil: number | null
 }
 
-/** Santé : un seul type de maladie en V1, extensible en V2 (centre vétérinaire). */
-export type Health = { status: 'ok' } | { status: 'malade'; since: number }
+/** Les quatre maladies (V2, étape 3). */
+export type DiseaseId = 'parasites' | 'indigestion' | 'blessure' | 'grippe'
+/** Stade d'une maladie : 1 léger, 2 grave, 3 mortel. */
+export type Stage = 1 | 2 | 3
+
+/**
+ * Santé : en forme, ou malade d'une maladie à un stade.
+ * stageSince : début du stade (ms) ; detectedAt : repérage (null : pas encore vu) ;
+ * careUntil : fin du soin en cours (null : pas de soin) ; vetId : vétérinaire qui soigne ; quarantined : au centre.
+ */
+export type Health = { status: 'ok' }
+  | { status: 'malade'; disease: DiseaseId; stage: Stage; stageSince: number; detectedAt: number | null; careUntil: number | null; vetId: number | null; quarantined: boolean }
 
 export interface Animal {
   id: number
@@ -34,8 +46,9 @@ export interface Animal {
   lastBirthAt: number | null
 }
 
-export type BuildingType = 'ferme' | 'cafe' | 'boutique' | 'auberge' | 'personnel'
-export interface Building { slot: number; type: BuildingType; level: 1 | 2 | 3 }
+export type BuildingType = 'ferme' | 'cafe' | 'boutique' | 'auberge' | 'personnel' | 'centreVeto'
+/** Niveau de 1 à maxBuildingLevel(type) (3 pour la plupart des bâtiments, 5 pour le centre vétérinaire). */
+export interface Building { slot: number; type: BuildingType; level: number }
 
 /** Un animal proposé par le marchand. */
 export interface Offer { id: number; species: SpeciesId; sex: 'F' | 'M'; stage: 'jeune' | 'adulte'; price: number }
@@ -48,7 +61,7 @@ export interface Pantry { fourrage: number; viande: number; capacity: number }
 
 /** Compteurs cumulés depuis le début de la partie : les missions en mesurent la différence. */
 export type StatKey = 'nettoyages' | 'fourrageAchete' | 'viandeAchetee' | 'ventes' | 'achatsAnimaux' | 'naissances' | 'gestations'
-  | 'visiteurs' | 'piecesGagnees' | 'soins' | 'billetsRegles' | 'ficheEnclosVue' | 'autonomieVue' | 'ameliorations'
+  | 'visiteurs' | 'piecesGagnees' | 'soins' | 'billetsRegles' | 'ficheEnclosVue' | 'autonomieVue' | 'ameliorations' | 'vaccinations'
 export interface Stats { counts: Record<StatKey, number>; birthsBySpecies: Partial<Record<SpeciesId, number>> }
 
 /** Avancée d'une mission : `base` = valeur du compteur au début ; `done` = réussie ; `claimed` = récompense récupérée. */
@@ -84,7 +97,7 @@ export interface Staff {
 }
 
 export interface GameState {
-  version: 5
+  version: 6
   /** Heure du jeu (ms), toujours alignée sur le pas de 10 minutes. */
   time: number
   /** Graine du hasard, sauvegardée avec la partie. */
@@ -112,8 +125,11 @@ export interface GameState {
 
 export type GameEvent =
   | { kind: 'naissance'; at: number; animalId: number; motherId: number }
-  | { kind: 'malade'; at: number; animalId: number; cause: 'faim' | 'saleté' }
-  | { kind: 'mort'; at: number; animalId: number; name: string; species: SpeciesId }
+  /** Émis au repérage (pas à l'apparition de la maladie). */
+  | { kind: 'malade'; at: number; animalId: number; disease: DiseaseId }
+  | { kind: 'aggravation'; at: number; animalId: number; stage: 2 | 3 }
+  | { kind: 'soigne'; at: number; animalId: number; disease: DiseaseId; cost: number }
+  | { kind: 'mort'; at: number; animalId: number; name: string; species: SpeciesId; cause?: DiseaseId }
   | { kind: 'gestation'; at: number; animalId: number }
   | { kind: 'repas'; at: number; fourrage: number; viande: number }
   | { kind: 'recettes'; at: number; visiteurs: number; billets: number; village: number }

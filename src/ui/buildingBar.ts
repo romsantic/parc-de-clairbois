@@ -15,7 +15,7 @@ export interface BuildingBarContext {
 }
 
 const text = (tag: string, t: string, cls = '') => { const e = document.createElement(tag); e.textContent = t; if (cls) e.className = cls; return e }
-const BUILD_ICON: Record<BuildingType, string> = { ferme: ICONS.garde, cafe: ICONS.cafe, boutique: ICONS.boutique, auberge: ICONS.auberge, personnel: ICONS.personnel }
+const BUILD_ICON: Record<BuildingType, string> = { ferme: ICONS.garde, cafe: ICONS.cafe, boutique: ICONS.boutique, auberge: ICONS.auberge, personnel: ICONS.personnel, centreVeto: ICONS.personnel } // centreVeto : icône provisoire (tâche 7)
 
 /** Ce qui doit changer pour que la barre d'un emplacement soit reconstruite. */
 export function slotKey(s: GameState, slot: number): string {
@@ -57,7 +57,7 @@ export function buildBuildingBar(ctx: BuildingBarContext, slot: number, left: HT
       return none
     }
     left.append(text('b', 'Emplacement libre', 'nom'))
-    const types = (Object.keys(BUILDINGS) as BuildingType[]).filter((t) => BUILDINGS[t].buildCost !== null && (def?.only ? t === def.only : t !== 'personnel') && !s.buildings.some((x) => x.type === t))
+    const types = (Object.keys(BUILDINGS) as BuildingType[]).filter((t) => BUILDINGS[t].buildCost !== null && (def?.only ? t === def.only : t !== 'personnel' && t !== 'centreVeto') && !s.buildings.some((x) => x.type === t))
     if (types.length === 0 || !slotCanBuild(s, slot)) {
       left.append(text('span', 'De nouveaux bâtiments arriveront bientôt', 'discret'))
       return none
@@ -76,7 +76,7 @@ export function buildBuildingBar(ctx: BuildingBarContext, slot: number, left: HT
 
   const d = BUILDINGS[b.type]
   const upgrade = () => {
-    const cost = b.level < 3 ? d.upgradeCost[b.level - 1] : undefined
+    const cost = d.upgradeCost[b.level - 1]
     const btn = iconButton(ICONS.ameliorer, cost === undefined ? 'Niveau maximum' : `Améliorer (niveau ${b.level + 1})`, { price: cost, disabled: cost === undefined })
     btn.addEventListener('click', () => ctx.dispatch({ type: 'ameliorer', slot }, btn))
     return btn

@@ -4,7 +4,7 @@ import { ageStage } from '../../src/sim/animal'
 import type { GameEvent, GameState } from '../../src/sim/types'
 import { ANIMAL_NAMES } from '../../src/data/names'
 import { HOUR_MS } from '../../src/data/tuning'
-import { animal, emptyState, enclosure, T0 } from './helpers'
+import { animal, sick, emptyState, enclosure, T0 } from './helpers'
 
 // Chance forcée : tant que `force.on` est vrai, tout tirage aléatoire vaut 0 (la conception réussit toujours).
 const force = vi.hoisted(() => ({ on: false }))
@@ -71,7 +71,7 @@ describe('breedingStep', () => {
   })
   it('pas de conception si la femelle est malade', () => {
     const s = couple()
-    s.animals[0].health = { status: 'malade', since: T0 }
+    s.animals[0].health = sick(T0)
     expect(noConception(s)).toBe(true)
   })
   it('pas de conception si la femelle est affamée', () => {

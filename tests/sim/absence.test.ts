@@ -49,7 +49,7 @@ describe('nouvelle partie laissée seule', () => {
     for (let seed = 1; seed <= 20; seed++) {
       const g = newGame(seed, T0)
       const { events } = advanceTo(g, g.time + 72 * HOUR_MS)
-      const faim = events.filter((e) => e.kind === 'malade' && e.cause === 'faim')
+      const faim = events.filter((e) => e.kind === 'malade' && e.disease === 'indigestion')
       expect(faim, `graine ${seed}`).toHaveLength(0)
     }
   })

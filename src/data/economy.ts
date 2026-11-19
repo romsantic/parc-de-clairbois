@@ -44,8 +44,8 @@ export interface BuildingData {
   unlockLevel: 1 | 2 | 3
   /** null : déjà construit au départ. */
   buildCost: number | null
-  /** Coût pour passer au niveau 2 puis 3. */
-  upgradeCost: [number, number]
+  /** Coût de chaque amélioration : niveau 2, puis 3… (le niveau maximum est upgradeCost.length + 1). */
+  upgradeCost: number[]
   /** Part des visiteurs qui viennent ici. */
   share: number
   /** Pièces par client, par niveau (boutique : multiplicateur du niveau). */
@@ -59,7 +59,13 @@ export const BUILDINGS: Record<BuildingType, BuildingData> = {
   cafe: { name: 'Café', withArticle: 'un café', unlockLevel: 1, buildCost: 300, upgradeCost: [600, 1200], share: 0.4, spend: [1.5, 2, 2.5], maxClientsPerH: [10, 25, 50] },
   boutique: { name: 'Boutique', withArticle: 'une boutique', unlockLevel: 2, buildCost: 800, upgradeCost: [1500, 3000], share: 0.3, spend: [0.5, 0.6, 0.75], maxClientsPerH: [10, 25, 50] },
   personnel: { name: 'Maison du personnel', withArticle: 'une maison du personnel', unlockLevel: 1, buildCost: 400, upgradeCost: [900, 2000], share: 0, spend: [0, 0, 0], maxClientsPerH: [0, 0, 0] },
+  centreVeto: { name: 'Centre vétérinaire', withArticle: 'un centre vétérinaire', unlockLevel: 1, buildCost: 250, upgradeCost: [500, 1200, 2500, 5000], share: 0, spend: [0, 0, 0], maxClientsPerH: [0, 0, 0] },
   auberge: { name: 'Auberge', withArticle: 'une auberge', unlockLevel: 2, buildCost: 1200, upgradeCost: [2500, 5000], share: 0.1, spend: [4, 5, 6], maxClientsPerH: [4, 8, 15] },
+}
+
+/** Niveau maximum d'un bâtiment (3 pour la plupart, 5 pour le centre vétérinaire). */
+export function maxBuildingLevel(type: BuildingType): number {
+  return BUILDINGS[type].upgradeCost.length + 1
 }
 
 export const FARM = {
@@ -96,4 +102,6 @@ export const SLOTS: { id: number; x: number; z: number; rot: number; unlockLevel
   { id: 5, x: 24, z: -11, rot: -0.55, unlockLevel: 3 },
   // Au fond du village, derrière les emplacements du Bourg, façade tournée vers la place : la maison du personnel.
   { id: 6, x: 17, z: -19, rot: 0, unlockLevel: 1, only: 'personnel' },
+  // Tout au fond du village, à l'arrière-gauche de la maison du personnel (à plus de 9 m, loin de la rivière) : le centre vétérinaire.
+  { id: 7, x: 10, z: -26, rot: 0.4, unlockLevel: 1, only: 'centreVeto' },
 ]

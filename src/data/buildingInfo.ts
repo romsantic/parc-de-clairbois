@@ -6,6 +6,7 @@ export const BUILDING_ROLE: Record<BuildingType, string> = {
   cafe: "Le café sert une boisson aux visiteurs du parc : une part d'entre eux y passe, et chaque client dépense quelques pièces.",
   boutique: "La boutique vend des souvenirs aux visiteurs ; plus le parc compte d'espèces, plus ils achètent.",
   personnel: "Le personnel y loge : plus elle est grande, plus tu peux embaucher.",
+  centreVeto: "Le vétérinaire y soigne les animaux malades que le soigneur a repérés, même quand tu n'es pas là. Plus le centre est grand, plus il soigne de maladies.",
   auberge: "L'auberge loge les visiteurs de passage : peu de clients, mais de gros paniers, et elle attire plus de monde au parc.",
 }
 

@@ -1,6 +1,7 @@
 import type { GameState, MissionProgress } from '../sim/types'
 import { SPECIES } from '../data/species'
-import { BUILDINGS, SLOTS } from '../data/economy'
+import { BUILDINGS, SLOTS, maxBuildingLevel } from '../data/economy'
+import { DISEASES } from '../data/diseases'
 import { ENTRANCE_ID } from '../data/paths'
 import { TUTORIAL, STORY } from '../data/missions'
 import { JOBS } from '../data/staff'
@@ -85,6 +86,17 @@ export function loadGame(store: Storage, migrations: Record<number, Migration> =
 
 const finite = (x: unknown) => typeof x === 'number' && Number.isFinite(x)
 const intBetween = (x: unknown, min: number, max: number) => typeof x === 'number' && Number.isInteger(x) && x >= min && x <= max
+/** Une santé : en forme, ou malade avec maladie connue, stade 1 à 3 et dates finies ou absentes. */
+function validHealth(h: unknown): boolean {
+  const x = h as { status?: unknown; disease?: unknown; stage?: unknown; stageSince?: unknown; detectedAt?: unknown; careUntil?: unknown; vetId?: unknown; quarantined?: unknown } | null
+  if (!x || typeof x !== 'object') return false
+  if (x.status === 'ok') return true
+  if (x.status !== 'malade') return false
+  const finiteOrNull = (v: unknown) => v === null || finite(v)
+  return typeof x.disease === 'string' && Object.hasOwn(DISEASES, x.disease) && intBetween(x.stage, 1, 3) && finite(x.stageSince)
+    && finiteOrNull(x.detectedAt) && finiteOrNull(x.careUntil) && finiteOrNull(x.vetId) && typeof x.quarantined === 'boolean'
+}
+
 /** Une mission en cours : id texte, valeur de départ finie, réussie et récupérée vrai/faux. */
 function validProgress(x: unknown, drawnDaily = false): boolean {
   const mp = x as MissionProgress | null
@@ -111,9 +123,10 @@ function looksLikeGame(s: unknown): s is GameState {
   for (const e of g.enclosures) {
     if (!e || !finite(e.id) || !finite(e.cleanedAt) || !e.rect) return false
     if (e.species !== null && !(e.species in SPECIES)) return false
+    if (e.vaccinatedUntil !== null && !finite(e.vaccinatedUntil)) return false
   }
   for (const a of g.animals) {
-    if (!a || !(a.species in SPECIES) || !finite(a.bornAt) || !finite(a.lastFedAt) || !a.health) return false
+    if (!a || !(a.species in SPECIES) || !finite(a.bornAt) || !finite(a.lastFedAt) || !validHealth(a.health)) return false
     if (a.lastBirthAt !== null && !finite(a.lastBirthAt)) return false
   }
   const v = g.village
@@ -122,7 +135,7 @@ function looksLikeGame(s: unknown): s is GameState {
   if (!Array.isArray(g.buildings)) return false
   const slots = new Set<number>()
   for (const b of g.buildings) {
-    if (!b || !(b.type in BUILDINGS) || ![1, 2, 3].includes(b.level) || !SLOTS.some((x) => x.id === b.slot) || slots.has(b.slot)) return false
+    if (!b || !(b.type in BUILDINGS) || !intBetween(b.level, 1, maxBuildingLevel(b.type)) || !SLOTS.some((x) => x.id === b.slot) || slots.has(b.slot)) return false
     slots.add(b.slot)
   }
   const m = g.merchant

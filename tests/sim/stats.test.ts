@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { animal, emptyState, enclosure, T0 } from './helpers'
+import { animal, sick, emptyState, enclosure, T0 } from './helpers'
 import { applyAction } from '../../src/sim/actions'
 import { advanceTo } from '../../src/sim/advance'
 import { newGame } from '../../src/sim/newGame'
@@ -20,7 +20,7 @@ const ok = (s: GameState, a: Parameters<typeof applyAction>[1]): GameState => {
 describe('compteurs (stats)', () => {
   it('une nouvelle partie a tous ses compteurs à zéro', () => {
     const g = newGame(1, T0)
-    expect(g.version).toBe(5)
+    expect(g.version).toBe(6)
     expect(Object.values(g.stats.counts).every((n) => n === 0)).toBe(true)
     expect(g.stats.birthsBySpecies).toEqual({})
     expect(g.missions.story.index).toBe(0)
@@ -41,7 +41,7 @@ describe('compteurs (stats)', () => {
   it('vendre, soigner, billet, améliorer comptent', () => {
     const base = emptyState({
       enclosures: [enclosure(1, 'mouton')],
-      animals: [animal(1, 'mouton', 'F', 1), animal(2, 'mouton', 'M', 1, { health: { status: 'malade', since: T0 } }), animal(3, 'mouton', 'M', 1, { health: { status: 'malade', since: T0 } })],
+      animals: [animal(1, 'mouton', 'F', 1), animal(2, 'mouton', 'M', 1, { health: sick(T0) }), animal(3, 'mouton', 'M', 1, { health: sick(T0) })],
     })
     expect(ok(base, { type: 'soigner', animalId: 2 }).stats.counts.soins).toBe(1)
     expect(ok(base, { type: 'soignerTout', encId: 1 }).stats.counts.soins).toBe(2)

@@ -1,6 +1,6 @@
 /** Ce que la fiche d'un bâtiment, de la mairie ou d'un décor du village affiche : fonctions pures (testées), sans DOM. */
 import { staffCap } from '../sim/staff'
-import { BUILDINGS, ECONOMY, FARM, SLOTS } from '../data/economy'
+import { BUILDINGS, ECONOMY, FARM, SLOTS, maxBuildingLevel } from '../data/economy'
 import { BUILDING_ROLE, INFO_LABELS, MAIRIE_INFO } from '../data/buildingInfo'
 import { VILLAGE_PROPS } from '../data/village'
 import { buildingIncomePerHour, visibleSpecies, spendPerClient } from '../sim/economy'
@@ -36,7 +36,7 @@ export function buildingInfo(state: GameState, target: InfoTarget): BuildingInfo
   if (!b || !SLOTS.some((x) => x.id === target.slot)) return null
   const d = BUILDINGS[b.type]
   const i = b.level - 1
-  const rows: InfoRow[] = [{ label: INFO_LABELS.level, value: `${b.level}/3` }]
+  const rows: InfoRow[] = [{ label: INFO_LABELS.level, value: `${b.level}/${maxBuildingLevel(b.type)}` }]
   if (b.type === 'ferme') {
     const free = FARM.freeFourragePerDay[i]
     rows.push(
@@ -55,7 +55,7 @@ export function buildingInfo(state: GameState, target: InfoTarget): BuildingInfo
       { label: INFO_LABELS.spend, value: spendText(spendPerClient(b.type, b.level, especes)) },
     )
   }
-  const cost = b.level < 3 ? d.upgradeCost[i] : undefined
+  const cost = d.upgradeCost[i]
   rows.push({ label: INFO_LABELS.upgrade, value: cost === undefined ? INFO_LABELS.maxLevel : `${formatCoins(cost)} pour le niveau ${b.level + 1}` })
   return { title: d.name, role: BUILDING_ROLE[b.type], rows, missing: [], villageButton: null }
 }

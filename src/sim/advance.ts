@@ -54,12 +54,19 @@ function shiftDates(s: GameState, ms: number): void {
   s.merchant.restockAt += ms
   s.staff.renewAt += ms // pas coverAllUntil : le délai de grâce ne doit pas s'allonger
   for (const e of s.staff.employees) e.hiredAt += ms
-  for (const e of s.enclosures) e.cleanedAt += ms
+  for (const e of s.enclosures) {
+    e.cleanedAt += ms
+    if (e.vaccinatedUntil !== null) e.vaccinatedUntil += ms
+  }
   for (const a of s.animals) {
     a.bornAt += ms
     a.lastFedAt += ms
     if (a.pregnantSince !== null) a.pregnantSince += ms
     if (a.lastBirthAt !== null) a.lastBirthAt += ms
-    if (a.health.status === 'malade') a.health.since += ms
+    if (a.health.status === 'malade') {
+      a.health.stageSince += ms
+      if (a.health.detectedAt !== null) a.health.detectedAt += ms
+      if (a.health.careUntil !== null) a.health.careUntil += ms
+    }
   }
 }

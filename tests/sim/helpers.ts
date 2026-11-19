@@ -1,4 +1,4 @@
-import type { Animal, Enclosure, GameState } from '../../src/sim/types'
+import type { Animal, Employee, Enclosure, GameState, Health, JobId } from '../../src/sim/types'
 import type { SpeciesId } from '../../src/data/species'
 import { SPECIES } from '../../src/data/species'
 import { capacity } from '../../src/sim/enclosure'
@@ -10,7 +10,7 @@ export const T0 = 1_800_000_000_000 - (1_800_000_000_000 % 600_000) // aligné s
 
 export function emptyState(over: Partial<GameState> = {}): GameState {
   return {
-    version: 5, time: T0, rng: 12345, coins: 1000, nextId: 100,
+    version: 6, time: T0, rng: 12345, coins: 1000, nextId: 100,
     pantry: { fourrage: 0, viande: 0, capacity: 1000 },
     enclosures: [], animals: [],
     ticketPrice: 2, reputation: 1,
@@ -44,7 +44,7 @@ export function storyAt(index: number): GameState['missions'] {
 }
 
 export function enclosure(id: number, species: SpeciesId | null, w = 12, d = 10, over: Partial<Enclosure> = {}): Enclosure {
-  return { id, biome: species ? SPECIES[species].biome : 'prairie', species, rect: { x: 0, z: 0, w, d }, cleanedAt: T0, ...over }
+  return { id, biome: species ? SPECIES[species].biome : 'prairie', species, rect: { x: 0, z: 0, w, d }, cleanedAt: T0, vaccinatedUntil: null, ...over }
 }
 
 export function animal(id: number, species: SpeciesId, sex: 'F' | 'M', encId: number, over: Partial<Animal> = {}): Animal {
@@ -147,4 +147,14 @@ export function bigPark(): GameState {
     ],
     enclosures, animals, missions: storyAt(8),
   }))
+}
+
+/** Un animal malade (par défaut : indigestion légère, repérée, depuis `since`). */
+export function sick(since: number = T0, over: Partial<Extract<Health, { status: 'malade' }>> = {}): Health {
+  return { status: 'malade', disease: 'indigestion', stage: 1, stageSince: since, detectedAt: since, careUntil: null, vetId: null, quarantined: false, ...over }
+}
+
+/** Un employé (par défaut : débutant, embauché à T0, sans enclos). */
+export function employee(id: number, job: JobId, over: Partial<Employee> = {}): Employee {
+  return { id, name: `Employé${id}`, job, xpH: 0, hiredAt: T0, encIds: [], ...over }
 }

@@ -1,15 +1,15 @@
 import { describe, it, expect } from 'vitest'
 import { cleanEnclosure, cureAnimal, addRations, renameAnimal } from '../../src/sim/actions'
 import { HOUR_MS } from '../../src/data/tuning'
-import { animal, emptyState, enclosure, T0 } from './helpers'
+import { animal, sick, emptyState, enclosure, T0 } from './helpers'
 
 const base = () => emptyState({
   time: T0 + 30 * HOUR_MS, coins: 1000,
   pantry: { fourrage: 190, viande: 0, capacity: 200 },
   enclosures: [enclosure(1, 'mouton'), enclosure(2, 'loup')],
   animals: [
-    animal(1, 'mouton', 'F', 1, { health: { status: 'malade', since: T0 + 24 * HOUR_MS } }),
-    animal(2, 'loup', 'M', 2, { health: { status: 'malade', since: T0 + 24 * HOUR_MS } }),
+    animal(1, 'mouton', 'F', 1, { health: sick(T0 + 24 * HOUR_MS) }),
+    animal(2, 'loup', 'M', 2, { health: sick(T0 + 24 * HOUR_MS) }),
     animal(3, 'mouton', 'M', 1),
   ],
 })

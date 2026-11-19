@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { buildEnclosure, resizeEnclosure, cureAllInEnclosure, applyAction, cleanEnclosure, previewEnclosure } from '../../src/sim/actions'
-import { animal, emptyState, enclosure, T0 } from './helpers'
+import { animal, sick, emptyState, enclosure, T0 } from './helpers'
 
 const R = (x: number, z: number, w: number, d: number) => ({ x, z, w, d })
 const START = R(-26, -5, 12, 10)
@@ -58,8 +58,8 @@ describe("aperçu d'un enclos (éditeur)", () => {
 describe('soigner tout un enclos', () => {
   it('soigne tous les malades, coût = somme', () => {
     const s = base()
-    s.animals[0].health = { status: 'malade', since: T0 }
-    s.animals[1].health = { status: 'malade', since: T0 }
+    s.animals[0].health = sick(T0)
+    s.animals[1].health = sick(T0)
     const r = cureAllInEnclosure(s, 1)
     expect(r.ok && r.state.coins).toBe(900)
     expect(r.ok && r.state.animals.every((a) => a.health.status === 'ok')).toBe(true)

@@ -57,7 +57,7 @@ describe('liaison des enclos par les chemins', () => {
   })
   it('nouvelle partie : v4, un segment de départ, enclos des moutons relié', () => {
     const g = newGame(1, T0)
-    expect(g.version).toBe(5)
+    expect(g.version).toBe(6)
     expect(g.paths).toHaveLength(1)
     expect(g.paths[0]).toMatchObject(START_PATH)
     expect(isLinked(g, g.enclosures[0].id)).toBe(true)
@@ -244,7 +244,7 @@ describe('chemin offert : recherche sur grille', () => {
 describe('chemin offert : copies', () => {
   it('les points offerts ne sont jamais partagés avec l’état d’origine ni l’entrée', () => {
     const g = newGame(1, T0)
-    g.enclosures.push({ id: 900, biome: 'prairie', species: null, rect: { x: -34, z: -8, w: 6, d: 6 }, cleanedAt: T0 })
+    g.enclosures.push({ id: 900, biome: 'prairie', species: null, rect: { x: -34, z: -8, w: 6, d: 6 }, cleanedAt: T0, vaccinatedUntil: null })
     const r = giftPaths(g)
     expect(r.linked).toContain(900)
     const fresh = r.state.paths.slice(g.paths.length)

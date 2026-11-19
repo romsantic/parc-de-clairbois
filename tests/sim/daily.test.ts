@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { animal, bigPark, crowdedPark, emptyState, enclosure, storyAt, T0 } from './helpers'
+import { animal, sick, bigPark, crowdedPark, emptyState, enclosure, storyAt, T0 } from './helpers'
 import { applyAction, type Action } from '../../src/sim/actions'
 import { advanceTo, step } from '../../src/sim/advance'
 import { claimMission, dayKey, missionDef, updateMissions } from '../../src/sim/missions'
@@ -118,7 +118,7 @@ describe('tirage', () => {
     for (let rng = 1; rng <= 120; rng++) {
       const s = withDaily({
         rng, enclosures: [enclosure(1, 'mouton'), enclosure(2, 'cochon')],
-        animals: [animal(1, 'mouton', 'F', 1), animal(2, 'mouton', 'M', 1), animal(3, 'cochon', 'F', 2, { health: { status: 'malade', since: T0 } })],
+        animals: [animal(1, 'mouton', 'F', 1), animal(2, 'mouton', 'M', 1), animal(3, 'cochon', 'F', 2, { health: sick(T0) })],
       })
       for (const id of ids(s)) vues.add(poolId(id))
     }
@@ -127,7 +127,7 @@ describe('tirage', () => {
   it("un animal malade n'est pas vendable", () => {
     const vendre = DAILY_POOL.find((p) => p.possible === 'animalVendable')!.id
     for (let rng = 1; rng <= 40; rng++) {
-      const s = withDaily({ rng, enclosures: [enclosure(1, 'mouton')], animals: [animal(1, 'mouton', 'F', 1, { health: { status: 'malade', since: T0 } })] })
+      const s = withDaily({ rng, enclosures: [enclosure(1, 'mouton')], animals: [animal(1, 'mouton', 'F', 1, { health: sick(T0) })] })
       expect(ids(s).map(poolId)).not.toContain(vendre)
     }
   })
@@ -439,7 +439,7 @@ describe('anciennes quotidiennes (partie v3, « quot-pieces#2 »)', () => {
   it('une partie v3 avec des « #2 » se charge, se mesure et se récupère', () => {
     const g = structuredClone(withDaily({ village: { level: 2, clientsServed: 0 } })) as GameState
     g.missions.daily.list = [{ id: 'quot-achat#2', base: g.stats.counts.achatsAnimaux, done: false, claimed: false }]
-    const mem: Record<string, string> = { [SAVE_KEY]: JSON.stringify({ version: 5, savedAt: 1, state: g }) }
+    const mem: Record<string, string> = { [SAVE_KEY]: JSON.stringify({ version: 6, savedAt: 1, state: g }) }
     const r = loadGame({ getItem: (k) => mem[k] ?? null, setItem: (k, v) => { mem[k] = v } })
     expect(r.kind).toBe('ok')
     if (r.kind !== 'ok') return

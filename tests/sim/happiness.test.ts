@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { happiness } from '../../src/sim/happiness'
 import { HOUR_MS } from '../../src/data/tuning'
-import { animal, emptyState, enclosure, T0 } from './helpers'
+import { animal, sick, emptyState, enclosure, T0 } from './helpers'
 
 describe('happiness', () => {
   const pair = () => emptyState({ enclosures: [enclosure(1, 'mouton')], animals: [animal(1, 'mouton', 'F', 1), animal(2, 'mouton', 'M', 1)] })
@@ -22,7 +22,7 @@ describe('happiness', () => {
   })
   it('malade, le reste parfait → 0,8', () => {
     const s = pair()
-    s.animals[0].health = { status: 'malade', since: T0 }
+    s.animals[0].health = sick(T0)
     expect(happiness(s, s.animals[0])).toBeCloseTo(0.8)
   })
   it('enclos surpeuplé → l’espace baisse le bonheur', () => {
