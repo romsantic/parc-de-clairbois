@@ -259,3 +259,49 @@ export function createPath(control: Point[], opts: PathOptions): THREE.Group {
   }
   return group
 }
+
+/**
+ * Disque de jonction posé sur le relief : cache le bout plat d'un ruban et rend propres les
+ * carrefours. Même texture que les rubans ; bord adouci comme eux (transparent vers l'herbe).
+ */
+export function createJunctionDisc(center: Point, opts: { style?: PathStyle; width?: number; ground: (x: number, z: number) => number; rng: () => number }): THREE.Mesh {
+  const width = opts.width ?? 2.2
+  const style: PathStyle = opts.style ?? 1
+  const rIn = width / 2 - 0.1, rOut = width / 2 + (style === 3 ? 0.3 : 0.45)
+  const N = 24, lift = 0.05
+  const pos: number[] = [], col: number[] = [], uv: number[] = [], idx: number[] = []
+  const push = (x: number, z: number, a: number) => {
+    pos.push(x, opts.ground(x, z) + lift, z)
+    col.push(1, 1, 1, a)
+    uv.push(0.5 + (x - center.x) / (width * 2.2), 0.5 + (z - center.z) / (width * 2.2))
+  }
+  push(center.x, center.z, 1)
+  for (const [r, a] of [[rIn, 1], [rOut, 0]] as const) {
+    for (let i = 0; i < N; i++) {
+      const t = (i / N) * Math.PI * 2
+      push(center.x + Math.cos(t) * r, center.z + Math.sin(t) * r, a)
+    }
+  }
+  for (let i = 0; i < N; i++) {
+    const j = (i + 1) % N
+    idx.push(0, 1 + i, 1 + j) // centre -> anneau intérieur
+    idx.push(1 + i, 1 + N + i, 1 + j, 1 + j, 1 + N + i, 1 + N + j) // anneau intérieur -> extérieur
+  }
+  const geo = new THREE.BufferGeometry()
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3))
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 4))
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2))
+  geo.setIndex(idx)
+  geo.computeVertexNormals()
+  const mesh = new THREE.Mesh(
+    geo,
+    new THREE.MeshStandardMaterial({
+      map: getPathTexture(style, opts.rng),
+      vertexColors: true, transparent: true, roughness: 1, side: THREE.DoubleSide,
+      polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, depthWrite: false,
+    }),
+  )
+  mesh.receiveShadow = true
+  mesh.renderOrder = 1
+  return mesh
+}

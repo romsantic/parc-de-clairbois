@@ -223,6 +223,7 @@ button.icone:hover::after, button.icone:focus-visible::after { opacity: 1; }
 .editeur-enclos .infos { font-weight: 600; font-variant-numeric: tabular-nums; }
 .editeur-enclos .raison { color: #b23a2a; }
 .editeur-enclos .raison:empty { display: none; }
+.editeur-enclos .invite { color: #6f6852; }
 .editeur-enclos button.principal { background: #6fa84a; color: #fff; border-color: #5a8f39; }
 .editeur-enclos button:disabled { opacity: .45; cursor: not-allowed; }
 @media (max-width: 640px) {

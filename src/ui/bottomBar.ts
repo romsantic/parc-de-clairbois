@@ -28,6 +28,7 @@ export interface BottomBarContext {
   dispatch(action: Action, from?: HTMLElement | null): boolean
   startBuild(zone: Zone, point: { x: number; z: number }): void
   startResize(encId: number): void
+  startPath(): void
   openGazette(): void
   /** Glisse la caméra jusqu'au « ! » de la mission ; false s'il n'y en a pas. */
   focusMission(): boolean
@@ -201,7 +202,9 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
         const add = iconButton(ICONS.plus, 'Nouvel enclos')
         if (p.zone.id === 'prairie') guide(add, 'prairie')
         add.addEventListener('click', () => ctx.startBuild(p.zone, p.point))
-        actions.append(add)
+        const path = iconButton(ICONS.chemin, 'Tracer un chemin')
+        path.addEventListener('click', () => ctx.startPath())
+        actions.append(add, path)
       }
     } else if (p.kind === 'emplacement') {
       slotUpdate = buildBuildingBar(ctx, p.slot, left, actions)

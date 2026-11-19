@@ -21,6 +21,8 @@ import { createPicker, type Pick } from './scene/picking'
 import { mountBottomBar } from './ui/bottomBar'
 import { closeDrawer } from './ui/drawer'
 import { createEnclosureEditor } from './scene/enclosureEditor'
+import { createPathEditor } from './scene/pathEditor'
+import { createPathsView } from './scene/pathsView'
 import { SPECIES_MODELS } from './data/speciesModels'
 import { createRng } from './core/rng'
 import { setHighlight } from './ui/highlight'
@@ -121,13 +123,16 @@ async function start(): Promise<void> {
       dispatch,
       onDone: (id) => { select({ kind: 'enclos', id }); bottomBar.refresh() },
     })
-    const picker = createPicker(world, canvas, () => park.enclosureMeshes(), () => editor.active(), () => villageView.slotMeshes(), () => decor.propMeshes())
+    const pathEditor = createPathEditor(world, canvas, rig, { get: getState, dispatch })
+    const pathsView = createPathsView(world)
+    const picker = createPicker(world, canvas, () => park.enclosureMeshes(), () => editor.active() || pathEditor.active(), () => villageView.slotMeshes(), () => decor.propMeshes())
     const bottomBar = mountBottomBar({
       get: getState,
       selection: () => selection,
       dispatch,
       startBuild: (zone, point) => { closeDrawer(); editor.startBuild(zone, point) },
       startResize: (id) => { closeDrawer(); editor.startResize(id) },
+      startPath: () => { closeDrawer(); pathEditor.start() },
       openGazette: game.openGazette,
       focusMission: () => {
         const spot = markerSpot(getState())
@@ -158,6 +163,7 @@ async function start(): Promise<void> {
         world.update(dt)
         decor.update(dt)
         park.update(dt)
+        pathsView.update(getState())
         visitors.update(dt)
         const level = getState().village.level
         if (level !== zonesLevel) { zonesLevel = level; zones.setLevel(level); decor.setPathLevel(level) }
