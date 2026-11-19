@@ -4,6 +4,7 @@ import { MODELS, type ModelKey } from './assets/manifest'
 import { loadModels, requestModel, AssetLoadError } from './scene/loadModels'
 import { hourFromLocation } from './scene/clock'
 import { createVisitorsView, WALKER_MODELS } from './scene/visitorsView'
+import { createStaffView } from './scene/staffView'
 import { createWorld } from './scene/world'
 import { isPhone } from './core/device'
 import { showError, showLoading } from './ui/errorScreen'
@@ -109,6 +110,7 @@ async function start(): Promise<void> {
       hour: () => hourFromLocation(location.search, new Date()).hour,
       mobile: isPhone(),
     })
+    const staffView = createStaffView(world, getState)
     void (async () => { for (const k of WALKER_MODELS) { try { await requestModel(world.models, k) } catch { /* sans ce modèle, tant pis */ } } })()
     let selection: Pick = { kind: 'rien' }
     const select = (p: Pick) => {
@@ -165,6 +167,7 @@ async function start(): Promise<void> {
         park.update(dt)
         pathsView.update(getState())
         visitors.update(dt)
+        staffView.update(dt)
         const level = getState().village.level
         if (level !== zonesLevel) { zonesLevel = level; zones.setLevel(level); decor.setPathLevel(level) }
         zones.update(dt)

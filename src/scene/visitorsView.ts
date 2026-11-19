@@ -15,7 +15,7 @@ export const WALKER_MODELS: ModelKey[] = [
 
 type Phase = 'off' | 'in' | 'walk' | 'stop' | 'out'
 
-class Walker {
+export class Walker {
   readonly object: THREE.Object3D
   private mixer: THREE.AnimationMixer
   private walk?: THREE.AnimationAction

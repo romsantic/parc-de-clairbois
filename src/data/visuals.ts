@@ -27,6 +27,18 @@ export const WALKERS = {
   REFRESH_S: 3,
 } as const
 
+/** Employés visibles sur la carte (purement visuel) : ils font le tour de leur premier enclos. */
+export const STAFF_WALKERS = {
+  MAX_DESKTOP: 8,
+  MAX_MOBILE: 4,
+  /** Distance entre la clôture et le trajet, vers l'extérieur (m). */
+  FENCE_GAP_M: 1.2,
+  MODEL: {
+    soigneur: 'promeneurFermier', entretien: 'promeneuseAventuriere', veterinaire: 'promeneuseTailleur',
+    fermier: 'promeneurFermier', animateur: 'promeneurCasual2',
+  },
+} as const
+
 /** Nombre de promeneurs à afficher selon les visiteurs/h, l'heure (0–24) et l'appareil. */
 export function visitorsShown(visitorsPerH: number, hour: number, mobile: boolean): number {
   if (!(visitorsPerH > 0)) return 0
