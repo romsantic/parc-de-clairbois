@@ -30,6 +30,23 @@ L'étape 2 n'est pas encore codée. Ce plan suppose qu'elle livre ce qui suit. *
 | Fabriques de test | `employee(id, job, over?)` dans `tests/sim/helpers.ts`, et `emptyState()` en v5 avec `staff: []` | tâches 1 à 4 |
 | Joueur automatique | il embauche et affecte déjà soigneurs et agents d'entretien | tâche 4 |
 
+### Revérifié contre le vrai code de l'étape 2 (19/11/2026, après fusion de `main`) — **ces lignes font foi**
+
+| Attendu | Réalité dans le code | Conséquence pour ce plan |
+|---|---|---|
+| Sauvegarde | `CURRENT_VERSION = 5`, `version: 5` | conforme : passage en **v6** |
+| Employés | `GameState.staff: Staff = { employees, candidates, renewAt, renewals, payDay, coverAllUntil }` ; `Employee { id, name, job: JobId, xpH, hiredAt, encIds }` — **pas de champ `level`** : `employeeLevel(e)` (`src/sim/staff.ts`) le déduit de `xpH` | lire `state.staff.employees` ; `JobId` au lieu de `Job` ; la vétérinaire offerte (migration) = `{ id, name: 'Élise Fontaine', job: 'veterinaire', xpH: 0, hiredAt: old.time, encIds: [] }` |
+| Dépistage | pas de `coveredAnimalIds` ; `careCoverage(state).covered` (`src/sim/care.ts`) ; pendant le délai de grâce V1 (`time ≤ staff.coverAllUntil`) tous les animaux sont suivis | tâche 2 utilise `careCoverage(state).covered` (une fois par pas, pas par animal) |
+| Efficacité | pas de `staffEfficiency` ; `efficiency(state)` (`src/sim/care.ts`) = 0,5 si caisse < 0, sinon 1 ; **aucun bonus d'expérience** | tâche 3 : durée du soin ÷ (`efficiency(state)` × bonus de niveau du vétérinaire — voir écart E2) |
+| Embauche | action `embaucher` OK ; **mais `JOBS.veterinaire.open = false`** et `STAFF_TUNING.CANDIDATE_JOBS` ne tire que soigneurs et agents | tâche 1 ouvre le métier (voir écart E1) |
+| Dette | `debtRefusal(state)` (`src/sim/staff.ts`) existe | conforme ; vaccination et soins utilisent aussi `debtRefusal` / attendent |
+| Bâtiments à plus de 3 niveaux | `Building.level: 1 \| 2 \| 3`, `upgradeCost: [number, number]` | **tâche 1 généralise** comme prévu (`number[]`, `maxBuildingLevel`) |
+| Emplacement 6 | existe : `{ id: 6, x: 17, z: -19, rot: 0, unlockLevel: 1, only: 'personnel' }` (au fond du village) ; **le champ `only` existe déjà** | tâche 1 ajoute le 7 avec `only: 'centreVeto'` en réutilisant la règle existante (ne pas la recréer) ; position hors du fond du village déjà pris |
+| Message de mise à jour | `fromVersion` OK ; `Session.staffNotice` + `showNotice` dans `runGame.ts` | tâche 5 ajoute `vetNotice` sur ce modèle (`fromVersion < 6`) |
+| Fabriques de test | **pas de `employee()`** ; `emptyState()` en v5 avec `staff.coverAllUntil = MAX_SAFE_INTEGER` (donc **tous les animaux suivis par défaut dans les tests**) | tâche 1 ajoute `employee(id, job, over?)` ; les tests « sans soigneur » doivent mettre `coverAllUntil` dans le passé |
+| Joueur automatique | `tests/balance/bot.ts` embauche soigneurs et agents (choix du meilleur candidat par métier) | tâche 4 lui ajoute le centre et un vétérinaire |
+| Premiers pas | 9 pas de Margaux dans `src/data/missions.ts` (`pas-fiche` … `pas-autonomie`) | D8 : `pas-centre` inséré avant `pas-gestation` (au plus tard), réussi aussitôt si le centre existe |
+
 ## Global Constraints
 
 - Règles pures et testées dans `src/sim/`, chiffres dans `src/data/`, aucune logique dans `src/data/`.
