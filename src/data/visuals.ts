@@ -19,8 +19,6 @@ export const WALKERS = {
   STOP_MAX_S: 6,
   /** Chance de s'arrêter devant un enclos occupé. */
   STOP_CHANCE: 0.7,
-  /** Enclos à plus de cette distance de l'allée : pas d'arrêt devant lui. */
-  STOP_MAX_GAP: 6,
   HEIGHT: 1.8,
   /** Apparition / disparition en douceur (s) et délai entre deux arrivées (s). */
   FADE_S: 1,
@@ -107,10 +105,8 @@ export const CONFIRM_TIMEOUT_MS = 3000
 
 /** Trajet des promeneurs (m) : marges autour du pont et de l'allée du zoo. */
 export const WALK_ROUTE = {
-  /** Les arrêts devant les enclos restent à l'ouest de cette distance avant le pont. */
-  STOP_BEFORE_BRIDGE: 5,
-  /** Les arrêts restent à l'est de cette abscisse. */
-  STOP_WEST_LIMIT: -33,
+  /** Un promeneur s'arrête devant au plus ce nombre d'enclos occupés et reliés. */
+  MAX_STOPS: 4,
   /** Demi-longueur du passage sur le pont, de part et d'autre de son centre. */
   BRIDGE_APPROACH: 3.5,
   /** Longueur de la rampe entre la berge et le tablier. */
