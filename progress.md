@@ -124,8 +124,8 @@
 | 4 | Maison du personnel | agent · Sonnet | faite (d8a3d80) — relue (0 critique, 0 important) ; emplacement 6 en (17, −19) ; pas encore vue dans le navigateur — 774 tests verts + 3 du joueur automatique |
 | 5 | Actions, dette, ancienne partie, joueur automatique | agent · Sonnet | faite (da2b633) — relue Opus (0 critique, 0 important) ; joueur automatique : Village j2-3, Bourg j5-6, fin j16-17 (avant j3/j7/j18-19), ~460 pièces de salaires/jour en fin — 797 tests |
 | 6 | Petits textes du personnel et de la Gazette | agent · Haiku | faite (f5124e7) — relue (0 critique, 0 important) — 820 tests |
-| 7 | Interface : volet Personnel, fiches, barre du haut | agent · Sonnet | en cours |
-| 8 | Employés visibles sur la carte | agent · Sonnet | — |
+| 7 | Interface : volet Personnel, fiches, barre du haut | agent · Sonnet | faite (f6c5099 + 6b354ae) — relue, 1 correction (alerte de soins en rouge) ; vue par l’agent dans le navigateur (volet, cases d’enclos, Licencier, 375 × 812) sauf Embaucher — 820 tests |
+| 8 | Employés visibles sur la carte | agent · Sonnet | en cours |
 | 9 | Vérification d'ensemble, relecture et publication | chef (Opus) + relecture · Opus | — |
 
 ## Liens
