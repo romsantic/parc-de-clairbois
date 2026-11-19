@@ -42,7 +42,7 @@
 
 ---
 
-### Tâche 1 : État v4, données et liaison des enclos — agent · **Sonnet**
+### Task 1: Tâche 1 — État v4, données et liaison des enclos — agent · **Sonnet**
 
 **Files :**
 - Create : `src/data/paths.ts`, `src/sim/paths.ts`, `tests/sim/paths.test.ts`
@@ -85,7 +85,7 @@
 - [ ] **Step 4 :** `npx vitest run` → tout vert (les anciens tests compris).
 - [ ] **Step 5 :** commit `V2-1 tâche 1 : état v4 et liaison des enclos par les chemins`.
 
-### Tâche 2 : Tracer, détruire, relier, chemin offert (règles) — agent · **Sonnet**
+### Task 2: Tâche 2 — Tracer, détruire, relier, chemin offert (règles) — agent · **Sonnet**
 
 **Files :**
 - Modify : `src/sim/paths.ts`, `src/sim/actions.ts`, `src/sim/placement.ts`
@@ -124,7 +124,7 @@
 - [ ] **Step 4 :** `npx vitest run` → tout vert.
 - [ ] **Step 5 :** commit `V2-1 tâche 2 : tracer, détruire, relier et chemin offert`.
 
-### Tâche 3 : Visiteurs, ancienne partie, joueur automatique — agent · **Sonnet**
+### Task 3: Tâche 3 — Visiteurs, ancienne partie, joueur automatique — agent · **Sonnet**
 
 **Files :**
 - Modify : `src/sim/economy.ts`, `src/save/save.ts`, `src/game/session.ts`, `src/main.ts` (affichage du message), `src/data/missions.ts` (texte de `pas-enclos`), `tests/balance/bot.ts`
@@ -149,7 +149,7 @@
 - [ ] **Step 4 :** `npx vitest run` → tout vert ; noter le rythme du joueur automatique dans le compte rendu.
 - [ ] **Step 5 :** commit `V2-1 tâche 3 : seuls les enclos reliés attirent, chemin offert aux anciennes parties`.
 
-### Tâche 4 : Chemins en 3D et éditeur de tracé — agent · **Sonnet**
+### Task 4: Tâche 4 — Chemins en 3D et éditeur de tracé — agent · **Sonnet**
 
 **Files :**
 - Create : `src/scene/pathsView.ts`, `src/scene/pathEditor.ts`
@@ -173,7 +173,7 @@
 - [ ] **Step 4 :** `npx vitest run` et `npm run build` → verts.
 - [ ] **Step 5 :** commit `V2-1 tâche 4 : chemins construits en 3D et éditeur de tracé`.
 
-### Tâche 5 : Fiches — chemin, enclos non relié — agent · **Sonnet**
+### Task 5: Tâche 5 — Fiches — chemin, enclos non relié — agent · **Sonnet**
 
 **Files :**
 - Modify : `src/scene/picking.ts`, `src/ui/bottomBar.ts`, `src/main.ts`, `src/style.css`
@@ -193,7 +193,7 @@
 - [ ] **Step 4 :** `npx vitest run` et `npm run build` → verts.
 - [ ] **Step 5 :** commit `V2-1 tâche 5 : fiches du chemin et de l'enclos non relié`.
 
-### Tâche 6 : Promeneurs sur le réseau réel — agent · **Sonnet**
+### Task 6: Tâche 6 — Promeneurs sur le réseau réel — agent · **Sonnet**
 
 **Files :**
 - Create : `src/scene/pathGraph.ts`, `tests/scene/pathGraph.test.ts`
@@ -216,7 +216,7 @@
 - [ ] **Step 4 :** `npx vitest run` et `npm run build` → verts.
 - [ ] **Step 5 :** commit `V2-1 tâche 6 : promeneurs sur les chemins construits`.
 
-### Tâche 7 : Vérification d'ensemble, relecture et publication — chef (**Opus**) + relecture · **Opus**
+### Task 7: Tâche 7 — Vérification d'ensemble, relecture et publication — chef (**Opus**) + relecture · **Opus**
 
 - [ ] Navigateur (`?heure=14`) : nouvelle partie (chemin des moutons, allée), tracé valide / chacune des raisons rouges, enchaînement de segments, Relier, Détruire avec avertissement, attrait qui baisse puis remonte, niveaux 1 → 3 (terre, gravier, pavés + lanternes), promeneurs sur un embranchement, téléphone 375 × 812 (taps seulement).
 - [ ] Ancienne partie : charger une sauvegarde v3 (copie de type « partie de Romain » avec enclos loin de l'allée) → chemins offerts, message unique.
