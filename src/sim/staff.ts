@@ -76,11 +76,12 @@ export function staffStep(state: GameState, events: GameEvent[]): void {
   if (st.payDay === -1) st.payDay = d
   else if (d > st.payDay) {
     st.payDay = d
-    const due = dailyWages(state)
-    const next = Math.max(state.coins - due, -due)
-    const paid = Math.min(due, Math.max(0, state.coins)) // ce qui sort réellement de la caisse ; le reste est de la dette
-    state.coins = next
-    if (due > 0) events.push({ kind: 'paie', at: state.time, due, paid })
+    if (state.time > st.coverAllUntil) { // pendant le délai de grâce d'une ancienne partie : règles de la V1, pas de salaire
+      const due = dailyWages(state)
+      const paid = Math.min(due, Math.max(0, state.coins)) // ce qui sort réellement de la caisse ; le reste est de la dette
+      state.coins = Math.min(state.coins, Math.max(state.coins - due, -due)) // la paie ne fait jamais monter la caisse
+      if (due > 0) events.push({ kind: 'paie', at: state.time, due, paid })
+    }
   }
   if (state.time >= st.renewAt) renewCandidates(state, events)
   if (events.some((e) => e.kind === 'naissance')) assignGaps(state)
@@ -99,7 +100,10 @@ export function hire(state: GameState, candidateId: number): ActionResult {
   const c = state.staff.candidates.find((x) => x.id === candidateId)
   if (!c) return NOT_FOUND
   const cap = staffCap(state)
-  if (state.staff.employees.length >= cap) return { ok: false, reason: `Plus de place à la maison du personnel (${cap} employés au plus).` }
+  if (state.staff.employees.length >= cap) {
+    const house = state.buildings.some((b) => b.type === 'personnel')
+    return { ok: false, reason: house ? `Plus de place à la maison du personnel (${cap} employés au plus).` : `Construis la maison du personnel pour embaucher plus (${cap} employés au plus sans elle).` }
+  }
   const s = structuredClone(state)
   s.staff.employees.push({ id: s.nextId++, name: c.name, job: c.job, xpH: STAFF_TUNING.XP_LEVEL_H[c.level - 1], hiredAt: s.time, encIds: [] })
   s.staff.candidates = s.staff.candidates.filter((x) => x.id !== candidateId)

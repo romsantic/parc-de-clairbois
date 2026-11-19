@@ -145,11 +145,11 @@ function looksLikeGame(s: unknown): s is GameState {
   if (!sf || typeof sf !== 'object' || !Array.isArray(sf.employees) || !Array.isArray(sf.candidates)) return false
   if (!finite(sf.renewAt) || !finite(sf.renewals) || !finite(sf.payDay) || !finite(sf.coverAllUntil)) return false
   for (const e of sf.employees) {
-    if (!e || !finite(e.id) || typeof e.name !== 'string' || !(e.job in JOBS) || !finite(e.xpH) || e.xpH < 0 || !finite(e.hiredAt)) return false
+    if (!e || !finite(e.id) || typeof e.name !== 'string' || !Object.hasOwn(JOBS, e.job) || !finite(e.xpH) || e.xpH < 0 || !finite(e.hiredAt)) return false
     if (!Array.isArray(e.encIds) || !e.encIds.every(finite)) return false
   }
   for (const c of sf.candidates) {
-    if (!c || !finite(c.id) || typeof c.name !== 'string' || !(c.job in JOBS) || !intBetween(c.level, 1, 5)) return false
+    if (!c || !finite(c.id) || typeof c.name !== 'string' || !Object.hasOwn(JOBS, c.job) || !intBetween(c.level, 1, 5)) return false
   }
   const ms = g.missions
   if (!ms || !ms.tutorial || !intBetween(ms.tutorial.step, 0, TUTORIAL.length) || !ms.story || !intBetween(ms.story.index, 0, STORY.length)) return false

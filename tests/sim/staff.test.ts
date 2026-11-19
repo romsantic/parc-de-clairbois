@@ -100,6 +100,53 @@ describe('paie de minuit', () => {
     expect(s.staff.payDay).toBe(Math.floor(s.time / DAY_MS))
     expect(ev.some((e) => e.kind === 'paie')).toBe(false)
   })
+  it('la paie ne remonte jamais la caisse : -400 avec une dette de 60 reste à -400', () => {
+    const { s } = beforeMidnight(-400)
+    s.staff.employees = [emp(0, 'soigneur')] // 60
+    const ev = step(s)
+    expect(s.coins).toBe(-400)
+    expect(ev.find((e) => e.kind === 'paie')).toMatchObject({ due: 60, paid: 0 })
+  })
+  it('plus personne à payer : la dette reste, rien ne change', () => {
+    const { s } = beforeMidnight(-400)
+    s.staff.employees = []
+    const ev = step(s)
+    expect(s.coins).toBe(-400)
+    expect(ev.some((e) => e.kind === 'paie')).toBe(false)
+  })
+  it('pendant le délai de grâce (anciennes règles) : rien à payer, mais le jour est noté', () => {
+    const { s, midnight } = beforeMidnight(500)
+    s.staff.coverAllUntil = midnight + 3600_000
+    const ev = step(s)
+    expect(s.coins).toBe(500)
+    expect(s.staff.payDay).toBe(Math.floor(s.time / DAY_MS))
+    expect(ev.some((e) => e.kind === 'paie')).toBe(false)
+    s.staff.coverAllUntil = 0 // la grâce finie, pas de rattrapage du jour déjà noté
+    const ev2 = step(s)
+    expect(ev2.some((e) => e.kind === 'paie')).toBe(false)
+  })
+  it('saut de plus de 30 jours : une paie par minuit rejoué, jamais doublée après le saut', () => {
+    const { s } = beforeMidnight(100_000)
+    const r = advanceTo(s, s.time + 40 * DAY_MS)
+    expect(r.skippedMs).toBeGreaterThan(0)
+    const n = r.events.filter((e) => e.kind === 'paie').length
+    expect(n).toBeGreaterThanOrEqual(29)
+    expect(n).toBeLessThanOrEqual(31)
+    const after = step(r.state) // un pas de plus : au plus une paie, et pas deux
+    expect(after.filter((e) => e.kind === 'paie').length).toBeLessThanOrEqual(1)
+  })
+  it('changement de fuseau (ouest puis est) autour de minuit : pas de seconde paie le même jour', () => {
+    const { s, midnight } = beforeMidnight(500)
+    s.utcOffsetMin = -120
+    s.time = midnight - 600_000 + 2 * HOUR_MS // minuit local est 2 h plus tard
+    s.staff.payDay = Math.floor((s.time + s.utcOffsetMin * 60_000) / DAY_MS)
+    const r1 = advanceTo(s, midnight + 3 * HOUR_MS) // passe minuit local : une paie
+    expect(r1.events.filter((e) => e.kind === 'paie')).toHaveLength(1)
+    const back = structuredClone(r1.state)
+    back.utcOffsetMin = 120 // l'appareil change de fuseau : on se retrouve la veille
+    const r2 = advanceTo(back, back.time + 6 * HOUR_MS)
+    expect(r2.events.filter((e) => e.kind === 'paie')).toHaveLength(0)
+  })
   it('horloge qui recule : une seule paie ce jour-là', () => {
     const { s, midnight } = beforeMidnight(500)
     const r1 = advanceTo(s, midnight)
@@ -214,7 +261,14 @@ describe('embaucher', () => {
     const s = hireState({ buildings: [{ slot: 0, type: 'ferme', level: 1 }] })
     s.staff.employees = [1, 2, 3].map((i) => ({ id: i, name: 'X', job: 'soigneur' as const, xpH: 0, hiredAt: T0, encIds: [] }))
     expect(refused(applyAction(s, { type: 'embaucher', candidateId: 50 })))
-      .toBe('Plus de place à la maison du personnel (3 employés au plus).')
+      .toBe('Construis la maison du personnel pour embaucher plus (3 employés au plus sans elle).')
+  })
+  it('maison pleine : refus avec le plafond de la maison', () => {
+    const s = hireState({ buildings: [{ slot: 0, type: 'ferme', level: 1 }, { slot: 6, type: 'personnel', level: 1 }] })
+    s.staff.employees = [1, 2, 3, 4, 5, 6].map((i) => ({ id: i, name: 'X', job: 'soigneur' as const, xpH: 0, hiredAt: T0, encIds: [] }))
+    const r = applyAction(s, { type: 'embaucher', candidateId: 50 })
+    if (r.ok) throw new Error('attendu un refus')
+    expect(r.reason).toContain('Plus de place à la maison du personnel')
   })
 })
 

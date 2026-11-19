@@ -423,7 +423,8 @@ button.recuperer .cadeau svg { width: 18px; height: 18px; display: block; }
 .volet .ligne-perso { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
 @media (max-width: 640px), (pointer: coarse) {
   .volet .personnel button, .volet .ligne-perso button { min-height: 44px; }
-  .volet .carte-perso { flex-direction: column; align-items: stretch; }
+  .volet .carte-perso { flex-direction: column; flex-wrap: nowrap; align-items: stretch; }
+  .volet .carte-perso .infos { flex: 0 0 auto; }
   .volet .carte-perso .boutons button { flex: 1 1 auto; }
   .volet .liste-enclos label { min-height: 44px; }
   .volet .liste-enclos input { width: 22px; height: 22px; }

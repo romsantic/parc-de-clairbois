@@ -19,15 +19,24 @@ function loopAround(x0: number, z0: number, x1: number, z1: number, gap: number)
   ]
 }
 
+/** Fait partir la boucle fermée d'un autre point (le dernier point répète le premier). */
+function rotate(loop: RoutePoint[], slot: number): RoutePoint[] {
+  const pts = loop.slice(0, -1)
+  const k = ((slot % pts.length) + pts.length) % pts.length
+  if (k === 0) return loop
+  const r = [...pts.slice(k), ...pts.slice(0, k)]
+  return [...r, r[0]]
+}
+
 /**
  * Trajet décoratif d'un employé (les règles n'en dépendent jamais) : tour de la clôture de son premier enclos
- * encore existant ; sans enclos, petit tour autour de la maison du personnel, sinon de la mairie.
+ * encore existant (`slot` : rang parmi ceux du même enclos, pour partir d'un autre point de la boucle) ; sans enclos, petit tour autour de la maison du personnel, sinon de la mairie.
  */
-export function staffRoute(state: GameState, e: Employee): RoutePoint[] {
+export function staffRoute(state: GameState, e: Employee, slot = 0): RoutePoint[] {
   const enc = e.encIds.map((id) => state.enclosures.find((x) => x.id === id)).find((x) => x !== undefined)
   if (enc) {
     const r = enc.rect
-    return loopAround(r.x, r.z, r.x + r.w, r.z + r.d, STAFF_WALKERS.FENCE_GAP_M)
+    return rotate(loopAround(r.x, r.z, r.x + r.w, r.z + r.d, STAFF_WALKERS.FENCE_GAP_M), slot)
   }
   const hasHouse = state.buildings.some((b) => b.type === 'personnel')
   const home = (hasHouse && SLOTS.find((s) => s.id === 6)) || MAIRIE

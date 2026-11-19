@@ -5,6 +5,7 @@ import { TUNING, HOUR_MS } from '../data/tuning'
 import type { GameState } from './types'
 import { random } from './random'
 import { restock } from './merchant'
+import { renewCandidates } from './staff'
 import { emptyStats } from './stats'
 import { updateMissions } from './missions'
 import { firstKeeper } from './staff'
@@ -45,6 +46,7 @@ export function newGame(seed: number, nowMs: number): GameState {
   }
   state.staff.employees.push(firstKeeper(state, [encId])) // Léa, affectée à l'enclos de départ
   restock(state) // premier stock : le couple de cochons
+  renewCandidates(state) // les premiers candidats sont là dès l'ouverture du volet Personnel
   updateMissions(state, []) // le premier des premiers pas démarre tout de suite
   return state
 }

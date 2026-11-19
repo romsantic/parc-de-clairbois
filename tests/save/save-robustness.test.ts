@@ -87,6 +87,8 @@ describe('sauvegarde v2 abîmée (relecture)', () => {
     'unread non booléen': (g) => { g.missions.unread = 1 },
     'staff absent': (g) => { delete g.staff },
     'staff non objet': (g) => { g.staff = 'x' },
+    'employé : métier constructor': (g) => { g.staff.employees = [{ id: 9, name: 'A', job: 'constructor', xpH: 0, hiredAt: 0, encIds: [] }] },
+    'candidat : métier toString': (g) => { g.staff.candidates = [{ id: 9, name: 'B', job: 'toString', level: 1 }] },
     'employé : métier inconnu': (g) => { g.staff.employees = [{ id: 9, name: 'A', job: 'pilote', xpH: 0, hiredAt: 0, encIds: [] }] },
     'employé : xpH non fini': (g) => { g.staff.employees[0].xpH = 'a' },
     'employé : xpH négatif': (g) => { g.staff.employees[0].xpH = -1 },

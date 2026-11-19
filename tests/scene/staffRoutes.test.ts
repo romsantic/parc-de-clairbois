@@ -25,6 +25,13 @@ describe('staffRoute', () => {
     }
   })
 
+  it('deux employés sur le même enclos partent de points différents', () => {
+    const s = emptyState({ enclosures: [enc(7, -30, 2.5)] })
+    const a = staffRoute(s, emp([7]), 0), b = staffRoute(s, emp([7]), 1)
+    expect([a[0].x, a[0].z]).not.toEqual([b[0].x, b[0].z])
+    expect([b[0].x, b[0].z]).toEqual([b[b.length - 1].x, b[b.length - 1].z])
+  })
+
   it('a au moins un arrêt tourné vers le centre de l\'enclos', () => {
     const e = enc(7, -30, 2.5)
     const r = staffRoute(emptyState({ enclosures: [e] }), emp([7]))

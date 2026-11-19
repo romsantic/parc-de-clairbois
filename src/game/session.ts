@@ -8,7 +8,7 @@ import { HOUR_MS } from '../data/tuning'
 import { population, newcomers } from '../sim/village'
 import { giftPaths } from '../sim/paths'
 import { assignGaps, careCoverage } from '../sim/care'
-import { firstKeeper } from '../sim/staff'
+import { firstKeeper, renewCandidates } from '../sim/staff'
 import { SPECIES } from '../data/species'
 import { loadGame, saveGame, SAVE_KEY, type Storage } from '../save/save'
 
@@ -97,6 +97,7 @@ export function giftFirstKeeper(state: GameState, nowMs: number): GameState {
   const s = structuredClone(state)
   s.staff.employees.push(firstKeeper(s, []))
   assignGaps(s)
+  if (s.staff.candidates.length === 0) renewCandidates(s) // des candidats dès le retour, sans attendre 10 minutes
   s.staff.coverAllUntil = nowMs
   return s
 }
@@ -106,7 +107,7 @@ function staffMessage(state: GameState): string {
   let msg = "Nouveau à Clairbois : le personnel ! Margaux t'envoie Léa, ta première soigneuse. Sans soigneur, un enclos se salit plus vite et ses animaux n'ont plus de petits. Embauche la suite dans le volet Personnel (icône en haut)."
   const followed = careCoverage({ ...state, staff: { ...state.staff, coverAllUntil: 0 } }).covered.size // sans le délai de grâce
   const waiting = state.animals.length - followed
-  if (waiting > 0) msg += ` Léa ne peut suivre que ${followed} animaux : ${waiting} attendent un soigneur.`
+  if (waiting > 0) msg += ` Léa ne peut suivre que ${followed} ${followed === 1 ? 'animal' : 'animaux'} : ${waiting} ${waiting === 1 ? 'animal attend' : 'animaux attendent'} un soigneur.`
   return msg
 }
 
@@ -140,6 +141,7 @@ export function startSession(store: Storage, nowMs: number, storageOk = true): S
   start.utcOffsetMin = localOffset(nowMs) // l'heure locale, avant le rattrapage
   const notice = applyStep6Adjustments(store, start) // avant le rattrapage : l'absence ne se passe pas à un prix démesuré
   const r = advanceTo(start, nowMs)
+  if (r.state.staff.coverAllUntil > 0) { r.state = structuredClone(r.state); r.state.staff.coverAllUntil = 0 } // la grâce est finie : les nouvelles règles jouent tout de suite
   if (r.state.merchant.restocks === 0 && r.state.merchant.offers.length === 0) {
     // Partie migrée de la v1 chargée avant le premier pas : le marchand a déjà son premier stock.
     r.state = structuredClone(r.state)

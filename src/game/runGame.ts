@@ -54,9 +54,9 @@ export function runGame(store: Storage, storageOk = true, audio: AudioController
   if (session.problem === 'illisible') {
     showNotice('Ta sauvegarde était abîmée ; une copie a été mise de côté et une nouvelle partie commence.')
   }
-  if (session.priceNotice) showNotice(session.priceNotice)
-  if (session.pathsNotice) showNotice(session.pathsNotice)
-  if (session.staffNotice) showNotice(session.staffNotice)
+  if (session.priceNotice) showNotice(session.priceNotice, 20000)
+  if (session.pathsNotice) showNotice(session.pathsNotice, 20000)
+  if (session.staffNotice) showNotice(session.staffNotice, 20000)
   if (!storageOk) showNotice('Ton navigateur bloque la sauvegarde : la partie ne sera pas conservée après fermeture.')
 
   let state = session.state
@@ -178,7 +178,7 @@ function successMessage(a: Action, s: GameState, before: GameState): string {
     case 'construire': return 'Nouvel enclos construit'
     case 'redimensionner': return 'Enclos redimensionné'
     case 'renommer': return 'Nom changé'
-    case 'batir': return `${BUILDINGS[a.building].name} construit`
+    case 'batir': return a.building === 'personnel' ? 'Maison du personnel construite' : `${BUILDINGS[a.building].name} construit`
     case 'ameliorer': {
       const b = s.buildings.find((x) => x.slot === a.slot)
       return b ? `${BUILDINGS[b.type].name} amélioré (niveau ${b.level})` : 'Bâtiment amélioré'

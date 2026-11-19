@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import type { GameState } from '../sim/types'
+import type { Employee, GameState } from '../sim/types'
 import { STAFF_WALKERS, WALKERS } from '../data/visuals'
 import { isPhone } from '../core/device'
 import type { World } from './world'
@@ -32,25 +32,34 @@ export function createStaffView(world: World, getState: () => GameState, opts: {
   let key = ''
   let refresh = 0
 
+  function firstEnclosure(s: GameState, e: Employee) {
+    return e.encIds.map((id) => s.enclosures.find((x) => x.id === id)).find((x) => x !== undefined)
+  }
+
   function clear(): void { for (const x of walkers) x.w.dispose(); walkers = [] }
 
   function rebuild(): void {
     const s = getState()
     const emps = s.staff.employees.slice(0, max)
     const next = emps.map((e) => {
-      const first = e.encIds.find((id) => s.enclosures.some((x) => x.id === id))
+      const enc = firstEnclosure(s, e)
       const model = STAFF_WALKERS.MODEL[e.job]
-      return `${e.id}:${model}:${first ?? '-'}:${world.models.has(model) ? 1 : 0}`
+      const r = enc?.rect
+      return `${e.id}:${model}:${enc?.id ?? '-'}:${r ? `${r.x},${r.z},${r.w},${r.d}` : ''}:${world.models.has(model) ? 1 : 0}`
     }).join(';')
     if (next === key) return
     key = next
     clear()
+    const seen = new Map<number, number>() // enclos -> employés déjà placés dessus
     for (const e of emps) {
+      const enc = firstEnclosure(s, e)
+      const slot = enc ? (seen.get(enc.id) ?? 0) : 0
+      if (enc) seen.set(enc.id, slot + 1)
       const src = world.models.get(STAFF_WALKERS.MODEL[e.job])
       if (!src) continue
       const w = new Walker(src, height, rng, !mobile)
       group.add(w.object)
-      const route = repeat(staffRoute(s, e))
+      const route = repeat(staffRoute(s, e, slot))
       walkers.push({ w, route })
       w.start(route)
     }

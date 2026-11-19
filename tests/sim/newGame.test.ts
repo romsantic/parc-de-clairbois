@@ -28,7 +28,10 @@ describe('newGame', () => {
   it("embauche Léa, affectée à l'enclos de départ", () => {
     expect(g.staff.employees).toHaveLength(1)
     expect(g.staff.employees[0]).toMatchObject({ name: 'Léa', job: 'soigneur', encIds: [g.enclosures[0].id], xpH: 0 })
-    expect(g.staff).toMatchObject({ candidates: [], renewAt: g.time, renewals: 0, payDay: -1, coverAllUntil: 0 })
+    expect(g.staff).toMatchObject({ renewals: 1, payDay: -1, coverAllUntil: 0 })
+    expect(g.staff.candidates).toHaveLength(4)
+    expect(g.staff.candidates.map((c) => c.job)).toEqual(expect.arrayContaining(['soigneur', 'entretien']))
+    expect(g.staff.renewAt).toBeGreaterThan(g.time)
     expect(new Set([...g.animals.map((a) => a.id), g.staff.employees[0].id]).size).toBe(3)
   })
   it('remplit un peu le garde-manger', () => {

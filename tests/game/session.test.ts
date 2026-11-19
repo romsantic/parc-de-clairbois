@@ -255,6 +255,8 @@ describe('le personnel : ancienne partie', () => {
     expect(lea).toBeDefined()
     expect(r.staffNotice).toContain('Margaux t\'envoie Léa')
     expect(r.staffNotice).toContain('attendent un soigneur')
+    expect(r.state.staff.candidates.length).toBeGreaterThan(0)
+    expect(r.state.staff.coverAllUntil).toBe(0)
     // même parc, sans personnel, tout suivi : référence
     const ref = advanceTo({ ...structuredClone(g), staff: { ...g.staff, employees: [], coverAllUntil: Number.MAX_SAFE_INTEGER } }, now)
     const refSum = summarize(ref.events, ref.state)
