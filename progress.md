@@ -125,8 +125,8 @@
 | 5 | Actions, dette, ancienne partie, joueur automatique | agent · Sonnet | faite (da2b633) — relue Opus (0 critique, 0 important) ; joueur automatique : Village j2-3, Bourg j5-6, fin j16-17 (avant j3/j7/j18-19), ~460 pièces de salaires/jour en fin — 797 tests |
 | 6 | Petits textes du personnel et de la Gazette | agent · Haiku | faite (f5124e7) — relue (0 critique, 0 important) — 820 tests |
 | 7 | Interface : volet Personnel, fiches, barre du haut | agent · Sonnet | faite (f6c5099 + 6b354ae) — relue, 1 correction (alerte de soins en rouge) ; vue par l’agent dans le navigateur (volet, cases d’enclos, Licencier, 375 × 812) sauf Embaucher — 820 tests |
-| 8 | Employés visibles sur la carte | agent · Sonnet | en cours |
-| 9 | Vérification d'ensemble, relecture et publication | chef (Opus) + relecture · Opus | — |
+| 8 | Employés visibles sur la carte | agent · Sonnet | faite (d51d3f6) — relue (0 critique, 0 important) — 826 tests |
+| 9 | Vérification d’ensemble, relecture et publication | chef (Opus) + relecture · Opus | en cours |
 
 ## Liens
 
