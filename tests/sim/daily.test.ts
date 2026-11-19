@@ -439,7 +439,7 @@ describe('anciennes quotidiennes (partie v3, « quot-pieces#2 »)', () => {
   it('une partie v3 avec des « #2 » se charge, se mesure et se récupère', () => {
     const g = structuredClone(withDaily({ village: { level: 2, clientsServed: 0 } })) as GameState
     g.missions.daily.list = [{ id: 'quot-achat#2', base: g.stats.counts.achatsAnimaux, done: false, claimed: false }]
-    const mem: Record<string, string> = { [SAVE_KEY]: JSON.stringify({ version: 3, savedAt: 1, state: g }) }
+    const mem: Record<string, string> = { [SAVE_KEY]: JSON.stringify({ version: 4, savedAt: 1, state: g }) }
     const r = loadGame({ getItem: (k) => mem[k] ?? null, setItem: (k, v) => { mem[k] = v } })
     expect(r.kind).toBe('ok')
     if (r.kind !== 'ok') return

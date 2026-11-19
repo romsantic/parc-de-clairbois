@@ -54,6 +54,7 @@ export function runGame(store: Storage, storageOk = true, audio: AudioController
     showNotice('Ta sauvegarde était abîmée ; une copie a été mise de côté et une nouvelle partie commence.')
   }
   if (session.priceNotice) showNotice(session.priceNotice)
+  if (session.pathsNotice) showNotice(session.pathsNotice)
   if (!storageOk) showNotice('Ton navigateur bloque la sauvegarde : la partie ne sera pas conservée après fermeture.')
 
   let state = session.state
@@ -189,6 +190,9 @@ function successMessage(a: Action, s: GameState, before: GameState): string {
     case 'vendre': return `Animal vendu (+${s.coins - before.coins})`
     case 'vu': case 'lireMission': return ''
     case 'passerTutoriel': return 'Premiers pas passés'
+    case 'tracerChemin': return 'Chemin tracé'
+    case 'detruireChemin': return 'Chemin détruit'
+    case 'relierEnclos': return 'Enclos relié'
     case 'recuperer': return `Récompense récupérée : ${rewardText(s.coins - before.coins, s.pantry.fourrage - before.pantry.fourrage, s.pantry.viande - before.pantry.viande)}`
     case 'monterNiveau': return s.village.level === 3 ? 'Clairbois devient un bourg !' : 'Clairbois devient un village !'
   }

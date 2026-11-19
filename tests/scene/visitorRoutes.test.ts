@@ -1,16 +1,17 @@
 import { describe, it, expect } from 'vitest'
-import { alleyStops, bridgeX, buildRoute, cafeRoute, walkHeight, cachedWalkHeight, ROUTE_START_X, type RoutePoint } from '../../src/scene/visitorRoutes'
-import { visitorsShown, WALKERS } from '../../src/data/visuals'
+import { bridgeX, cafeRoute, networkRoute, walkHeight, cachedWalkHeight, ROUTE_START_X, type RoutePoint } from '../../src/scene/visitorRoutes'
+import { visitorsShown, WALKERS, WALK_ROUTE } from '../../src/data/visuals'
 import { riverDistance } from '../../src/scene/world'
 import { BRIDGE_Z, BRIDGE_DECK_Y } from '../../src/scene/decor'
 import { villagePaths } from '../../src/data/zones'
 import type { Animal, Building, Enclosure } from '../../src/sim/types'
+import { emptyState } from '../sim/helpers'
 
 const bx = bridgeX(riverDistance)
 const enc = (id: number, x: number, z: number, w = 8, d = 6): Enclosure =>
   ({ id, biome: 'prairie', species: 'lion' as never, rect: { x, z, w, d }, cleanedAt: 0 })
 const animal = (id: number, enclosureId: number) => ({ id, enclosureId }) as Animal
-const enclosures = [enc(1, -30, 2.5), enc(2, -20, 11.5), enc(3, -12, -20, 8, 6)] // 3 : trop loin de l'allée
+const enclosures = [enc(1, -30, 2.5), enc(2, -20, 11.5), enc(3, -12, -20, 8, 6)] // 3 : trop loin de l'allée, non relié
 const animals = [animal(1, 1), animal(2, 2), animal(3, 3)]
 const cafe: Building[] = [{ slot: 0, type: 'cafe', level: 1 }]
 
@@ -19,8 +20,10 @@ function distToSegment(p: { x: number; z: number }, a: { x: number; z: number },
   const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)))
   return Math.hypot(p.x - (a.x + dx * t), p.z - (a.z + dz * t))
 }
+const branch = { id: 5, a: { x: -20, z: 10 }, b: { x: -20, z: 6.5 } }
 const lines = () => [
   [{ x: ROUTE_START_X, z: BRIDGE_Z }, { x: bx + 3.5, z: BRIDGE_Z }],
+  [branch.a, branch.b],
   ...villagePaths(bx),
 ]
 const onPath = (p: { x: number; z: number }) =>
@@ -36,8 +39,12 @@ function sample(route: RoutePoint[]) {
   return out
 }
 
+const seeded = (seed = 7) => () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647 }
+const stateOf = (encs: Enclosure[], anim: Animal[], extra: Partial<Parameters<typeof emptyState>[0]> = {}) =>
+  emptyState({ enclosures: encs, animals: anim, buildings: cafe, ...extra })
+
 describe('trajets des promeneurs', () => {
-  const route = buildRoute(bx, alleyStops(enclosures, animals, bx), cafeRoute(cafe, bx))
+  const route = networkRoute(stateOf(enclosures, animals), bx, seeded())
   it('commencent et finissent au bout de la route', () => {
     expect(route[0]).toMatchObject({ x: ROUTE_START_X, z: BRIDGE_Z })
     expect(route[route.length - 1]).toMatchObject({ x: ROUTE_START_X, z: BRIDGE_Z })
@@ -57,18 +64,47 @@ describe('trajets des promeneurs', () => {
       expect(p.x > r.x && p.x < r.x + r.w && p.z > r.z && p.z < r.z + r.d, `${p.x},${p.z}`).toBe(false)
     }
   })
-  it("s'arrêtent seulement devant un enclos occupé proche, en le regardant", () => {
+  it("s'arrêtent devant les enclos occupés et reliés, en les regardant", () => {
     const stops = route.filter((p) => p.faceX !== undefined && !p.always)
     expect(stops).toHaveLength(2)
-    expect(stops[0].faceZ).toBeLessThan(BRIDGE_Z) // enclos 1, au nord
-    expect(stops[1].faceZ).toBeGreaterThan(BRIDGE_Z) // enclos 2, au sud
+    expect(stops.some((p) => p.faceZ! < BRIDGE_Z)).toBe(true) // enclos 1, au nord
+    expect(stops.some((p) => p.faceZ! > BRIDGE_Z)).toBe(true) // enclos 2, au sud
   })
   it('ignore les enclos vides', () => {
-    expect(alleyStops(enclosures, [], bx)).toHaveLength(0)
+    const r = networkRoute(stateOf(enclosures, []), bx, seeded())
+    expect(r.filter((p) => p.faceX !== undefined && !p.always)).toHaveLength(0)
   })
   it('passent par le café quand il existe', () => {
     expect(route.filter((p) => p.always)).toHaveLength(1)
     expect(cafeRoute([], bx)).toBeNull()
+  })
+  it("un enclos relié par un embranchement : le trajet passe par l'embranchement et s'arrête face à l'enclos", () => {
+    const e = enc(4, -26, -5, 12, 10) // z -5..5, à 1,5 m du bout de l'embranchement
+    const st = stateOf([e], [animal(1, 4)], { paths: [branch] })
+    const r = networkRoute(st, bx, seeded())
+    const stop = r.find((p) => p.faceX !== undefined && !p.always)!
+    expect(stop).toMatchObject({ x: -20, z: 6.5, faceX: -20, faceZ: 0 })
+    expect(r.filter((p) => p.x === -20 && p.z === 10).length).toBeGreaterThan(0)
+    for (const p of sample(r)) expect(onPath(p), `${p.x},${p.z}`).toBe(true)
+  })
+  it("un enclos non relié n'a jamais d'arrêt, quelle que soit la graine", () => {
+    const e = enc(4, -26, -5, 12, 10)
+    for (let k = 1; k < 20; k++) {
+      const r = networkRoute(stateOf([e], [animal(1, 4)]), bx, seeded(k))
+      expect(r.filter((p) => p.faceX !== undefined && !p.always)).toHaveLength(0)
+    }
+  })
+  it('au plus MAX_STOPS arrêts, et chaque promeneur peut avoir un trajet différent', () => {
+    const many = [1, 2, 3, 4, 5, 6].map((i) => enc(10 + i, -34 + i * 5, 2.5, 4, 6))
+    const st = stateOf(many, many.map((e, i) => animal(i, e.id)))
+    const faces = new Set<string>()
+    for (let k = 1; k < 12; k++) {
+      const r = networkRoute(st, bx, seeded(k))
+      const stops = r.filter((p) => p.faceX !== undefined && !p.always)
+      expect(stops.length).toBeLessThanOrEqual(WALK_ROUTE.MAX_STOPS)
+      faces.add(stops.map((p) => p.faceX).join(','))
+    }
+    expect(faces.size).toBeGreaterThan(1)
   })
 })
 

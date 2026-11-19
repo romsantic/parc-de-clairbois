@@ -7,12 +7,22 @@ import { bump } from './stats'
 import { happiness } from './happiness'
 import { buildRoster } from './enclosure'
 import type { ParkPace } from '../data/missions'
-import type { BuildingType, GameEvent, GameState } from './types'
+import { linkedEnclosureIds } from './paths'
+import type { Animal, BuildingType, GameEvent, GameState } from './types'
 
-/** Attrait : par espèce présente, base × (1 + 0,5 × √(n − 1)), n = nombre d'animaux de l'espèce. */
+/** Animaux que les visiteurs peuvent voir : ceux des enclos reliés à l'allée par un chemin. */
+export function visibleAnimals(state: GameState): Animal[] {
+  const linked = linkedEnclosureIds(state)
+  return state.animals.filter((a) => linked.has(a.enclosureId))
+}
+
+/** Nombre d'espèces que les visiteurs voient. */
+export const visibleSpecies = (state: GameState): number => new Set(visibleAnimals(state).map((a) => a.species)).size
+
+/** Attrait : par espèce visible, base × (1 + 0,5 × √(n − 1)), n = nombre d'animaux visibles de l'espèce. */
 export function appeal(state: GameState): number {
   const counts = new Map<SpeciesId, number>()
-  for (const a of state.animals) counts.set(a.species, (counts.get(a.species) ?? 0) + 1)
+  for (const a of visibleAnimals(state)) counts.set(a.species, (counts.get(a.species) ?? 0) + 1)
   let total = 0
   for (const [id, n] of counts) {
     total += SPECIES[id].appeal * (1 + ECONOMY.APPEAL_EXTRA_FACTOR * Math.sqrt(n - 1))
@@ -77,14 +87,14 @@ function buildingFlow(b: { type: BuildingType; level: 1 | 2 | 3 }, visiteurs: nu
 export function buildingIncomePerHour(state: GameState, slot: number): { clients: number; pieces: number } {
   const b = state.buildings.find((x) => x.slot === slot)
   if (!b) return { clients: 0, pieces: 0 }
-  return buildingFlow(b, visitorsPerHour(state), new Set(state.animals.map((a) => a.species)).size)
+  return buildingFlow(b, visitorsPerHour(state), visibleSpecies(state))
 }
 
 /** Revenus par heure : billets, commerces du village, et nombre de clients servis. */
 export function incomePerHour(state: GameState, price: number = state.ticketPrice):
   { visiteurs: number; billets: number; village: number; clients: number } {
   const visiteurs = visitorsPerHour(state, price)
-  const especes = new Set(state.animals.map((a) => a.species)).size
+  const especes = visibleSpecies(state)
   let village = 0
   let clients = 0
   for (const b of state.buildings) {

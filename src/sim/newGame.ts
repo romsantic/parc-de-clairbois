@@ -1,3 +1,4 @@
+import { START_PATH } from '../data/paths'
 import { SPECIES } from '../data/species'
 import { ANIMAL_NAMES } from '../data/names'
 import { TUNING, HOUR_MS } from '../data/tuning'
@@ -11,7 +12,7 @@ import { updateMissions } from './missions'
 export function newGame(seed: number, nowMs: number): GameState {
   const time = Math.floor(nowMs / TUNING.STEP_MS) * TUNING.STEP_MS
   const state: GameState = {
-    version: 3, time, rng: seed >>> 0, coins: TUNING.START_COINS, nextId: 1,
+    version: 4, time, rng: seed >>> 0, coins: TUNING.START_COINS, nextId: 1,
     pantry: { fourrage: TUNING.START_FOURRAGE, viande: 0, capacity: TUNING.START_PANTRY_CAPACITY },
     enclosures: [], animals: [],
     ticketPrice: 2, reputation: 1,
@@ -27,7 +28,9 @@ export function newGame(seed: number, nowMs: number): GameState {
       unread: true,
     },
     utcOffsetMin: 0,
+    paths: [],
   }
+  state.paths.push({ id: state.nextId++, a: { ...START_PATH.a }, b: { ...START_PATH.b } })
   const encId = state.nextId++
   state.enclosures.push({ id: encId, biome: 'prairie', species: 'mouton', rect: { ...TUNING.START_ENCLOSURE }, cleanedAt: time - TUNING.START_DIRT_H * HOUR_MS })
   const adultBorn = time - 2 * SPECIES.mouton.gestationH * HOUR_MS

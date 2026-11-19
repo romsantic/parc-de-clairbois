@@ -17,7 +17,7 @@ describe('sauvegarde : ne jamais perdre la partie', () => {
     expect(JSON.parse(m.data[SAVE_KEY]).state.coins).toBe(1)
   })
   it("un vieil onglet n'écrase pas une sauvegarde d'une version plus récente", () => {
-    const raw = JSON.stringify({ version: 4, savedAt: 1, owner: 'onglet-B', state: {} })
+    const raw = JSON.stringify({ version: 5, savedAt: 1, owner: 'onglet-B', state: {} })
     const m = memory({ [SAVE_KEY]: raw })
     expect(saveGame(m, g, 3, 'onglet-A', true)).toBe('trop-recente')
     expect(m.data[SAVE_KEY]).toBe(raw)
@@ -85,12 +85,17 @@ describe('sauvegarde v2 abîmée (relecture)', () => {
     'série non finie': (g) => { g.missions.daily.streak = 'x' },
     'bons non finis': (g) => { g.missions.daily.coupons = undefined },
     'unread non booléen': (g) => { g.missions.unread = 1 },
+    'paths absent': (g) => { delete g.paths },
+    'paths non tableau': (g) => { g.paths = 'x' },
+    "segment portant l'id de l'entrée": (g) => { g.paths = [{ id: -1, a: { x: 1, z: 2 }, b: { x: 1, z: 5 } }] },
+    'segments aux ids en double': (g) => { g.paths = [{ id: 7, a: { x: 1, z: 2 }, b: { x: 1, z: 5 } }, { id: 7, a: { x: 2, z: 2 }, b: { x: 2, z: 5 } }] },
+    'segment sans coordonnée valide': (g) => { g.paths = [{ id: 1, a: { x: 'a' }, b: { x: 1, z: 2 } }] },
   }
   for (const [name, corrupt] of Object.entries(cases)) {
     it(`met de côté une partie avec : ${name}`, () => {
       const g = structuredClone(g0) as any // eslint-disable-line @typescript-eslint/no-explicit-any
       corrupt(g)
-      const m = memory({ [SAVE_KEY]: JSON.stringify({ version: 3, savedAt: 1, state: g }) })
+      const m = memory({ [SAVE_KEY]: JSON.stringify({ version: 4, savedAt: 1, state: g }) })
       expect(loadGame(m).kind).toBe('illisible')
       expect(m.data[BROKEN_KEY]).toBeDefined()
     })
@@ -99,19 +104,19 @@ describe('sauvegarde v2 abîmée (relecture)', () => {
     const g = structuredClone(g0) as any // eslint-disable-line @typescript-eslint/no-explicit-any
     g.missions.tutorial = { step: 3, current: { id: 'pas-billet', base: 0, done: true, claimed: false }, skipped: false }
     g.missions.daily.list = [{ id: 'quot-pieces#1', base: 4, done: false, claimed: false }]
-    const m = memory({ [SAVE_KEY]: JSON.stringify({ version: 3, savedAt: 1, state: g }) })
+    const m = memory({ [SAVE_KEY]: JSON.stringify({ version: 4, savedAt: 1, state: g }) })
     expect(loadGame(m).kind).toBe('ok')
   })
   it('une quotidienne tirée (cible et récompense gardées) reste lisible', () => {
     const g = structuredClone(g0) as any // eslint-disable-line @typescript-eslint/no-explicit-any
     g.missions.daily.list = [{ id: 'quot-pieces', base: 4, done: false, claimed: false, n: 1350, reward: { coins: 450, fourrage: 25 } }]
-    const m = memory({ [SAVE_KEY]: JSON.stringify({ version: 3, savedAt: 1, state: g }) })
+    const m = memory({ [SAVE_KEY]: JSON.stringify({ version: 4, savedAt: 1, state: g }) })
     const r = loadGame(m)
     expect(r.kind).toBe('ok')
     if (r.kind === 'ok') expect(r.state.missions.daily.list[0]).toMatchObject({ n: 1350, reward: { coins: 450, fourrage: 25 } })
   })
   it('une partie neuve reste lisible', () => {
-    const m = memory({ [SAVE_KEY]: JSON.stringify({ version: 3, savedAt: 1, state: g0 }) })
+    const m = memory({ [SAVE_KEY]: JSON.stringify({ version: 4, savedAt: 1, state: g0 }) })
     expect(loadGame(m).kind).toBe('ok')
   })
 })

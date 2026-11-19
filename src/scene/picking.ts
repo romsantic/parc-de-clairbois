@@ -1,6 +1,9 @@
 import * as THREE from 'three'
 import type { Zone } from '../data/zones'
 import { zoneAtPoint } from '../sim/placement'
+import { segmentAt } from '../sim/paths'
+import { PATHS_TUNING } from '../data/paths'
+import type { GameState, PathPoint } from '../sim/types'
 import type { World } from './world'
 
 export type Pick =
@@ -8,6 +11,8 @@ export type Pick =
   | { kind: 'emplacement'; slot: number }
   /** Mairie, maison ou autre décor du village : `index` dans VILLAGE_PROPS. */
   | { kind: 'decor'; index: number }
+  /** Chemin touché au sol : `point` est l'endroit du clic (pour Prolonger). */
+  | { kind: 'chemin'; id: number; point: PathPoint }
   | { kind: 'zone'; zone: Zone; point: { x: number; z: number } }
   | { kind: 'rien' }
 
@@ -25,6 +30,7 @@ export function createPicker(
   isBusy: () => boolean = () => false,
   slotTargets: () => Map<number, THREE.Object3D> = () => new Map(),
   propTargets: () => Map<number, THREE.Object3D> = () => new Map(),
+  getState: (() => GameState) | null = null,
 ) {
   const listeners: ((p: Pick) => void)[] = []
   const ray = new THREE.Raycaster()
@@ -57,6 +63,8 @@ export function createPicker(
     }
     const p = new THREE.Vector3()
     if (r.ray.intersectPlane(ground, p)) {
+      const seg = getState ? segmentAt(getState(), p.x, p.z, PATHS_TUNING.WIDTH_M / 2 + 0.3) : null
+      if (seg !== null) return { kind: 'chemin', id: seg, point: { x: p.x, z: p.z } }
       const zone = zoneAtPoint(p.x, p.z)
       if (zone) return { kind: 'zone', zone, point: { x: p.x, z: p.z } }
     }

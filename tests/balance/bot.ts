@@ -12,6 +12,8 @@ import { catalogue, sellPrice } from '../../src/sim/merchant'
 import { currentMission } from '../../src/sim/missions'
 import { newGame } from '../../src/sim/newGame'
 import { checkPlacement, enclosureCost } from '../../src/sim/placement'
+import { isLinked, removalImpact } from '../../src/sim/paths'
+import { START_PATH } from '../../src/data/paths'
 import { canLevelUp, population } from '../../src/sim/village'
 import type { BuildingType, GameState, Rect } from '../../src/sim/types'
 
@@ -66,7 +68,7 @@ export function visitHours(visitsPerDay: number): number[] {
   return Array.from({ length: visitsPerDay }, (_, k) => WAKE_FROM_H + ((WAKE_TO_H - WAKE_FROM_H) * k) / (visitsPerDay - 1))
 }
 
-interface Ctx { s: GameState; deaths: number; dayDeaths: number; timeline: Timeline }
+interface Ctx { s: GameState; deaths: number; dayDeaths: number; timeline: Timeline; /** Plus gros budget déjà essayé en vain, par situation (propre à cette partie). */ noRoom: Map<string, number> }
 
 /** Joue une action ; vrai si elle a réussi. */
 function act(c: Ctx, a: Action): boolean {
@@ -105,17 +107,42 @@ function pushRow(c: Ctx, deathsToday: number): void {
 // ---------------------------------------------------------------------------------------------
 // Placement : balayage simple et déterministe de la grille de la zone.
 
-/** Nombre d'animaux visé dans l'enclos neuf d'une espèce (portées de 2 à 4 : un peu plus de place). */
-const TARGET_CAP: Partial<Record<SpeciesId, number>> = { cochon: 4, renard: 4, loup: 4 }
+/** Nombre d'animaux visé dans l'enclos neuf d'une espèce (2 par défaut : les chemins prennent de la place ; 3 pour les portées de plusieurs petits, et le loup dont la naissance est demandée). */
+const TARGET_CAP: Partial<Record<SpeciesId, number>> = { cochon: 3, renard: 3, loup: 3 }
 const MIN_SIDE = TUNING.MIN_SIDE_M
 
+/** Il laisse 2,5 m entre deux enclos : de quoi y passer un chemin. */
+function hasRoomAround(s: GameState, r: Rect): boolean {
+  const g = 2.5
+  return s.enclosures.every((e) => r.x >= e.rect.x + e.rect.w + g || e.rect.x >= r.x + r.w + g || r.z >= e.rect.z + e.rect.d + g || e.rect.z >= r.z + r.d + g)
+}
+
+/** Le joueur ne pose un enclos que s'il sait le relier à l'allée (il le voit à l'écran) : essai sur une copie. */
+function canBuildLinked(s: GameState, rect: Rect): boolean {
+  const built = applyAction(s, { type: 'construire', rect })
+  if (!built.ok) return false
+  const encId = built.state.enclosures[built.state.enclosures.length - 1].id
+  return isLinked(built.state, encId) || applyAction(built.state, { type: 'relierEnclos', encId }).ok
+}
+
 /** Le plus grand enclos (pour 2 animaux au moins) que le budget permet et qui tient dans la zone ; balayage de la grille de gauche à droite, de haut en bas. */
-function findRect(s: GameState, species: SpeciesId, budget: number): Rect | null {
+function findRect(c: Ctx, species: SpeciesId, budget: number): Rect | null {
+  const s = c.s
+  // Pas de place trouvée tant que ni les enclos ni les chemins ni le budget n'ont changé (un budget plus grand refait la recherche) : inutile de rechercher à chaque passage.
+  const key = `${s.enclosures.length}|${s.paths.length}|${s.village.level}|${species}|${s.enclosures.map((e) => e.rect.x + ',' + e.rect.z + ',' + e.rect.w + ',' + e.rect.d).join(';')}`
+  const failed = c.noRoom.get(key)
+  if (failed !== undefined && budget <= failed) return null
+  const found = searchRect(s, species, budget)
+  if (!found) c.noRoom.set(key, Math.max(failed ?? 0, budget))
+  return found
+}
+
+function searchRect(s: GameState, species: SpeciesId, budget: number): Rect | null {
   const sp = SPECIES[species]
   const zone = ZONES.find((z) => z.id === sp.biome && z.unlockLevel <= s.village.level)
   if (!zone) return null
   const z = zone.rect
-  for (let n = TARGET_CAP[species] ?? 3; n >= 2; n--) {
+  for (let n = TARGET_CAP[species] ?? 2; n >= 2; n--) {
     const area = n * sp.spaceM2
     const shapes: { w: number; d: number }[] = []
     for (let w = MIN_SIDE; w <= z.w; w++) {
@@ -123,13 +150,18 @@ function findRect(s: GameState, species: SpeciesId, budget: number): Rect | null
       if (d <= z.d) shapes.push({ w, d })
     }
     // Colonnes étroites et profondes d'abord (les plus étroites qui tiennent dans la zone) : elles se rangent côte à côte sans trou.
-    shapes.sort((a, b) => a.w - b.w)
+    // Prairie : bandes peu profondes le long de l'allée, deux rangées ; forêt et montagne : formes presque carrées.
+    const shallow = sp.biome === 'prairie'
+    shapes.sort(shallow ? (a, b) => a.d - b.d || a.w - b.w : (a, b) => Math.abs(a.w - a.d) - Math.abs(b.w - b.d) || a.w - b.w)
     for (const { w, d } of shapes) {
       if (enclosureCost({ x: 0, z: 0, w, d }) > budget) continue
-      for (let x = z.x; x + w <= z.x + z.w + 1e-9; x++) {
-        for (let zz = z.z; zz + d <= z.z + z.d + 1e-9; zz++) {
+      const zs: number[] = []
+      for (let zz = z.z; zz + d <= z.z + z.d + 1e-9; zz++) zs.push(zz)
+      if (shallow) zs.reverse() // de l'allée vers le fond
+      for (const zz of zs) {
+        for (let x = z.x; x + w <= z.x + z.w + 1e-9; x += 0.5) {
           const rect = { x, z: zz, w, d }
-          if (checkPlacement(s, rect).ok) return rect
+          if (checkPlacement(s, rect).ok && hasRoomAround(s, rect) && canBuildLinked(s, rect)) return rect
         }
       }
     }
@@ -146,7 +178,23 @@ function moveStartPen(c: Ctx): void {
   const home = TUNING.START_ENCLOSURE
   if (!start || start.rect.x !== home.x || start.rect.z !== home.z) return
   const prairie = ZONES.find((z) => z.id === 'prairie')!.rect
-  act(c, { type: 'redimensionner', encId: start.id, rect: { x: prairie.x + prairie.w - home.w, z: prairie.z, w: home.w, d: home.d } })
+  const rect = { x: prairie.x + prairie.w - 9, z: prairie.z, w: 9, d: 7 }
+  // Il ne déménage que si le nouvel emplacement peut être relié à l'allée.
+  const moved = applyAction(c.s, { type: 'redimensionner', encId: start.id, rect })
+  if (!moved.ok || !(isLinked(moved.state, start.id) || applyAction(moved.state, { type: 'relierEnclos', encId: start.id }).ok)) return
+  act(c, { type: 'redimensionner', encId: start.id, rect })
+  act(c, { type: 'relierEnclos', encId: start.id })
+  // Le chemin offert au départ ne sert plus : il coupe la prairie en deux, le joueur le retire.
+  const old = c.s.paths.find((p) => p.a.x === START_PATH.a.x && p.a.z === START_PATH.a.z && p.b.x === START_PATH.b.x && p.b.z === START_PATH.b.z)
+  if (old && removalImpact(c.s, old.id).length === 0) act(c, { type: 'detruireChemin', id: old.id })
+}
+
+/** Construit l'enclos puis le relie à l'allée (un refus « déjà relié » est sans importance) ; renvoie son id, ou null. */
+function buildLinked(c: Ctx, rect: Rect): number | null {
+  if (!act(c, { type: 'construire', rect })) return null
+  const encId = c.s.enclosures[c.s.enclosures.length - 1].id
+  act(c, { type: 'relierEnclos', encId })
+  return encId
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -243,9 +291,10 @@ function buyAnimals(c: Ctx): boolean {
     let encId = enclosureFor(c.s, o.species)
     if (encId === null) {
       if (c.s.animals.some((a) => a.species === o.species)) continue // son enclos est plein : on ne le double pas
-      const rect = findRect(c.s, o.species, free)
-      if (!rect || !act(c, { type: 'construire', rect })) continue
-      encId = c.s.enclosures[c.s.enclosures.length - 1].id
+      const rect = findRect(c, o.species, free)
+      if (!rect) continue
+      encId = buildLinked(c, rect)
+      if (encId === null) continue
     }
     if (act(c, { type: 'acheterAnimal', offerId: o.id, encId })) return true
   }
@@ -324,8 +373,8 @@ function tutorialStep(c: Ctx): boolean {
     case 'pas-cafe': return act(c, { type: 'batir', slot: SLOT_OF.cafe!, building: 'cafe' })
     case 'pas-enclos': {
       moveStartPen(c)
-      const rect = findRect(c.s, 'cochon', c.s.coins)
-      return !!rect && act(c, { type: 'construire', rect })
+      const rect = findRect(c, 'cochon', c.s.coins)
+      return !!rect && buildLinked(c, rect) !== null
     }
     case 'pas-cochons': {
       const adults = c.s.merchant.offers.filter((o) => o.species === 'cochon' && o.stage === 'adulte')
@@ -383,7 +432,7 @@ export function playBot(opts: { seed: number; days: number; visitsPerDay: number
   const milestones = {} as Record<MilestoneKey, Moment | null>
   for (const k of Object.keys(MILESTONE_LABELS) as MilestoneKey[]) milestones[k] = null
   const timeline: Timeline = { seed, days, visitsPerDay, milestones, rows: [], deaths: 0, final: undefined as unknown as GameState }
-  const c: Ctx = { s: newGame(seed, T0 + WAKE_FROM_H * HOUR_MS), deaths: 0, dayDeaths: 0, timeline }
+  const c: Ctx = { s: newGame(seed, T0 + WAKE_FROM_H * HOUR_MS), deaths: 0, dayDeaths: 0, timeline, noRoom: new Map() }
   const hours = visitHours(visitsPerDay)
   for (let day = 1; day <= days; day++) {
     for (const h of hours) {

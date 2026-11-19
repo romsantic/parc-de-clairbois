@@ -44,6 +44,13 @@ describe('fiche d\'un bâtiment', () => {
     expect(info.title).toBe('Boutique')
     expect(row(info, 'Niveau')).toBe('2/3')
   })
+  it('boutique : une espèce dans un enclos non relié ne compte pas dans la dépense par client', () => {
+    const s = park()
+    s.enclosures.push(enclosure(2, 'cochon', 6, 6, { rect: { x: -34, z: -8, w: 6, d: 6 } }))
+    s.animals.push(animal(3, 'cochon', 'F', 2), animal(4, 'cochon', 'M', 2))
+    const info = buildingInfo(s, { kind: 'emplacement', slot: 2 })!
+    expect(row(info, 'Dépense par client')).toBe('0,9 pièce') // toujours 1 espèce visible
+  })
   it('auberge au niveau maximum', () => {
     const info = buildingInfo(park(), { kind: 'emplacement', slot: 3 })!
     expect(row(info, 'Amélioration')).toBe('Niveau maximum')
