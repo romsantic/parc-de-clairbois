@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Parc de Clairbois — maquette de l'interface V2</title>
+<style>
+:root{--encre:#2b2a24;--papier:#f6f0e1;--bord:#c9b98f;--accent:#5f8a3c;--discret:#6f6852;--rouge:#b23a2a;--orange:#b26a12;--vert:#2f6a12;--or:#f2b13a;--ligne:#e3d8bb}
+*{box-sizing:border-box}
+html,body{margin:0;background:#3a4a38;color:var(--encre);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+body{padding:16px 0 60px}
+.page{width:1280px;margin:0 auto}
+h1{color:#f6f0e1;font-size:22px;margin:0 0 4px}
+.intro{color:#dfe6d2;font-size:14px;margin:0 0 14px;line-height:1.45}
+h2.titre{color:#f6f0e1;font-size:17px;margin:34px 0 8px}
+.cle{display:inline-block;padding:1px 8px;border-radius:6px;background:var(--papier);color:var(--encre);outline:2px solid var(--or);outline-offset:1px;margin:0 3px}
+svg.i{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+button{font:inherit;color:var(--encre);background:var(--papier);border:1px solid var(--bord);border-radius:10px;padding:8px 14px;cursor:default}
+.nouv{outline:2px solid var(--or);outline-offset:1px;border-radius:9px;box-shadow:0 0 8px 1px rgba(242,177,58,.55)}
+.n{position:absolute;z-index:30;width:20px;height:20px;border-radius:50%;background:#2b2a24;color:#ffd277;border:2px solid #ffd277;font:700 11px/16px system-ui;text-align:center;font-style:normal;pointer-events:none;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+.rel{position:relative}
+.scene{position:relative;width:1280px;height:800px;overflow:hidden;border-radius:6px;box-shadow:0 6px 24px rgba(0,0,0,.45);background:#9fc7e8}
+.scene>svg.carte{position:absolute;inset:0}
+.barre-haut{position:absolute;top:0;left:0;right:0;z-index:4;display:flex;flex-wrap:wrap;align-items:center;gap:2px 4px;padding:4px 10px;background:rgba(246,240,225,.93);border-bottom:1px solid var(--bord);color:var(--encre);font-size:14px;font-variant-numeric:tabular-nums}
+.ressource{position:relative;display:inline-flex;align-items:center;gap:4px;padding:2px 6px;border-radius:8px;white-space:nowrap}
+.ressource .valeur{font-weight:600}
+.ressource.attention{color:var(--orange)}
+.ressource[data-alerte="oui"],.ressource[data-dette="oui"]{color:var(--rouge)}
+.ressource.pastille::after{content:"";position:absolute;top:-1px;right:-1px;width:9px;height:9px;border-radius:50%;background:#e0802a;box-shadow:0 0 0 2px var(--papier)}
+.ressource.point::after{content:"3";position:absolute;top:-4px;right:-5px;min-width:15px;height:15px;border-radius:8px;background:#d23a2a;color:#fff;font:700 10px/15px system-ui;text-align:center;box-shadow:0 0 0 2px var(--papier)}
+.barre-haut .heure{margin-left:auto;color:var(--discret)}
+.roue{font-size:16px;padding:0 4px;border:0;background:none}
+.boutons-camera{position:absolute;top:44px;right:12px;display:flex;gap:6px;z-index:5}
+.boutons-camera button{width:40px;height:40px;padding:8px;display:grid;place-items:center;background:rgba(246,240,225,.92);box-shadow:0 2px 6px rgba(0,0,0,.18)}
+.boutons-camera svg.i{width:20px;height:20px;stroke-width:2.2}
+.barre-bas{display:flex;align-items:center;gap:10px;height:48px;padding:0 10px;background:rgba(246,240,225,.95);border-top:1px solid var(--bord);color:var(--encre);font-size:14px;position:relative}
+.barre-bas.fixe{position:absolute;left:0;right:0;bottom:0;z-index:4}
+.barre-bas>*{min-width:0}
+.zone-selection{display:flex;align-items:center;gap:6px;white-space:nowrap;position:relative}
+.zone-selection svg.i{width:18px;height:18px}
+.compte,.discret{color:var(--discret)}
+.malades{color:var(--rouge);font-size:13px}
+.alerte{display:block;color:var(--rouge);font-size:11px;line-height:12px;font-weight:600}
+.pile{display:flex;flex-direction:column;line-height:16px}
+.jauge{display:inline-block;width:44px;height:6px;background:#e6dcc1;border-radius:4px;overflow:hidden;flex:none}
+.jauge i{display:block;height:100%;background:#6fa84a}
+.zone-actions{display:flex;gap:4px;padding:0 8px;border-left:1px solid var(--bord);border-right:1px solid var(--bord);position:relative}
+.zone-mission{flex:1;display:flex;align-items:center;gap:6px;overflow:hidden;color:var(--discret);padding:4px 6px;white-space:nowrap}
+.zone-mission svg.i{width:18px;height:18px}
+.zone-mission .avancee,.zone-mission .quot{font-weight:600;font-variant-numeric:tabular-nums}
+.zone-droite{display:flex;gap:4px}
+button.icone{position:relative;width:34px;height:34px;padding:0;display:grid;place-items:center;border-radius:9px}
+button.icone svg.i{width:18px;height:18px}
+button.icone small{position:absolute;bottom:-3px;right:-4px;font-size:10px;line-height:13px;padding:0 3px;border-radius:6px;background:var(--papier);border:1px solid var(--bord)}
+.bulle{position:absolute;bottom:42px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:12px;padding:2px 7px;border-radius:6px;background:#2b2a24;color:#fff;z-index:8}
+.rouge{color:var(--rouge);font-weight:600}.vert{color:var(--vert)}.orange{color:var(--orange);font-weight:600}.bleu{color:#2c6fa8;font-weight:600}.jaune{color:#9a7b00;font-weight:600}
+.volet{position:absolute;z-index:5;width:306px;height:360px;overflow:hidden;background:rgba(246,240,225,.97);border:1px solid var(--bord);border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.25);padding:10px 12px;font-size:13px;line-height:1.35}
+.volet.libre{position:relative;height:auto}
+.volet header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.volet h2{margin:0;font-size:15px}
+.volet h3{margin:8px 0 3px;font-size:13.5px}
+.volet p{margin:3px 0}
+.volet .fermer{padding:1px 8px}
+.volet .discret{font-size:12px}
+.volet button{padding:2px 8px;font-size:12px;border-radius:8px}
+.volet button.principal{background:#6fa84a;color:#fff;border-color:#5a8f39}
+.volet button.off{opacity:.5}
+.carte{display:flex;gap:6px;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--ligne)}
+.carte .bt{display:flex;gap:4px;flex:none}
+.carte small{color:var(--discret);font-size:12px}
+dl.fiche{display:grid;grid-template-columns:auto 1fr;gap:2px 8px;margin:4px 0}
+dl.fiche dt{color:var(--discret)}dl.fiche dd{margin:0}
+.grille{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:4px}
+.obj{border:1px solid var(--bord);border-radius:8px;padding:3px 2px;text-align:center;font-size:11.5px;line-height:1.2;background:#fffaf0}
+.obj svg.i{width:20px;height:20px;display:block;margin:0 auto 1px}
+.obj b{display:block;font-weight:600}
+.obj.verrou{opacity:.5;background:#ece4cd}
+.visage{display:flex;align-items:center;gap:10px;margin:2px 0}
+.visage svg.i{width:38px;height:38px;color:var(--vert)}
+.visage b{font-size:26px}
+.ligne2{display:flex;justify-content:space-between}
+.pastilles{display:inline-flex;gap:3px;vertical-align:middle}
+.pastilles i{width:11px;height:11px;border-radius:50%;border:1px solid #8b7a4e;display:inline-block}
+.pastilles .b{background:#c98a4b}.pastilles .a{background:#c9ced3}.pastilles .o{background:#f2b13a}.pastilles .v{border-style:dashed}
+.fam{font-weight:600;background:#efe6cc;border-radius:6px;padding:2px 6px;margin-top:6px;display:flex;justify-content:space-between}
+.editeur{position:absolute;z-index:6;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:6px 10px;background:rgba(246,240,225,.97);border:1px solid var(--bord);border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.25);font-size:14px}
+.editeur .infos{font-weight:600}
+.editeur button.principal{background:#6fa84a;color:#fff;border-color:#5a8f39}
+.editeur button{padding:4px 12px}
+.banniere{position:absolute;z-index:8;padding:8px 16px;border-radius:12px;font-size:14px;font-weight:600;text-align:center;background:#fff7e0;color:var(--encre);border:1px solid #e0b64e;box-shadow:0 4px 14px rgba(0,0,0,.22)}
+.plaque{position:absolute;z-index:3;font:600 11px system-ui;color:#fff;background:rgba(43,42,36,.72);padding:1px 6px;border-radius:5px;white-space:nowrap}
+.legende{display:grid;grid-template-columns:repeat(2,1fr);gap:5px 28px;background:var(--papier);border-radius:10px;padding:14px 18px;font-size:13.5px;line-height:1.4}
+.legende h3{grid-column:1/-1;margin:6px 0 0;font-size:14px;border-bottom:1px solid var(--bord);padding-bottom:2px}
+.legende div{display:flex;gap:8px;align-items:flex-start}
+.legende b.num{flex:none;width:22px;height:22px;border-radius:50%;background:#2b2a24;color:#ffd277;border:2px solid #ffd277;font:700 11px/18px system-ui;text-align:center;margin-top:1px}
+.legende em{color:#6f6852}
+.invente{color:#8a5a00}
+.galerie{background:rgba(246,240,225,.12);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:20px}
+.galerie .lib{color:#f6f0e1;font-size:13px;margin:0 0 5px;display:flex;gap:8px;align-items:center}
+.galerie .lib .discret{color:#cfd8c0;font-size:12px}
+.lib b.nn{flex:none;width:20px;height:20px;border-radius:50%;background:#2b2a24;color:#ffd277;border:2px solid #ffd277;font:700 11px/16px system-ui;text-align:center}
+.rangee{display:flex;gap:16px;align-items:flex-start}
+.tels{display:flex;gap:40px;align-items:flex-start}
+.tel{position:relative;width:375px;height:812px;overflow:hidden;border-radius:26px;border:8px solid #1d1d1a;box-sizing:content-box;background:#9fc7e8;box-shadow:0 6px 24px rgba(0,0,0,.45)}
+.tel>svg.carte{position:absolute;inset:0}
+.tel .barre-haut{font-size:13px;gap:0 2px;padding:6px 8px 4px}
+.tel .ressource{padding:2px 5px}
+.tel .boutons-camera{top:96px;right:8px}
+.tel .boutons-camera button{width:34px;height:34px;padding:6px}
+.tel .barre-bas{position:absolute;left:0;right:0;bottom:0;height:auto;min-height:48px;flex-direction:column;align-items:stretch;gap:4px;padding:5px 8px 8px}
+.tel button.icone{width:30px;height:30px}
+.tel .ligne-bas{display:flex;align-items:center;gap:6px;width:100%}
+.legtel{color:#f6f0e1;font-size:13px;width:560px;line-height:1.5;background:rgba(246,240,225,.12);padding:12px 16px;border-radius:10px}
+.legtel p{margin:0 0 8px}
+.legtel .invente{color:#ffd277}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<defs>
+<symbol id="i-coins" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v8M9.5 10.5c0-1.2 1.1-2 2.5-2s2.5.8 2.5 2-1.1 1.5-2.5 1.5-2.5.6-2.5 1.8 1.1 2 2.5 2 2.5-.8 2.5-2" stroke-width="1.6"/></symbol>
+<symbol id="i-fourrage" viewBox="0 0 24 24"><path d="M5 19c6 0 13-5 13-14-7 0-13 5-13 14zm0 0 7-7"/></symbol>
+<symbol id="i-viande" viewBox="0 0 24 24"><path d="M14 4a6 6 0 0 1 6 6c0 4-5 6-8 6l-4 4-2-2 4-4c0-3 1-10 4-10z"/></symbol>
+<symbol id="i-horloge" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></symbol>
+<symbol id="i-visiteurs" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5M16 5a3 3 0 0 1 0 6M18 14c2 .7 3 2.5 3 5"/></symbol>
+<symbol id="i-billet" viewBox="0 0 24 24"><path d="M4 8a2 2 0 0 0 0 4v0a2 2 0 0 1 0 4h0v2h16v-2a2 2 0 0 1 0-4 2 2 0 0 0 0-4V6H4zM14 6v12"/></symbol>
+<symbol id="i-village" viewBox="0 0 24 24"><path d="M4 11l8-6 8 6v8H4z"/><path d="M10 19v-5h4v5"/></symbol>
+<symbol id="i-balai" viewBox="0 0 24 24"><path d="M14 4l6 6M10 8l6 6M4 20l6-6M8 16c-2 2-4 3-5 3 0-1 1-3 3-5l4-4 4 4z"/></symbol>
+<symbol id="i-agrandir" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+<symbol id="i-liste" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-moins" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+<symbol id="i-cible" viewBox="0 0 24 24"><path d="M12 12m-8 0a8 8 0 1 0 16 0a8 8 0 1 0-16 0M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0-6 0"/></symbol>
+<symbol id="i-marchand" viewBox="0 0 24 24"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7M7 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4M17 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4"/></symbol>
+<symbol id="i-gazette" viewBox="0 0 24 24"><path d="M4 5h13v14H6a2 2 0 0 1-2-2zM17 9h3v8a2 2 0 0 1-2 2M8 9h5M8 13h5"/></symbol>
+<symbol id="i-replier" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+<symbol id="i-patte" viewBox="0 0 24 24"><path d="M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4M16 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4M5 15a2 2 0 1 0 0-4 2 2 0 0 0 0 4M19 15a2 2 0 1 0 0-4 2 2 0 0 0 0 4M12 20c-3 0-5-2-5-4s2-4 5-4 5 2 5 4-2 4-5 4"/></symbol>
+<symbol id="i-tourne-g" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v5h5"/></symbol>
+<symbol id="i-tourne-d" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-3-6.2M20 4v5h-5"/></symbol>
+<symbol id="i-personnel" viewBox="0 0 24 24"><circle cx="12" cy="10" r="3"/><path d="M8.5 8.5a3.5 3.5 0 0 1 7 0M6 20c0-4 2.5-6 6-6s6 2 6 6"/></symbol>
+<symbol id="i-legumes" viewBox="0 0 24 24"><path d="M12 20c-4 0-6-3-6-6 0-2 2-4 6-4s6 2 6 4c0 3-2 6-6 6zM12 10c0-3-1-5-3-6M12 10c0-3 1-5 4-6"/></symbol>
+<symbol id="i-content" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 14c1 2 2.2 3 4 3s3-1 4-3M9 9.5h.01M15 9.5h.01"/></symbol>
+<symbol id="i-triste" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 17c1-2 2.2-3 4-3s3 1 4 3M9 9.5h.01M15 9.5h.01"/></symbol>
+<symbol id="i-trophee" viewBox="0 0 24 24"><path d="M8 4h8v6a4 4 0 0 1-8 0zM8 6H5v2a3 3 0 0 0 3 3M16 6h3v2a3 3 0 0 1-3 3M12 14v4M8 20h8"/></symbol>
+<symbol id="i-vaccin" viewBox="0 0 24 24"><path d="M15 4l5 5M17 6l-9 9-3 1 1-3 9-9M12 9l3 3M5 19l-2 2"/></symbol>
+<symbol id="i-relier" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+<symbol id="i-decorer" viewBox="0 0 24 24"><path d="M12 10a3 3 0 0 1 0-6 3 3 0 0 1 0 6zM12 14a3 3 0 0 1 0 6 3 3 0 0 1 0-6zM10 12a3 3 0 0 1-6 0 3 3 0 0 1 6 0zM14 12a3 3 0 0 1 6 0 3 3 0 0 1-6 0z"/></symbol>
+<symbol id="i-banc" viewBox="0 0 24 24"><path d="M4 11h16M5 11v4M19 11v4M6 8h12v3M7 15v3M17 15v3"/></symbol>
+<symbol id="i-poubelle" viewBox="0 0 24 24"><path d="M5 7h14M9 7V4h6v3M7 7l1 13h8l1-13M10 11v6M14 11v6"/></symbol>
+<symbol id="i-toilettes" viewBox="0 0 24 24"><path d="M9 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M15 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M6 20v-9h6v9M12 20v-9h6v9"/></symbol>
+<symbol id="i-arbre" viewBox="0 0 24 24"><path d="M12 3a5 5 0 0 0-5 5c0 2 1 3 2 4-2 0-4 1-4 3 0 2 2 3 4 3h6c2 0 4-1 4-3 0-2-2-3-4-3 1-1 2-2 2-4a5 5 0 0 0-5-5zM12 18v3"/></symbol>
+<symbol id="i-cafe" viewBox="0 0 24 24"><path d="M5 8h11v6a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4zM16 9h2a2 2 0 0 1 0 5h-2M8 3v2M12 3v2"/></symbol>
+<symbol id="i-lampadaire" viewBox="0 0 24 24"><path d="M12 3a4 4 0 0 0-4 4v3h8V7a4 4 0 0 0-4-4zM12 10v10M9 20h6"/></symbol>
+<symbol id="i-puits" viewBox="0 0 24 24"><path d="M5 11h14v9H5zM7 11V6l5-3 5 3v5"/></symbol>
+<symbol id="i-statue" viewBox="0 0 24 24"><path d="M12 3a2 2 0 1 0 0 4 2 2 0 0 0 0-4M8 21v-6l2-8h4l2 8v6zM6 21h12"/></symbol>
+<symbol id="i-parcelle" viewBox="0 0 24 24"><path d="M4 6h16v12H4zM4 10h16M4 14h16M9 6v12M15 6v12"/></symbol>
+<symbol id="i-deplacer" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></symbol>
+<symbol id="i-vendre" viewBox="0 0 24 24"><path d="M12 3v18M16 7c0-2-2-3-4-3s-4 1-4 3 2 3.5 4 4 4 1.5 4 4-2 3-4 3-4-1-4-3"/></symbol>
+<symbol id="i-detruire" viewBox="0 0 24 24"><path d="M5 7h14M9 7V4h6v3M7 7l1 13h8l1-13"/></symbol>
+<symbol id="i-prolonger" viewBox="0 0 24 24"><path d="M4 20c0-5 4-5 7-8M14 9l6-5M15 4h5v5"/></symbol>
+</defs>
+</svg>
+
+<div class="page">
+<h1>Parc de Clairbois — maquette de l'interface V2</h1>
+<p class="intro">Image fixe (rien ne bouge) de tout ce que les étapes V2 ajoutent à l'écran. Tout ce qui est <span class="cle">cerclé d'or</span> est <b style="color:#ffd277">nouveau en V2</b> ; le reste existe déjà dans le jeu actuel (mêmes couleurs, polices, icônes et tailles). Les pastilles numérotées renvoient à la légende sous l'image. En vrai, un seul volet est ouvert à la fois : ici on en montre quatre côte à côte pour tout voir d'un coup. La carte est un décor simplifié, pas la vraie 3D.</p>
+
+<div class="scene" id="scene">
+<svg class="carte" viewBox="0 0 1280 800" width="1280" height="800" aria-hidden="true">
+ <defs>
+  <linearGradient id="herbe" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8fc063"/><stop offset=".55" stop-color="#78ad52"/><stop offset="1" stop-color="#5f9544"/></linearGradient>
+ </defs>
+ <rect width="1280" height="800" fill="url(#herbe)"/>
+ <rect x="720" y="0" width="560" height="800" fill="#a6d174" opacity=".5"/>
+ <ellipse cx="420" cy="80" rx="105" ry="30" fill="#6fb3d9" stroke="#4f95bd" stroke-width="3"/>
+ <ellipse cx="400" cy="76" rx="40" ry="8" fill="#9ccfe8" opacity=".6"/>
+ <path d="M640 40 C 690 120, 650 230, 690 330 S 700 480, 725 800" fill="none" stroke="#5aa6d0" stroke-width="40" stroke-linecap="round"/>
+ <path d="M640 40 C 690 120, 650 230, 690 330 S 700 480, 725 800" fill="none" stroke="#8cc8e6" stroke-width="12" stroke-linecap="round" opacity=".55"/>
+ <rect x="662" y="272" width="62" height="22" rx="4" fill="#9a7048" stroke="#6e4d2e" stroke-width="2" transform="rotate(8 693 283)"/>
+ <g stroke="#d9c496" stroke-width="16" stroke-linecap="round" fill="none"><path d="M10 250 H690"/><path d="M185 250 V212"/><path d="M365 250 V232"/><path d="M185 250 V264"/><path d="M520 250 V335"/></g>
+ <g stroke="#cdbb92" stroke-width="12" stroke-linecap="round" fill="none"><path d="M690 283 H1100"/><path d="M810 283 V190"/><path d="M930 283 V215"/><path d="M1040 283 V340"/><path d="M880 283 V345"/></g>
+ <path d="M440 250 L520 335" stroke="#46b341" stroke-width="16" stroke-linecap="round" opacity=".6"/>
+ <circle cx="520" cy="335" r="9" fill="#46b341" opacity=".8"/>
+ <path d="M575 250 L705 330" stroke="#d23a2a" stroke-width="16" stroke-linecap="round" opacity=".6"/>
+ <circle cx="705" cy="330" r="9" fill="#d23a2a" opacity=".85"/>
+ <g stroke="#7a5a35" stroke-width="3" stroke-linejoin="round">
+  <rect x="110" y="120" width="150" height="92" fill="#a8d27e" rx="4"/>
+  <rect x="300" y="150" width="130" height="82" fill="#c9b787" rx="4"/>
+  <rect x="470" y="110" width="120" height="90" fill="#9fc57a" rx="4" stroke-dasharray="7 4" stroke="#c0432f"/>
+  <rect x="120" y="264" width="130" height="68" fill="#a8d27e" rx="4"/>
+ </g>
+ <rect x="104" y="114" width="162" height="104" rx="8" fill="none" stroke="#f2b13a" stroke-width="3"/>
+ <g fill="#f4efe0" stroke="#8d8672" stroke-width="1.5"><ellipse cx="140" cy="175" rx="9" ry="6"/><ellipse cx="170" cy="190" rx="9" ry="6"/><ellipse cx="205" cy="168" rx="9" ry="6"/><ellipse cx="235" cy="185" rx="9" ry="6"/><ellipse cx="190" cy="140" rx="9" ry="6"/><ellipse cx="150" cy="145" rx="9" ry="6"/></g>
+ <g fill="#e8a8a0" stroke="#9b6a64" stroke-width="1.5"><ellipse cx="335" cy="195" rx="10" ry="7"/><ellipse cx="380" cy="205" rx="10" ry="7"/><ellipse cx="400" cy="175" rx="10" ry="7"/></g>
+ <g fill="#8a8a92" stroke="#55555c" stroke-width="1.5"><ellipse cx="505" cy="155" rx="10" ry="6"/><ellipse cx="550" cy="170" rx="10" ry="6"/></g>
+ <g fill="#b98a55" stroke="#6e4d2e" stroke-width="1.5"><ellipse cx="150" cy="300" rx="10" ry="7"/><ellipse cx="200" cy="295" rx="10" ry="7"/></g>
+ <g stroke="#fff" stroke-width="2"><circle cx="141" cy="158" r="8" fill="#e8c12a"/><circle cx="206" cy="150" r="8" fill="#e8862a"/><circle cx="170" cy="172" r="8" fill="#3b82c4"/><circle cx="400" cy="158" r="9" fill="#d23a2a"/></g>
+ <g stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M141 154v8M137 158h8"/><path d="M206 146v8M202 150h8"/><path d="M170 168v8M166 172h8"/><path d="M400 153v10M395 158h10"/></g>
+ <g><rect x="95" y="244" width="8" height="6" fill="#fff" stroke="#999" transform="rotate(20 99 247)"/><rect x="300" y="256" width="7" height="9" fill="#e9c14a" stroke="#8d7220" transform="rotate(-15 303 260)"/><rect x="410" y="245" width="9" height="6" fill="#7fb3de" stroke="#456"/><rect x="610" y="256" width="8" height="6" fill="#fff" stroke="#999" transform="rotate(35 614 259)"/></g>
+ <g stroke="#6e4d2e" stroke-width="1.5"><rect x="60" y="232" width="22" height="8" fill="#a8774a" rx="2"/><rect x="448" y="262" width="22" height="8" fill="#a8774a" rx="2"/></g>
+ <g><circle cx="262" cy="236" r="6" fill="#d4547a"/><circle cx="272" cy="239" r="6" fill="#f2c94c"/><circle cx="268" cy="232" r="6" fill="#d4547a"/></g>
+ <circle cx="305" cy="300" r="62" fill="#46b341" opacity=".18" stroke="#2f8a2b" stroke-width="2" stroke-dasharray="6 4"/>
+ <rect x="293" y="295" width="24" height="10" rx="2" fill="#5fcf59" stroke="#2f8a2b" stroke-width="2" opacity=".85"/>
+ <circle cx="620" cy="250" r="8" fill="#e0503c" opacity=".8" stroke="#8f2a1a" stroke-width="2"/><rect x="618" y="236" width="4" height="14" fill="#e0503c" opacity=".8"/>
+ <g stroke="#fff" stroke-width="1.5"><circle cx="228" cy="236" r="6" fill="#6a9c3e"/><rect x="224" y="241" width="8" height="9" rx="3" fill="#6a9c3e"/><circle cx="470" cy="243" r="6" fill="#c9742b"/><rect x="466" y="248" width="8" height="8" rx="3" fill="#c9742b"/></g>
+ <g stroke="#6e4d2e" stroke-width="2" stroke-linejoin="round">
+  <g><rect x="920" y="150" width="62" height="48" fill="#e7d3a4"/><path d="M914 152 951 118 988 152z" fill="#b5533c"/></g>
+  <g><rect x="780" y="140" width="50" height="42" fill="#e7d3a4"/><path d="M774 142 805 114 836 142z" fill="#9b5a3a"/></g>
+  <g><rect x="1010" y="150" width="46" height="38" fill="#e7d3a4"/><path d="M1005 152 1033 126 1061 152z" fill="#b5533c"/></g>
+  <g><rect x="780" y="305" width="54" height="42" fill="#d8c08c"/><path d="M774 307 807 280 840 307z" fill="#7d6a3f"/></g>
+  <g><rect x="930" y="305" width="50" height="40" fill="#e7d3a4"/><path d="M924 307 955 281 986 307z" fill="#7a5a8a"/></g>
+  <g><rect x="1030" y="305" width="54" height="42" fill="#e7d3a4"/><path d="M1024 307 1057 280 1090 307z" fill="#6e7c8c"/></g>
+  <g><rect x="840" y="190" width="40" height="36" fill="#e7d3a4"/><path d="M835 192 860 168 885 192z" fill="#a85a3a"/></g>
+ </g>
+ <g stroke="#6e4d2e" stroke-width="2"><rect x="738" y="244" width="34" height="18" rx="3" fill="#d9a441"/><path d="M738 244 c8-12 26-12 34 0" fill="#f2e2b8"/><circle cx="746" cy="266" r="5" fill="#6e4d2e"/><circle cx="764" cy="266" r="5" fill="#6e4d2e"/></g>
+ <g stroke="#6e4d2e" stroke-width="2">
+  <rect x="1160" y="215" width="42" height="42" fill="#c8b25a"/><rect x="1160" y="263" width="42" height="42" fill="#9ac35a"/><rect x="1160" y="311" width="42" height="42" fill="#c8b25a"/>
+  <rect x="1208" y="215" width="42" height="42" fill="#9ac35a"/><rect x="1208" y="263" width="42" height="42" fill="#d9c775" stroke-dasharray="4 3"/><rect x="1208" y="311" width="42" height="42" fill="#b99a64" stroke-dasharray="4 3"/>
+ </g>
+ <g stroke="#7b6a20" stroke-width="2" opacity=".7"><path d="M1168 225v30M1178 225v30M1188 225v30M1196 225v30M1168 321v30M1178 321v30M1188 321v30M1196 321v30"/></g>
+ <g stroke="#3f7a2a" stroke-width="2" opacity=".7"><path d="M1216 225v30M1226 225v30M1236 225v30M1246 225v30M1168 273v30M1178 273v30M1188 273v30M1196 273v30"/></g>
+ <g stroke="#6e4d2e" stroke-width="2"><rect x="1095" y="262" width="30" height="30" fill="#7d5a3a"/><rect x="1095" y="296" width="30" height="30" fill="#7d5a3a"/><rect x="1095" y="330" width="30" height="30" fill="#7d5a3a"/></g>
+ <g fill="#e07a2c"><circle cx="1103" cy="272" r="4"/><circle cx="1114" cy="276" r="4"/><circle cx="1105" cy="283" r="4"/><circle cx="1104" cy="306" r="4" fill="#7ab648"/><circle cx="1115" cy="310" r="4" fill="#7ab648"/></g>
+ <g stroke="#6e4d2e" stroke-width="2"><rect x="1000" y="62" width="64" height="40" fill="#b5533c"/><path d="M994 64 1032 38 1070 64z" fill="#8a3f2a"/></g>
+ <g stroke="#6e4d2e" stroke-width="2"><rect x="860" y="70" width="46" height="34" fill="#e7d3a4"/><path d="M854 72 883 46 912 72z" fill="#7a7f9a"/></g>
+ <g stroke="#6e4d2e" stroke-width="2"><rect x="760" y="62" width="48" height="40" fill="#f1ecdc"/><path d="M754 64 784 38 814 64z" fill="#b5533c"/><rect x="778" y="76" width="12" height="4" fill="#2fa04a" stroke="none"/><rect x="782" y="72" width="4" height="12" fill="#2fa04a" stroke="none"/></g>
+ <g stroke="#6e4d2e" stroke-width="2"><rect x="925" y="62" width="58" height="36" fill="#efe9d8"/><path d="M919 64 954 40 989 64z" fill="#a08a52"/><path d="M934 66v30M946 66v30M958 66v30M970 66v30" stroke="#c9b98f"/></g>
+ <g stroke="#6e4d2e" stroke-width="2"><rect x="1100" y="62" width="58" height="38" fill="#e7d3a4"/><path d="M1094 64 1129 38 1164 64z" fill="#6e4a8a"/></g>
+</svg>
+
+<span class="plaque" style="left:112px;top:222px">Moutons</span>
+<span class="plaque" style="left:474px;top:204px;background:rgba(178,58,42,.85)">Loups · pas de chemin</span>
+<span class="plaque" style="left:742px;top:104px">Centre vétérinaire</span>
+<span class="plaque" style="left:840px;top:106px">Maison du personnel</span>
+<span class="plaque" style="left:930px;top:100px">Musée</span>
+<span class="plaque" style="left:1002px;top:104px">Grange</span>
+<span class="plaque" style="left:1100px;top:102px">Restaurant</span>
+<span class="plaque" style="left:1150px;top:358px">Champs de Clairbois</span>
+<span class="plaque" style="left:1062px;top:364px">Potager</span>
+<span class="plaque" style="left:728px;top:226px;background:rgba(217,164,65,.95);color:#2b2a24">Marchand itinérant</span>
+<span class="plaque" style="left:380px;top:52px">Étang · niveau 4</span>
+<span class="plaque" style="left:922px;top:200px">Mairie</span>
+
+<header class="barre-haut" id="haut">
+ <span class="ressource"><svg class="i"><use href="#i-coins"/></svg><span class="valeur">1 240</span></span>
+ <span class="ressource"><svg class="i"><use href="#i-fourrage"/></svg><span class="valeur">86</span></span>
+ <span class="ressource"><svg class="i"><use href="#i-viande"/></svg><span class="valeur">42</span></span>
+ <span class="ressource nouv rel"><svg class="i"><use href="#i-legumes"/></svg><span class="valeur">18</span><i class="n" style="left:-8px;top:-14px">1</i></span>
+ <span class="ressource attention"><svg class="i"><use href="#i-horloge"/></svg><span class="valeur">1 j 20 h</span></span>
+ <span class="ressource"><svg class="i"><use href="#i-visiteurs"/></svg><span class="valeur">54/h</span></span>
+ <span class="ressource"><svg class="i"><use href="#i-billet"/></svg><span class="valeur">12</span></span>
+ <span class="ressource pastille nouv rel"><svg class="i"><use href="#i-village"/></svg><span class="valeur">Petite ville · 262 hab.</span><i class="n" style="left:-8px;top:-14px">2</i></span>
+ <span class="ressource nouv rel" data-alerte="oui"><svg class="i"><use href="#i-personnel"/></svg><span class="valeur">3/6</span><i class="n" style="left:-8px;top:-14px">3</i></span>
+ <span class="ressource nouv rel"><svg class="i" style="color:#2f6a12"><use href="#i-content"/></svg><span class="valeur">72 %</span><i class="n" style="left:-8px;top:-14px">4</i></span>
+ <span class="ressource nouv rel" style="background:#fff3cf"><svg class="i"><use href="#i-marchand"/></svg><span class="valeur">Itinérant · 14 h</span><i class="n" style="left:-8px;top:-14px">5</i></span>
+ <span class="ressource point nouv rel"><svg class="i"><use href="#i-trophee"/></svg><i class="n" style="left:-10px;top:-14px">6</i></span>
+ <span class="heure">jeu. 14:05</span>
+ <button class="roue">⚙</button>
+</header>
+
+<div class="boutons-camera">
+ <button><svg class="i"><use href="#i-tourne-g"/></svg></button><button><svg class="i"><use href="#i-tourne-d"/></svg></button><button><svg class="i"><use href="#i-plus"/></svg></button><button><svg class="i"><use href="#i-moins"/></svg></button>
+</div>
+
+<i class="n" style="left:121px;top:134px">8</i>
+<i class="n" style="left:530px;top:326px">9</i>
+<i class="n" style="left:690px;top:322px">9</i>
+<i class="n" style="left:352px;top:272px">10</i>
+<i class="n" style="left:630px;top:226px">10</i>
+<i class="n" style="left:418px;top:228px">11</i>
+<i class="n" style="left:1162px;top:195px">12</i>
+<i class="n" style="left:1076px;top:244px">12</i>
+<i class="n" style="left:770px;top:40px">13</i>
+<i class="n" style="left:760px;top:230px">14</i>
+<i class="n" style="left:236px;top:216px">15</i>
+
+<div class="editeur" style="left:20px;top:340px;border-color:#2f8a2b"><span class="infos vert">Banc · 40 pièces</span><button class="principal">Poser</button><button>Terminer</button><i class="n" style="left:-8px;top:-10px">10</i></div>
+<div class="editeur" style="left:405px;top:344px"><span class="infos">12 m · 36 pièces</span><button class="principal">Valider</button><button>Terminer</button><i class="n" style="left:-8px;top:-10px">9</i></div>
+<div class="editeur" style="left:640px;top:344px;border-color:#c0432f"><span class="infos rouge">Le chemin traverse la rivière.</span><button class="principal" style="opacity:.45">Valider</button><button>Terminer</button></div>
+<div class="banniere" style="left:960px;top:350px">Médaille d'argent : Grande famille !<i class="n" style="left:-8px;top:-10px">16</i></div>
+
+<section class="volet" style="left:10px;top:386px"><i class="n" style="left:-8px;top:-8px">19</i>
+ <header><h2>Personnel</h2><button class="fermer">✕</button></header>
+ <p style="font-weight:600">Personnel 3/6 · salaires 190 pièces/jour <button style="float:right">Répartir</button></p>
+ <p class="rouge" style="font-size:11.5px;line-height:1.3">Dette : 85 pièces. Tes employés travaillent moitié moins bien, et tu ne peux ni acheter ni construire tant qu’elle n’est pas remboursée.</p>
+ <h3>Employés</h3>
+ <div class="carte"><div><b>Léa — Soigneur ★★</b><br><small>12/14 animaux suivis · 72 pièces/jour</small></div><div class="bt"><button>Enclos</button><button>Licencier</button></div></div>
+ <div class="carte"><div><b>Élise — Vétérinaire ★</b><br><small>Soigne au centre · 70 pièces/jour</small></div><div class="bt"><button>Licencier</button></div></div>
+ <div class="carte"><div><b>Jules — Fermier ★</b><br><small>Porte 4 fourrages par heure au garde-manger</small></div><div class="bt"><button>Licencier</button></div></div>
+ <h3>Candidats</h3>
+ <p class="discret">Nouveaux candidats dans 5 h 20</p>
+ <div class="carte"><small style="color:var(--encre)">Hugo — Agent d’entretien ★ · 40 pièces/jour</small><div class="bt"><button class="principal">Embaucher</button></div></div>
+ <div class="carte"><small style="color:var(--encre)">Nina — Animateur ★★ · 54 pièces/jour</small><div class="bt"><button class="off">Embaucher</button></div></div>
+</section>
+
+<section class="volet" style="left:328px;top:386px"><i class="n" style="left:-8px;top:-8px">20</i>
+ <header><h2>Centre vétérinaire · niveau 3</h2><button class="fermer">✕</button></header>
+ <dl class="fiche"><dt>Soigne</dt><dd>parasites, indigestion, blessures, grippe</dd><dt>Vétérinaires</dt><dd>2 vétérinaires au travail sur 2 places</dd><dt>Quarantaine</dt><dd>1 / 2 places</dd></dl>
+ <h3>File d’attente</h3>
+ <div class="carte"><small style="color:var(--encre)"><b>Flocon</b> · <span class="bleu">En soin (encore 1 h 20)</span></small></div>
+ <div class="carte"><small style="color:var(--encre)"><b>Croc</b> · <span class="orange">Blessure · grave</span> · 2ᵉ</small></div>
+ <div class="carte"><small style="color:var(--encre)"><b>Biscotte</b> · <span class="jaune">Grippe · léger</span></small><div class="bt"><button>Isoler</button></div></div>
+ <div class="carte"><small style="color:var(--encre)"><b>Pépito</b> · <span class="bleu">En quarantaine · Grippe</span></small><div class="bt"><button>Remettre</button></div></div>
+ <p class="discret">…et 3 autres</p>
+ <p class="rouge" style="font-size:11.5px">Le soin attend : il faut 625 pièces dans la caisse.</p>
+ <p class="discret">Niveau 4 : vaccination des enclos</p>
+ <p><button class="principal" style="padding:4px 12px">Améliorer (1 200 pièces)</button></p>
+</section>
+
+<section class="volet" style="left:646px;top:386px"><i class="n" style="left:-8px;top:-8px">21</i>
+ <header><h2>Satisfaction des visiteurs</h2><button class="fermer">✕</button></header>
+ <div class="visage"><svg class="i"><use href="#i-content"/></svg><b>72 %</b></div>
+ <div class="ligne2"><span>Confort (bancs)</span><b>+9 %</b></div>
+ <div class="ligne2"><span>Décoration</span><b>+15 %</b></div>
+ <div class="ligne2"><span>Kiosque</span><b>+5 %</b></div>
+ <div class="ligne2"><span>Toilettes</span><b class="rouge">−10 %</b></div>
+ <div class="ligne2"><span>Propreté</span><b class="rouge">−6 % (4 déchets)</b></div>
+ <h3>Ce qui manque</h3>
+ <p class="rouge" style="font-size:11.5px">Il manque des toilettes : 1 toilette sert 40 visiteurs par heure.</p>
+ <h3>Poser un objet</h3>
+ <div class="grille">
+  <div class="obj"><svg class="i"><use href="#i-banc"/></svg><b>Banc</b>40</div>
+  <div class="obj"><svg class="i"><use href="#i-poubelle"/></svg><b>Poubelle</b>30</div>
+  <div class="obj"><svg class="i"><use href="#i-toilettes"/></svg><b>Toilettes</b>250</div>
+  <div class="obj"><svg class="i"><use href="#i-decorer"/></svg><b>Fleurs</b>20</div>
+  <div class="obj"><svg class="i"><use href="#i-arbre"/></svg><b>Arbre</b>35</div>
+  <div class="obj"><svg class="i"><use href="#i-cafe"/></svg><b>Kiosque</b>400</div>
+  <div class="obj"><svg class="i"><use href="#i-lampadaire"/></svg><b>Lampadaire</b>60</div>
+  <div class="obj verrou"><svg class="i"><use href="#i-puits"/></svg><b>Puits</b>Village niv. 3</div>
+  <div class="obj verrou"><svg class="i"><use href="#i-statue"/></svg><b>Statue</b>Village niv. 3</div>
+ </div>
+</section>
+
+<section class="volet" style="left:964px;top:386px"><i class="n" style="left:-8px;top:-8px">22</i>
+ <header><h2>Trophées</h2><button class="principal" style="margin-left:auto;margin-right:6px">Tout récupérer</button><button class="fermer">✕</button></header>
+ <div class="fam"><span>Animaux ▾</span><span class="discret">12 / 40</span></div>
+ <div class="carte"><div><b>Grande famille</b> <span class="pastilles"><i class="b"></i><i class="a"></i><i class="v"></i></span><br><small>37 / 50 naissances</small></div><div class="bt"><button class="principal">Récupérer 500</button></div></div>
+ <div class="carte"><div><b>Roi du loup</b> <span class="pastilles"><i class="b"></i><i class="a"></i><i class="o"></i></span><br><small>Or gagné · statue dorée</small></div><div class="bt"><button>Poser</button></div></div>
+ <div class="fam"><span>Argent ▾</span><span class="discret">8 / 40</span></div>
+ <div class="carte"><div><b>Caisse pleine</b> <span class="pastilles"><i class="b"></i><i class="v"></i><i class="v"></i></span><br><small>1 240 / 5 000 pièces</small></div><div class="bt"><button class="principal">Récupérer 100</button></div></div>
+ <div class="fam"><span>Village ▸</span><span class="discret">3 / 40</span></div>
+ <div class="fam"><span>Santé ▸</span><span class="discret">2 / 40</span></div>
+ <div class="fam"><span>Confort ▸</span><span class="discret">0 / 40</span></div>
+ <p class="discret" style="margin-top:8px">Musée : 12 médailles exposées sur 40 places</p>
+</section>
+
+<footer class="barre-bas fixe" id="bas">
+ <div class="zone-selection"><svg class="i"><use href="#i-patte"/></svg><span class="pile"><b>Moutons</b><span class="alerte">1 animal sans soigneur : pas de petit pour lui.</span></span><span class="compte">6/8</span><span class="jauge"><i style="width:62%"></i></span><span class="malades">2 malades</span><i class="n" style="left:32px;top:-16px">17</i></div>
+ <div class="zone-actions">
+  <button class="icone"><svg class="i"><use href="#i-balai"/></svg><small>10</small></button>
+  <button class="icone nouv"><svg class="i"><use href="#i-vaccin"/></svg><small>30</small><span class="bulle">Vacciner l'enclos</span></button>
+  <button class="icone"><svg class="i"><use href="#i-agrandir"/></svg></button>
+  <button class="icone"><svg class="i"><use href="#i-liste"/></svg></button>
+  <i class="n" style="left:-6px;top:-16px">18</i>
+ </div>
+ <div class="zone-mission"><svg class="i"><use href="#i-cible"/></svg><span>Pose 3 bancs le long du chemin</span><span class="avancee">1/3</span><span class="quot">☀ 2/4</span></div>
+ <div class="zone-droite"><button class="icone"><svg class="i"><use href="#i-marchand"/></svg></button><button class="icone"><svg class="i"><use href="#i-gazette"/></svg></button><button class="icone"><svg class="i"><use href="#i-replier"/></svg></button></div>
+</footer>
+</div>
+
+<h2 class="titre">Légende des pastilles</h2>
+<div class="legende">
+ <h3>Barre du haut</h3>
+ <div><b class="num">1</b><span><b>Légumes</b> : la nouvelle nourriture (dès le niveau 4), à côté du fourrage et de la viande. <em>Étape 6</em></span></div>
+ <div><b class="num">2</b><span><b>Village</b> : le nom du niveau va jusqu'à « Petite ville », « Ville », « Grande ville » (niveaux 4 à 6) ; la pastille orange dit qu'on peut monter de niveau. <em>Étape 6</em></span></div>
+ <div><b class="num">3</b><span><b>Personnel</b> : nouvelle icône + « employés / places ». Rouge s'il y a des animaux sans soigneur ou une dette. Un tap ouvre le volet Personnel. <em>Étape 2</em></span></div>
+ <div><b class="num">4</b><span><b>Satisfaction</b> des visiteurs : un visage (content, moyen, triste) + le pourcentage. Un tap ouvre le volet de la satisfaction. <em>Étape 5</em></span></div>
+ <div><b class="num">5</b><span><b>Marchand itinérant</b> : case dorée avec le temps restant, visible seulement quand il est au village. <em>Étape 6</em></span></div>
+ <div><b class="num">6</b><span><b>Trophées</b> : la coupe, avec un point rouge quand il y a des médailles à récupérer. <em>Étape 7</em></span></div>
+ <div><b class="num">7</b><span><b>Dette</b> : le nombre de pièces passe en rouge quand la caisse est négative (voir « Variantes »). <em>Étape 2</em></span></div>
+ <h3>Carte</h3>
+ <div><b class="num">8</b><span><b>Icônes de maladie</b> au-dessus des animaux : jaune (léger), orange (grave), rouge (mortel), bleu (en soin). <em>Étape 3</em></span></div>
+ <div><b class="num">9</b><span><b>Tracé d'un chemin</b> : le ruban fantôme est vert quand c'est permis (avec le prix), rouge avec la raison sinon ; boutons Valider / Terminer. <em>Étape 1</em></span></div>
+ <div><b class="num">10</b><span><b>Pose d'un objet</b> : fantôme vert ou rouge et grand rond de portée autour (ici un banc, 10 m) ; le panneau donne le prix ou la raison du refus. <em>Étape 5</em></span></div>
+ <div><b class="num">11</b><span><b>Déchets</b> laissés par les visiteurs sur les chemins : un tap ramasse ceux qui sont autour. <em>Étape 5</em></span></div>
+ <div><b class="num">12</b><span><b>Champs de la ferme</b> (8 parcelles, à l'est du village) et <b>potager</b> de légumes (4 parcelles, plus tard). <em>Étapes 4 et 6</em></span></div>
+ <div><b class="num">13</b><span><b>Nouveaux bâtiments</b> du village : centre vétérinaire (croix verte), maison du personnel, musée, grange, restaurant. <em>Étapes 2 à 7</em></span></div>
+ <div><b class="num">14</b><span><b>Charrette du marchand itinérant</b> près du pont, qu'on touche pour ouvrir ses offres. <em>Étape 6</em></span></div>
+ <div><b class="num">15</b><span><b>Employés qui se promènent</b> (soigneurs, agents, animateurs…) ; on ne peut pas les toucher. <em>Étapes 2 et 5</em></span></div>
+ <div><b class="num">16</b><span><b>Bannière de médaille</b> (une seule, même s'il y en a plusieurs). <em>Étape 7</em></span></div>
+ <h3>Barre du bas et volets</h3>
+ <div><b class="num">17</b><span>Phrase <b>rouge sous le nom</b> de l'enclos : animaux sans soigneur. <em>Étape 2</em></span></div>
+ <div><b class="num">18</b><span>Nouveau bouton de l'enclos : <b>Vacciner l'enclos</b> (prix dans la pastille). Le bouton « Soigner » de la V1 disparaît : on soigne au centre vétérinaire. <em>Étape 3</em></span></div>
+ <div><b class="num">19</b><span><b>Volet Personnel</b> : employés (enclos affectés, licencier), candidats avec compte à rebours, dette en rouge, bouton Répartir. <em>Étape 2</em></span></div>
+ <div><b class="num">20</b><span><b>Volet Centre vétérinaire</b> : vétérinaires, file d'attente, quarantaine, vaccination, améliorer. <em>Étape 3</em></span></div>
+ <div><b class="num">21</b><span><b>Volet Satisfaction et décoration</b> : détail du pourcentage, ce qui manque, catalogue « Poser un objet » (objets verrouillés en gris). <em>Étape 5</em></span></div>
+ <div><b class="num">22</b><span><b>Volet Trophées</b> : familles repliables, 3 pastilles bronze / argent / or, Récupérer, Poser un objet d'or ; le musée expose les médailles. <em>Étape 7</em></span></div>
+ <h3>Variantes (plus bas)</h3>
+ <div><b class="num">23</b><span>Barre d'une <b>zone</b> (Nouvel enclos, Tracer un chemin, Décorer) et d'un <b>chemin</b> (Prolonger, Décorer, Détruire en deux clics avec avertissement). <em>Étapes 1 et 5</em></span></div>
+ <div><b class="num">24</b><span>Enclos <b>non relié</b> : texte rouge et bouton Relier avec son prix. <em>Étape 1</em></span></div>
+ <div><b class="num">25</b><span>Barre d'une <b>parcelle</b> (cultivée ou libre) de la ferme. <em>Étape 4</em></span></div>
+ <div><b class="num">26</b><span>Barre d'un <b>objet de décoration</b> : Déplacer, Vendre. <em>Étape 5</em></span></div>
+ <div><b class="num">27</b><span>Volet du <b>marchand itinérant</b> : animaux rares, femelle gestante, décoration rare. <em>Étape 6</em></span></div>
+ <div><b class="num">28</b><span>Volet du <b>village</b> avec les niveaux 4 à 6. <em>Étape 6</em></span></div>
+ <div><b class="num">29</b><span>Écran des <b>crédits</b>, ouvert depuis Options. <em>Étape 6</em></span></div>
+ <div><b class="num">30</b><span><b>Santé d'un animal</b> dans le tableau des animaux (Isoler / Remettre) et bouton Personnel. <em>Étapes 2 et 3</em></span></div>
+</div>
+
+<h2 class="titre">Variantes : autres barres du bas, dette, autres volets</h2>
+<div class="galerie">
+
+ <div>
+  <p class="lib"><b class="nn">7</b> Dette : pièces en rouge, Personnel en rouge, visage triste (barre du haut, coupée)</p>
+  <div class="rel" style="height:36px"><header class="barre-haut" style="position:relative;width:1252px">
+   <span class="ressource nouv" data-dette="oui"><svg class="i"><use href="#i-coins"/></svg><span class="valeur">−85</span></span>
+   <span class="ressource"><svg class="i"><use href="#i-fourrage"/></svg><span class="valeur">86</span></span>
+   <span class="ressource"><svg class="i"><use href="#i-viande"/></svg><span class="valeur">42</span></span>
+   <span class="ressource nouv" data-alerte="oui"><svg class="i"><use href="#i-personnel"/></svg><span class="valeur">3/6</span></span>
+   <span class="ressource nouv" data-alerte="oui"><svg class="i"><use href="#i-triste"/></svg><span class="valeur">38 %</span></span>
+   <span class="heure">ven. 00:10</span></header></div>
+ </div>
+
+ <div>
+  <p class="lib"><b class="nn">23</b> Une zone sélectionnée, puis un chemin sélectionné <span class="discret">— étapes 1 et 5</span></p>
+  <div class="rel"><footer class="barre-bas">
+   <div class="zone-selection"><b>Prairie</b></div>
+   <div class="zone-actions"><button class="icone"><svg class="i"><use href="#i-plus"/></svg></button><button class="icone"><svg class="i"><use href="#i-prolonger"/></svg></button><button class="icone nouv"><svg class="i"><use href="#i-decorer"/></svg></button></div>
+   <div class="zone-mission"><svg class="i"><use href="#i-cible"/></svg><span>Construis un enclos</span></div>
+   <div class="zone-droite"><button class="icone"><svg class="i"><use href="#i-marchand"/></svg></button><button class="icone"><svg class="i"><use href="#i-gazette"/></svg></button><button class="icone"><svg class="i"><use href="#i-replier"/></svg></button></div></footer></div>
+  <div class="rel" style="margin-top:6px"><footer class="barre-bas">
+   <div class="zone-selection"><b>Chemin · 12 m</b></div>
+   <div class="zone-actions"><button class="icone nouv"><svg class="i"><use href="#i-prolonger"/></svg></button><button class="icone nouv"><svg class="i"><use href="#i-decorer"/></svg></button><button class="icone nouv"><svg class="i"><use href="#i-detruire"/></svg></button></div>
+   <div class="zone-mission" style="color:var(--rouge);font-weight:600">Non remboursé. 2 enclos ne seront plus visités : Moutons, Cochons.</div>
+   <div class="zone-droite"><button class="icone"><svg class="i"><use href="#i-marchand"/></svg></button><button class="icone"><svg class="i"><use href="#i-gazette"/></svg></button><button class="icone"><svg class="i"><use href="#i-replier"/></svg></button></div></footer></div>
+ </div>
+
+ <div>
+  <p class="lib"><b class="nn">24</b> Un enclos non relié : texte rouge et bouton Relier (le jeu trace le chemin le plus court) <span class="discret">— étape 1</span></p>
+  <div class="rel"><footer class="barre-bas">
+   <div class="zone-selection"><svg class="i"><use href="#i-patte"/></svg><span class="pile"><b>Loups</b><span class="alerte">Pas de chemin : les visiteurs ne le voient pas</span></span><span class="compte">2/4</span></div>
+   <div class="zone-actions"><button class="icone"><svg class="i"><use href="#i-balai"/></svg><small>10</small></button><button class="icone nouv"><svg class="i"><use href="#i-relier"/></svg><small>48</small></button><button class="icone"><svg class="i"><use href="#i-agrandir"/></svg></button><button class="icone"><svg class="i"><use href="#i-liste"/></svg></button></div>
+   <div class="zone-mission"><svg class="i"><use href="#i-cible"/></svg><span>Relie les loups au chemin</span></div>
+   <div class="zone-droite"><button class="icone"><svg class="i"><use href="#i-marchand"/></svg></button><button class="icone"><svg class="i"><use href="#i-gazette"/></svg></button><button class="icone"><svg class="i"><use href="#i-replier"/></svg></button></div></footer></div>
+ </div>
+
+ <div>
+  <p class="lib"><b class="nn">25</b> Parcelles de la ferme : cultivée, puis libre <span class="discret">— étape 4 (la barre de la ferme a aussi « Tout ramasser (N) »)</span></p>
+  <div class="rel"><footer class="barre-bas">
+   <div class="zone-selection"><svg class="i"><use href="#i-parcelle"/></svg><b>Parcelle ★★</b><span class="compte">3/6 fourrages · ≈ 3 par jour</span></div>
+   <div class="zone-actions"><button class="icone nouv"><svg class="i"><use href="#i-fourrage"/></svg></button><button class="icone nouv"><svg class="i"><use href="#i-plus"/></svg><small>150</small></button></div>
+   <div class="zone-mission"><svg class="i"><use href="#i-cible"/></svg><span>Cultive 4 parcelles</span><span class="avancee">3/4</span></div>
+   <div class="zone-droite"><button class="icone"><svg class="i"><use href="#i-marchand"/></svg></button><button class="icone"><svg class="i"><use href="#i-gazette"/></svg></button><button class="icone"><svg class="i"><use href="#i-replier"/></svg></button></div></footer></div>
+  <div class="rel" style="margin-top:6px"><footer class="barre-bas">
+   <div class="zone-selection"><svg class="i"><use href="#i-parcelle"/></svg><b>Parcelle libre</b><span class="discret">Cultiver cette parcelle</span></div>
+   <div class="zone-actions"><button class="icone nouv"><svg class="i"><use href="#i-plus"/></svg><small>100</small></button></div><div class="zone-mission"></div>
+   <div class="zone-droite"><button class="icone"><svg class="i"><use href="#i-marchand"/></svg></button><button class="icone"><svg class="i"><use href="#i-gazette"/></svg></button><button class="icone"><svg class="i"><use href="#i-replier"/></svg></button></div></footer></div>
+ </div>
+
+ <div>
+  <p class="lib"><b class="nn">26</b> Un objet de décoration sélectionné (son rond de portée s'affiche sur la carte) <span class="discret">— étape 5</span></p>
+  <div class="rel"><footer class="barre-bas">
+   <div class="zone-selection"><svg class="i"><use href="#i-banc"/></svg><span class="pile"><b>Banc</b><span class="discret" style="font-size:12px">Sert 20 m de chemin</span></span></div>
+   <div class="zone-actions"><button class="icone nouv"><svg class="i"><use href="#i-deplacer"/></svg></button><button class="icone nouv"><svg class="i"><use href="#i-vendre"/></svg><small>+20</small></button></div>
+   <div class="zone-mission"><svg class="i"><use href="#i-cible"/></svg><span>Pose 3 bancs le long du chemin</span><span class="avancee">2/3</span></div>
+   <div class="zone-droite"><button class="icone"><svg class="i"><use href="#i-marchand"/></svg></button><button class="icone"><svg class="i"><use href="#i-gazette"/></svg></button><button class="icone"><svg class="i"><use href="#i-replier"/></svg></button></div></footer></div>
+ </div>
+
+ <div class="rangee">
+  <div>
+   <p class="lib"><b class="nn">27</b> Marchand itinérant <span class="discret">— étape 6</span></p>
+   <section class="volet libre nouv" style="width:400px">
+    <header><h2>Le marchand itinérant — encore 14 h</h2><button class="fermer">✕</button></header>
+    <p class="discret">Il vend des animaux qu'on ne trouve nulle part ailleurs.</p>
+    <div class="carte"><div><b>Loutre ♀</b> · rare<br><small>Étang · 640 pièces</small></div><button class="principal">Acheter</button></div>
+    <div class="carte"><div><b>Loutre ♂</b> · rare<br><small>Étang · 640 pièces</small></div><button class="principal">Acheter</button></div>
+    <div class="carte"><div><b>Biche ♀</b> · Femelle déjà gestante<br><small>Prairie · 420 pièces</small></div><button class="principal">Acheter</button></div>
+    <div class="carte"><div><b>Statue dorée</b> · Décoration rare<br><small>Effet × 1,5 · 1 500 pièces</small></div><button class="principal">Acheter</button></div>
+   </section>
+  </div>
+  <div>
+   <p class="lib"><b class="nn">28</b> Village, niveaux 4 à 6 <span class="discret">— étape 6</span></p>
+   <section class="volet libre nouv" style="width:400px">
+    <header><h2>Clairbois · Petite ville</h2><button class="fermer">✕</button></header>
+    <p>262 habitants sur 450 pour devenir une <b>Ville</b> (niveau 5).</p>
+    <span class="jauge" style="width:100%;height:8px"><i style="width:58%"></i></span>
+    <dl class="fiche"><dt>Niveau 4</dt><dd>Petite ville · étang <span class="vert">ouvert</span></dd><dt>Niveau 5</dt><dd>Ville · forêt profonde · restaurant</dd><dt>Niveau 6</dt><dd>Grande ville · haute montagne</dd></dl>
+    <p class="discret">Bâtiments : ferme, café, boutique, auberge, maison du personnel, centre vétérinaire, grange, musée.</p>
+    <button class="principal" style="padding:4px 12px">Devenir une ville</button>
+   </section>
+  </div>
+  <div>
+   <p class="lib"><b class="nn">29</b> Crédits (bouton dans Options) <span class="discret">— étape 6</span></p>
+   <section class="volet libre nouv" style="width:400px">
+    <header><h2>Crédits</h2><button class="fermer">✕</button></header>
+    <p class="discret">Modèles 3D, sons et images utilisés dans le jeu.</p>
+    <dl class="fiche"><dt>Animaux et village</dt><dd>Quaternius · CC0</dd><dt>Espèces rares</dt><dd>Gobkit · CC0</dd><dt>Ours, lynx, bison, élan</dt><dd>Auteurs cités · CC-BY</dd></dl>
+    <p class="discret">Chaque ligne a sa licence et son lien.</p>
+   </section>
+  </div>
+ </div>
+
+ <div>
+  <p class="lib"><b class="nn">30</b> Santé d'un animal, dans « Animaux de l'enclos » <span class="discret">— étapes 2 et 3</span></p>
+  <section class="volet libre" style="width:760px">
+   <header><h2>Animaux de l'enclos</h2><button class="fermer">✕</button></header>
+   <table style="width:100%;border-collapse:collapse">
+    <tr style="text-align:left"><th>Nom</th><th></th><th>Âge</th><th>Satiété</th><th>Santé</th><th>Bonheur</th><th></th></tr>
+    <tr style="border-top:1px solid var(--ligne)"><td>Flocon</td><td>♀</td><td>adulte</td><td>80 %</td><td class="bleu">En soin (encore 1 h 20)</td><td>64 %</td><td></td></tr>
+    <tr style="border-top:1px solid var(--ligne)"><td>Biscotte</td><td>♀</td><td>jeune</td><td>55 %</td><td class="jaune">Grippe · léger</td><td>58 %</td><td><button class="nouv">Isoler</button></td></tr>
+    <tr style="border-top:1px solid var(--ligne)"><td>Nuage</td><td>♂</td><td>adulte</td><td>90 %</td><td class="vert">En forme</td><td>81 %</td><td><button>Vendre (120)</button></td></tr>
+   </table>
+   <p class="discret">Personne ne peut le soigner : construis le centre vétérinaire au village et embauche un vétérinaire.</p>
+   <p style="margin-top:4px">Soigneur : Léa · Entretien : Hugo <button class="nouv" style="float:right">Personnel</button></p>
+  </section>
+ </div>
+</div>
+
+<h2 class="titre">Vue téléphone 375 × 812 : barre du haut et barre du bas</h2>
+<div class="tels">
+ <div class="tel">
+  <svg class="carte" viewBox="0 0 375 812" width="375" height="812" aria-hidden="true">
+   <defs><linearGradient id="hp" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8fc063"/><stop offset="1" stop-color="#5f9544"/></linearGradient></defs>
+   <rect width="375" height="812" fill="url(#hp)"/>
+   <ellipse cx="150" cy="170" rx="70" ry="24" fill="#6fb3d9" stroke="#4f95bd" stroke-width="3"/>
+   <path d="M290 100 C 330 220, 300 380, 330 812" fill="none" stroke="#5aa6d0" stroke-width="34" stroke-linecap="round"/>
+   <path d="M0 440 H310" stroke="#d9c496" stroke-width="16" stroke-linecap="round"/><path d="M90 440 V380M200 440 V490" stroke="#d9c496" stroke-width="16" stroke-linecap="round"/>
+   <g stroke="#7a5a35" stroke-width="3"><rect x="40" y="300" width="110" height="80" fill="#a8d27e" rx="4"/><rect x="150" y="490" width="110" height="80" fill="#c9b787" rx="4"/></g>
+   <rect x="34" y="294" width="122" height="92" rx="8" fill="none" stroke="#f2b13a" stroke-width="3"/>
+   <g fill="#f4efe0" stroke="#8d8672"><ellipse cx="70" cy="340" rx="9" ry="6"/><ellipse cx="110" cy="355" rx="9" ry="6"/><ellipse cx="95" cy="320" rx="9" ry="6"/></g>
+   <g stroke="#fff" stroke-width="2"><circle cx="72" cy="326" r="8" fill="#e8862a"/><path d="M72 322v8M68 326h8" stroke-linecap="round"/></g>
+   <path d="M90 440 L150 520" stroke="#46b341" stroke-width="14" stroke-linecap="round" opacity=".6"/>
+  </svg>
+  <header class="barre-haut">
+   <span class="ressource"><svg class="i"><use href="#i-coins"/></svg><span class="valeur">1 240</span></span>
+   <span class="ressource"><svg class="i"><use href="#i-fourrage"/></svg><span class="valeur">86</span></span>
+   <span class="ressource"><svg class="i"><use href="#i-viande"/></svg><span class="valeur">42</span></span>
+   <span class="ressource nouv"><svg class="i"><use href="#i-legumes"/></svg><span class="valeur">18</span></span>
+   <span class="ressource attention"><svg class="i"><use href="#i-horloge"/></svg><span class="valeur">1 j 20 h</span></span>
+   <span class="ressource"><svg class="i"><use href="#i-visiteurs"/></svg><span class="valeur">54/h</span></span>
+   <span class="ressource"><svg class="i"><use href="#i-billet"/></svg><span class="valeur">12</span></span>
+   <span class="ressource pastille"><svg class="i"><use href="#i-village"/></svg><span class="valeur">Petite ville · 262 hab.</span></span>
+   <span class="ressource nouv" data-alerte="oui"><svg class="i"><use href="#i-personnel"/></svg><span class="valeur">3</span></span>
+   <span class="ressource nouv"><svg class="i" style="color:#2f6a12"><use href="#i-content"/></svg><span class="valeur">72</span></span>
+   <span class="ressource nouv" style="background:#fff3cf"><svg class="i"><use href="#i-marchand"/></svg><span class="valeur">14 h</span></span>
+   <span class="ressource point nouv"><svg class="i"><use href="#i-trophee"/></svg></span>
+   <span class="heure">jeu. 14:05</span>
+   <button class="roue">⚙</button>
+  </header>
+  <div class="boutons-camera"><button><svg class="i"><use href="#i-tourne-g"/></svg></button><button><svg class="i"><use href="#i-tourne-d"/></svg></button><button><svg class="i"><use href="#i-plus"/></svg></button><button><svg class="i"><use href="#i-moins"/></svg></button></div>
+  <div class="editeur" style="left:50%;transform:translateX(-50%);bottom:112px;width:340px;justify-content:center"><span class="infos">12 m · 36 pièces</span><button class="principal" style="min-height:44px">Valider</button><button style="min-height:44px">Terminer</button></div>
+  <footer class="barre-bas">
+   <div class="ligne-bas">
+    <div class="zone-selection"><svg class="i"><use href="#i-patte"/></svg><span class="pile"><b>Moutons</b><span class="alerte" style="font-size:10px">1 animal sans soigneur</span></span><span class="compte">6/8</span></div>
+    <div class="zone-actions" style="margin-left:auto;padding:0 6px"><button class="icone"><svg class="i"><use href="#i-balai"/></svg></button><button class="icone nouv"><svg class="i"><use href="#i-vaccin"/></svg></button><button class="icone"><svg class="i"><use href="#i-liste"/></svg></button></div>
+   </div>
+   <div class="ligne-bas">
+    <div class="zone-mission" style="padding:2px 4px"><svg class="i"><use href="#i-cible"/></svg><span style="overflow:hidden;text-overflow:ellipsis">Pose 3 bancs</span><span class="avancee">1/3</span></div>
+    <div class="zone-droite"><button class="icone"><svg class="i"><use href="#i-marchand"/></svg></button><button class="icone"><svg class="i"><use href="#i-gazette"/></svg></button><button class="icone"><svg class="i"><use href="#i-replier"/></svg></button></div>
+   </div>
+  </footer>
+ </div>
+ <div class="legtel">
+  <p><b>Sur téléphone</b> (375 × 812) :</p>
+  <p>• La barre du haut passe sur plusieurs lignes ; la case <b>Personnel</b> se réduit à l'icône + le nombre d'employés ; la <b>satisfaction</b> à un visage + le nombre (sans « % ») ; le <b>marchand itinérant</b> à l'icône + les heures.</p>
+  <p>• Les boutons de la barre du bas font 30 px ; ceux des volets et de l'éditeur de chemin font au moins 44 px.</p>
+  <p>• Les boutons de caméra descendent sous la barre du haut.</p>
+  <p>• Le panneau de l'éditeur (« 12 m · 36 pièces », Valider / Terminer) se pose au-dessus de la barre du bas.</p>
+  <p class="invente">Inventé pour la maquette : la barre du bas du téléphone sur deux rangées (sélection + boutons, puis mission + marchand / gazette / replier). Les plans disent seulement qu'elle peut prendre plusieurs lignes, pas comment elles se répartissent.</p>
+ </div>
+</div>
+</div>
+</body>
+</html>
