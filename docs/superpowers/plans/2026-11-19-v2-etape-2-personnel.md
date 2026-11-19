@@ -1,6 +1,6 @@
 # V2 — Étape 2 : le personnel — plan de construction
 
-> **Votes de Romain (19/11/2026)** — D5 (dette) validée telle quelle : tout est bloqué sauf rations, ventes, nettoyage et licenciement ; employés à 50 %. Les autres décisions sont acceptées telles que proposées (chiffres réglés à l'étape 7).
+> **Votes de Romain (19/11/2026)** — D5 (dette) validée telle quelle : tout est bloqué sauf rations, ventes, nettoyage et licenciement ; employés à 50 %. Les autres décisions sont acceptées telles que proposées (chiffres réglés à l'étape 7). Au lancement (19/11/2026), Romain a choisi l'emplacement de la maison du personnel : **au fond du village**, derrière les emplacements du Bourg (aucune place près de la mairie).
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
