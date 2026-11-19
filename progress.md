@@ -91,7 +91,7 @@
 | Étape V2 | Contenu | État |
 |---|---|---|
 | 1 | Chemins à construire | ✅ fusionnée dans `main` (4935132) avec l'accord de Romain le 19/11/2026, publiée et vérifiée en ligne |
-| 2 | Personnel et maison du personnel | — |
+| 2 | Personnel et maison du personnel | plan écrit le 19/11/2026 (`docs/superpowers/plans/2026-11-19-v2-etape-2-personnel.md`), en attente de validation par Romain |
 | 3 | Maladies et centre vétérinaire | — |
 | 4 | Ferme qui produit (parcelles, fermier, grange) | — |
 | 5 | Confort, décoration, déchets, satisfaction, animateur | — |
@@ -111,6 +111,19 @@
 | 7 | Vérification d'ensemble, relecture et publication | chef (Opus) + relecture · Opus | vérifiée dans le navigateur (tracé vert/rouge et raisons, fiche chemin, Détruire, Relier, ancienne partie v3 → chemins offerts + message, pavés et lanternes, téléphone) ; relecture finale Opus (0 critique, 3 importants) corrigée en 1c8cdd6, 0304292, d00cb11, f2c7cf7, relue à nouveau (approuvée) — 713 tests ; **fusionnée dans `main` (4935132) avec l'accord de Romain le 19/11/2026, publiée et vérifiée en ligne** |
 
 **Décisions de l'étape V2-1 (en plus de la spec)** : D1–D8 du plan acceptées par Romain. Chemin de l'entrée = allée entrée → pont + rues du village (fixes) ; on ne trace que côté zoo ; relié = chemin à moins de 1 m de la clôture ; 3 pièces/m, non remboursé ; bouton « Relier (N pièces) » ; chemin offert aux anciennes parties (droit, en L, sinon recherche sur grille) avec un message unique. À regarder par Romain : la place plus serrée (il faut laisser des allées entre les enclos), la tolérance du doigt pour toucher un chemin sur téléphone, les promeneurs sur un embranchement (pas vus marcher, panneau masqué). Laissé pour plus tard : couloirs de 2,2 à 3 m que la recherche du chemin offert ne voit pas (l'avis nomme alors les enclos à relier), chargement d'une vieille partie un peu lent sur téléphone (une seule fois).
+
+**V2 — étape 2 : personnel et maison du personnel** (branche `etape-v2-2-personnel`, plan `docs/superpowers/plans/2026-11-19-v2-etape-2-personnel.md`) — plan écrit le 19/11/2026, **en attente de validation par Romain** (décisions D1 à D10)
+
+| # | Sous-tâche | Agent · modèle | État |
+|---|---|---|---|
+| 1 | État v5, données du personnel et première soigneuse | agent · Sonnet | — |
+| 2 | Effets du personnel dans la simulation | agent · Sonnet | — |
+| 3 | Paie, dette, candidats et actions | agent · Sonnet | — |
+| 4 | Ancienne partie, Gazette, joueur automatique, 3 jours d'absence | agent · Sonnet | — |
+| 5 | Modèles des employés | agent · Sonnet | — |
+| 6 | Maison du personnel et employés sur la carte | agent · Sonnet | — |
+| 7 | Interface : volet Personnel, fiches, dette | agent · Sonnet | — |
+| 8 | Vérification d'ensemble, relecture et publication | chef (Opus) + relecture · Opus | — |
 
 ## Liens
 
