@@ -211,6 +211,22 @@ describe('chemins : chemin offert aux anciennes parties', () => {
     expect(r.pathsNotice).toContain('offert un chemin à 1 enclos')
     expect(r.pathsNotice).not.toContain('À relier')
   })
+  it('sauvegarde v3 : les enclos enfermés sont nommés à la main (espèce, « Enclos vide »)', () => {
+    const m = memory()
+    const g = newGame(5, NOW)
+    const sheep = g.enclosures[0]
+    sheep.rect = { x: -20, z: -4, w: 3.5, d: 8 } // enfermé au milieu d'un anneau d'enclos
+    const wall = (id: number, x: number, z: number, w: number, d: number) =>
+      ({ id, biome: 'prairie' as const, species: null, rect: { x, z, w, d }, cleanedAt: NOW })
+    g.enclosures.push(
+      wall(900, -16, -4, 4, 8), // vide, enfermé lui aussi
+      wall(901, -26, -12, 20, 8), wall(902, -26, 4, 20, 8), wall(903, -26, -12, 6, 24), wall(904, -12, -12, 6, 24),
+    )
+    g.nextId = 1000
+    m.data[SAVE_KEY] = JSON.stringify({ version: 3, savedAt: NOW, state: asV3(g) })
+    const r = startSession(m, NOW)
+    expect(r.pathsNotice).toContain(' À relier toi-même : Mouton, Enclos vide.')
+  })
   it('sauvegarde v4 : pas de message', () => {
     const m = memory()
     saveGame(m, v3(), NOW)
