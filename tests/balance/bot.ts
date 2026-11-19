@@ -68,7 +68,7 @@ export function visitHours(visitsPerDay: number): number[] {
   return Array.from({ length: visitsPerDay }, (_, k) => WAKE_FROM_H + ((WAKE_TO_H - WAKE_FROM_H) * k) / (visitsPerDay - 1))
 }
 
-interface Ctx { s: GameState; deaths: number; dayDeaths: number; timeline: Timeline }
+interface Ctx { s: GameState; deaths: number; dayDeaths: number; timeline: Timeline; /** Plus gros budget déjà essayé en vain, par situation (propre à cette partie). */ noRoom: Map<string, number> }
 
 /** Joue une action ; vrai si elle a réussi. */
 function act(c: Ctx, a: Action): boolean {
@@ -126,13 +126,14 @@ function canBuildLinked(s: GameState, rect: Rect): boolean {
 }
 
 /** Le plus grand enclos (pour 2 animaux au moins) que le budget permet et qui tient dans la zone ; balayage de la grille de gauche à droite, de haut en bas. */
-const noRoom = new Map<string, true>()
-function findRect(s: GameState, species: SpeciesId, budget: number): Rect | null {
-  // Pas de place trouvée tant que ni les enclos ni les chemins ni le budget (à peu près) n'ont changé : inutile de rechercher à chaque passage.
-  const key = `${s.enclosures.length}|${s.paths.length}|${s.village.level}|${species}|${Math.floor(Math.log2(Math.max(1, budget)))}|${s.enclosures.map((e) => e.rect.x + ',' + e.rect.z + ',' + e.rect.w + ',' + e.rect.d).join(';')}`
-  if (noRoom.has(key)) return null
+function findRect(c: Ctx, species: SpeciesId, budget: number): Rect | null {
+  const s = c.s
+  // Pas de place trouvée tant que ni les enclos ni les chemins ni le budget n'ont changé (un budget plus grand refait la recherche) : inutile de rechercher à chaque passage.
+  const key = `${s.enclosures.length}|${s.paths.length}|${s.village.level}|${species}|${s.enclosures.map((e) => e.rect.x + ',' + e.rect.z + ',' + e.rect.w + ',' + e.rect.d).join(';')}`
+  const failed = c.noRoom.get(key)
+  if (failed !== undefined && budget <= failed) return null
   const found = searchRect(s, species, budget)
-  if (!found) noRoom.set(key, true)
+  if (!found) c.noRoom.set(key, Math.max(failed ?? 0, budget))
   return found
 }
 
@@ -290,7 +291,7 @@ function buyAnimals(c: Ctx): boolean {
     let encId = enclosureFor(c.s, o.species)
     if (encId === null) {
       if (c.s.animals.some((a) => a.species === o.species)) continue // son enclos est plein : on ne le double pas
-      const rect = findRect(c.s, o.species, free)
+      const rect = findRect(c, o.species, free)
       if (!rect) continue
       encId = buildLinked(c, rect)
       if (encId === null) continue
@@ -372,7 +373,7 @@ function tutorialStep(c: Ctx): boolean {
     case 'pas-cafe': return act(c, { type: 'batir', slot: SLOT_OF.cafe!, building: 'cafe' })
     case 'pas-enclos': {
       moveStartPen(c)
-      const rect = findRect(c.s, 'cochon', c.s.coins)
+      const rect = findRect(c, 'cochon', c.s.coins)
       return !!rect && buildLinked(c, rect) !== null
     }
     case 'pas-cochons': {
@@ -431,7 +432,7 @@ export function playBot(opts: { seed: number; days: number; visitsPerDay: number
   const milestones = {} as Record<MilestoneKey, Moment | null>
   for (const k of Object.keys(MILESTONE_LABELS) as MilestoneKey[]) milestones[k] = null
   const timeline: Timeline = { seed, days, visitsPerDay, milestones, rows: [], deaths: 0, final: undefined as unknown as GameState }
-  const c: Ctx = { s: newGame(seed, T0 + WAKE_FROM_H * HOUR_MS), deaths: 0, dayDeaths: 0, timeline }
+  const c: Ctx = { s: newGame(seed, T0 + WAKE_FROM_H * HOUR_MS), deaths: 0, dayDeaths: 0, timeline, noRoom: new Map() }
   const hours = visitHours(visitsPerDay)
   for (let day = 1; day <= days; day++) {
     for (const h of hours) {

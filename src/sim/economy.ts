@@ -17,7 +17,7 @@ export function visibleAnimals(state: GameState): Animal[] {
 }
 
 /** Nombre d'espèces que les visiteurs voient. */
-const visibleSpecies = (state: GameState): number => new Set(visibleAnimals(state).map((a) => a.species)).size
+export const visibleSpecies = (state: GameState): number => new Set(visibleAnimals(state).map((a) => a.species)).size
 
 /** Attrait : par espèce visible, base × (1 + 0,5 × √(n − 1)), n = nombre d'animaux visibles de l'espèce. */
 export function appeal(state: GameState): number {
