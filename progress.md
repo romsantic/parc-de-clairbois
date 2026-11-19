@@ -90,13 +90,25 @@
 
 | Étape V2 | Contenu | État |
 |---|---|---|
-| 1 | Chemins à construire | à lancer (session d'étape) |
+| 1 | Chemins à construire | plan validé le 19/11/2026, construction en cours |
 | 2 | Personnel et maison du personnel | — |
 | 3 | Maladies et centre vétérinaire | — |
 | 4 | Ferme qui produit (parcelles, fermier, grange) | — |
 | 5 | Confort, décoration, déchets, satisfaction, animateur | — |
 | 6 | Niveaux 4–6, carte agrandie, espèces, potager, restaurant, marchand itinérant | — |
 | 7 | Trophées, musée, équilibrage, finition | — |
+
+**V2 — étape 1 : chemins à construire** (branche `etape-v2-1-chemins`, plan `docs/superpowers/plans/2026-11-19-v2-etape-1-chemins.md`) — plan écrit et **validé par Romain le 19/11/2026** (décisions D1 à D8 acceptées telles quelles)
+
+| # | Sous-tâche | Agent · modèle | État |
+|---|---|---|---|
+| 1 | État v4, données et liaison des enclos | agent · Sonnet | — |
+| 2 | Tracer, détruire, relier, chemin offert (règles) | agent · Sonnet | — |
+| 3 | Visiteurs, ancienne partie, joueur automatique | agent · Sonnet | — |
+| 4 | Chemins en 3D et éditeur de tracé | agent · Sonnet | — |
+| 5 | Fiches : chemin, enclos non relié | agent · Sonnet | — |
+| 6 | Promeneurs sur le réseau réel | agent · Sonnet | — |
+| 7 | Vérification d'ensemble, relecture et publication | chef (Opus) + relecture · Opus | — |
 
 ## Liens
 
