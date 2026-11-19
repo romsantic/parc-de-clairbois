@@ -137,3 +137,37 @@ Chaque étape est publiée et garde la partie de Romain (migration de sauvegarde
 ## 11. Laissé au constructeur
 
 Tous les chiffres (prix, salaires, durées des stades, taux de maladie, production, seuils), réglés dans `src/data/` puis ajustés à l'étape 7 ; le détail de l'interface de chaque volet ; la forme exacte de la carte agrandie ; le découpage de chaque étape en sous-tâches.
+
+## 12. Décisions détaillées par étape (questions-votes avec Romain, 19/11/2026)
+
+**Étape 2 — personnel**
+- Gestion dans un **volet Personnel** ouvert par une **nouvelle icône de la barre du haut** (employés, candidats, affectations, licenciement).
+- **Affectation automatique, modifiable** : le jeu répartit soigneurs et agents d'entretien à chaque embauche, nouvel enclos ou naissance ; le joueur peut changer un employé d'enclos à la main.
+- **Partie existante : un seul soigneur offert, tout de suite**, comme une nouvelle partie (pas de délai de grâce) — Romain embauche lui-même la suite.
+- **Nombre d'employés limité par la maison du personnel** : 3 sans maison, puis plus à chaque niveau (ordre d'idée 6 / 10 / 15).
+
+**Étape 3 — maladies et centre vétérinaire**
+- Le centre a **5 niveaux** (un déblocage par niveau ; proposition du chef : 1 parasites + indigestion, 2 blessures, 3 grippe + quarantaine, 4 vaccination, 5 soins plus rapides et une place de vétérinaire de plus).
+- **Vaccination déclenchée par le joueur, par enclos** (« Vacciner l'enclos », payant, protection de quelques jours puis à refaire).
+- **Quarantaine au clic du joueur** depuis la fiche de l'animal (pas automatique).
+- **Icône au-dessus de l'animal malade** sur la carte, couleur selon le stade.
+
+**Étape 4 — ferme**
+- **Parcelles sur 6 à 8 emplacements fixes** autour de la ferme, achetées une à une, de plus en plus chères.
+- Ferme complète et améliorée ≈ **la moitié du fourrage** consommé.
+- **Chaque parcelle s'améliore** (3 niveaux : production et stock).
+- La production gratuite de fourrage de la V1 (amélioration de la ferme) est **remplacée** : l'amélioration de la ferme garde les rations moins chères et débloque des parcelles.
+
+**Étape 5 — confort**
+- Satisfaction affichée par une **icône dans la barre du haut** (visage + %), détail au clic (confort, propreté, déco, ce qui manque).
+- Chaque objet agit **autour de lui** (sert une portion de chemin, ordre d'idée un banc tous les 20 m).
+- **Déchets visibles sur la carte**, ramassés d'un clic ou par l'agent d'entretien.
+- Objets **déplaçables gratuitement**, **revendables à moitié prix**.
+
+**Étapes 6 et 7**
+- **Nouveaux personnages** dans les missions : Margaux reste la maire ; s'ajoutent par exemple la vétérinaire, le fermier, le garde de l'étang, chacun avec sa petite histoire.
+- **Environ 40 trophées**, chacun bronze / argent / or (≈ 120 médailles).
+- Récompenses : **pièces** pour bronze et argent, **objet de décoration unique** pour l'or.
+- Modèles 3D des nouvelles espèces et objets de décoration **cherchés dès maintenant** (liste à télécharger par Romain).
+
+**Interface d'ensemble** : avant de créer les branches des étapes, Romain veut voir une **image du parc V2** montrant toutes les icônes, barres et volets.
