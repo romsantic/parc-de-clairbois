@@ -65,7 +65,8 @@ export function buildingInfo(state: GameState, target: InfoTarget): BuildingInfo
     if (v.vaccination) rows.push({ label: INFO_LABELS.vaccination, value: v.vaccination })
     rows.push({ label: INFO_LABELS.next, value: v.nextUnlock ?? INFO_LABELS.maxLevel })
     queue = v.queue.slice(0, QUEUE_SHOWN).map((q) => `${q.name} · ${q.label}`)
-    if (v.queue.length > QUEUE_SHOWN) queue.push(`et ${v.queue.length - QUEUE_SHOWN} autre${v.queue.length - QUEUE_SHOWN > 1 ? 's' : ''}`)  } else {
+    if (v.queue.length > QUEUE_SHOWN) queue.push(`et ${v.queue.length - QUEUE_SHOWN} autre${v.queue.length - QUEUE_SHOWN > 1 ? 's' : ''}`)
+  } else {
     const flow = buildingIncomePerHour(state, target.slot)
     const especes = visibleSpecies(state)
     rows.push(

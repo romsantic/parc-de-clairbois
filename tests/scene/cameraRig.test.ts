@@ -31,6 +31,9 @@ describe('focusOn : point visé et progression', () => {
   it('garde un point à l’intérieur de la carte tel quel', () => {
     expect(clampFocus(3, -4)).toEqual({ x: 3, z: -4 })
   })
+  it('peut centrer l’emplacement 7 (centre vétérinaire, x 10, z −26)', () => {
+    expect(clampFocus(10, -26)).toEqual({ x: 10, z: -26 })
+  })
   it('ramène un point hors carte aux bornes de la caméra', () => {
     expect(clampFocus(999, -999)).toEqual({ x: MAP.halfX, z: -MAP.halfZ })
   })

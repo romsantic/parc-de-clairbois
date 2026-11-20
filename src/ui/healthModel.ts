@@ -75,3 +75,10 @@ export function vetCenterView(state: GameState): VetCenterView {
     vaccination: level < VET_CENTER.VACCINE_LEVEL ? null : `Disponible dans chaque enclos (protège ${VET_CENTER.VACCINE_DAYS} jours)`,
   }
 }
+
+/** Petite ligne d'état du centre dans la barre du bas : « 1 vétérinaire · file : 2 » (ou « aucun vétérinaire »). */
+export function centreStatus(state: GameState): string {
+  const vets = workingVets(state).length
+  if (vets === 0) return 'aucun vétérinaire'
+  return `${vets} vétérinaire${vets > 1 ? 's' : ''} · file : ${careQueue(state).length}`
+}

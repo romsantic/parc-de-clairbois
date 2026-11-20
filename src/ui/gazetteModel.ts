@@ -2,7 +2,7 @@
 import type { GameState } from '../sim/types'
 import type { Summary } from '../sim/summary'
 import { autonomyHours } from '../sim/feeding'
-import { careQueue, untreatable, workingVets } from '../sim/vet'
+import { careQueue, centerLevel, untreatable, workingVets } from '../sim/vet'
 import { DISEASES } from '../data/diseases'
 import { MISSIONS_TUNING } from '../data/missions'
 import { dailyLines, currentLine } from './missionModel'
@@ -55,7 +55,10 @@ function healthLines(s: Summary, state?: GameState): string[] {
     if (queue > 0) lines.push(`File d’attente au centre : ${plural(queue, 'animal', 'animaux')}.`)
     const stuck = untreatable(state)
     if (stuck.length > 0) {
-      if (workingVets(state).length === 0) lines.push(`Personne ne peut soigner ${plural(stuck.length, 'animal', 'animaux')} : il faut le centre vétérinaire et un vétérinaire.`)
+      if (workingVets(state).length === 0) {
+        const need = centerLevel(state) === 0 ? 'le centre vétérinaire et un vétérinaire' : 'embaucher un vétérinaire'
+        lines.push(`Personne ne peut soigner ${plural(stuck.length, 'animal', 'animaux')} : il faut ${need}.`)
+      }
       else {
         const level = Math.min(...stuck.map((a) => DISEASES[(a.health as { disease: keyof typeof DISEASES }).disease].centerLevel))
         lines.push(`${plural(stuck.length, 'animal attend', 'animaux attendent')} que le centre passe au niveau ${level}.`)

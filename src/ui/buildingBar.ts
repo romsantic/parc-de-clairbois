@@ -8,6 +8,7 @@ import { BUILDINGS, SLOTS } from '../data/economy'
 import { TUNING } from '../data/tuning'
 import { ICONS, iconButton } from './icons'
 import { guide } from './highlight'
+import { centreStatus } from './healthModel'
 
 export interface BuildingBarContext {
   get(): GameState
@@ -133,6 +134,7 @@ export function buildBuildingBar(ctx: BuildingBarContext, slot: number, left: HT
   return () => {
     const est = left.querySelector('.estim')
     if (!est) return
+    if (b.type === 'centreVeto') { est.textContent = centreStatus(ctx.get()); return } // le centre ne rapporte rien : son état suffit
     const r = buildingIncomePerHour(ctx.get(), slot)
     est.textContent = `≈ ${Math.round(r.clients)} clients/h · ${Math.round(r.pieces)} pièces/h`
   }

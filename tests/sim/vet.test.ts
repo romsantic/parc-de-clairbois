@@ -175,6 +175,18 @@ describe('Review Focus 1 : vétérinaire parti, animal disparu', () => {
     expect(h.stage).toBe(1)
   })
 
+  it('soin annulé : le prix est rendu, le prochain vétérinaire le facture de nouveau', () => {
+    const s = world(1, 1, [mouton(1, sick(T0))])
+    run(s, 1)
+    expect(s.coins).toBe(980)
+    s.staff.employees = []
+    run(s, 1)
+    expect(s.coins).toBe(1000)
+    s.staff.employees = [employee(9, 'veterinaire')]
+    run(s, 1)
+    expect(s.coins).toBe(980)
+  })
+
   it('annulation sans autre vétérinaire : stageSince repart à maintenant', () => {
     const s = world(1, 1, [mouton(1, sick(T0 - 20 * HOUR_MS))])
     run(s, 2)

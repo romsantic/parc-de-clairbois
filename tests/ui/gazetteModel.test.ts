@@ -162,7 +162,8 @@ describe('Gazette : rubrique Santé (étape 3)', () => {
   })
   it('personne ne peut soigner : sans centre ou sans vétérinaire', () => {
     expect(santé(calm(), park(centre(0, 0), 1))).toEqual(['Personne ne peut soigner 1 animal : il faut le centre vétérinaire et un vétérinaire.'])
-    expect(santé(calm(), park(centre(1, 0), 2))).toEqual(['Personne ne peut soigner 2 animaux : il faut le centre vétérinaire et un vétérinaire.'])
+    expect(santé(calm(), park(centre(1, 0), 2))).toEqual(['Personne ne peut soigner 2 animaux : il faut embaucher un vétérinaire.'])
+    expect(santé(calm(), park(centre(1, 0), 1))).toEqual(['Personne ne peut soigner 1 animal : il faut embaucher un vétérinaire.'])
   })
   it('centre trop petit : « attend que le centre passe au niveau 3 »', () => {
     const flu = sick(T0, { disease: 'grippe' })

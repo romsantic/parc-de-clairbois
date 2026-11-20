@@ -102,7 +102,7 @@ export function vetStep(state: GameState, events: GameEvent[]): void {
       a.health = { status: 'ok' }
       bump(state.stats, 'soins')
     } else if (h.vetId !== null && vets.some((v) => v.id === h.vetId)) busy.add(h.vetId)
-    else { h.careUntil = null; h.vetId = null; h.stageSince = now }
+    else { state.coins += careCost(a); h.careUntil = null; h.vetId = null; h.stageSince = now } // soin annulé : le prix payé est rendu
   }
   const free = vets.filter((v) => !busy.has(v.id))
   if (free.length === 0) return

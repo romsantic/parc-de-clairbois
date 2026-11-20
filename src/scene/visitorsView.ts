@@ -51,6 +51,7 @@ export class Walker {
 
   start(route: RoutePoint[]): void {
     this.route = route
+    if (route.length < 2) { this.phase = 'off'; this.object.visible = false; return } // rien à parcourir
     this.seg = 0
     this.speed = WALKERS.SPEED_MIN + this.rng() * (WALKERS.SPEED_MAX - WALKERS.SPEED_MIN)
     this.fade = 0
@@ -109,6 +110,7 @@ export class Walker {
       if (this.fade <= 0) { this.phase = 'off'; this.object.visible = false; return }
     }
     this.setScale()
+    if (this.phase === 'out' && this.seg >= this.route.length - 1) return // arrivé au bout : il ne fait que s'estomper
     if (this.phase === 'stop') {
       this.turn(this.faceYaw, dt)
       this.wait -= dt

@@ -10,7 +10,7 @@ import { canLevelUp, farmLevel, isReservedType } from './village'
 import { animalsIn, capacity, cleanliness } from './enclosure'
 import { buyAnimal, restock, sellAnimal } from './merchant'
 import { claimMission, skipTutorial, updateMissions } from './missions'
-import { assign, debtRefusal, fire, hire, redistributeAll } from './staff'
+import { assign, debtRefusal, ensureVetCandidate, fire, hire, redistributeAll } from './staff'
 import { assignGaps } from './care'
 import { vaccinate, isolate, release } from './vet'
 import { checkPlacement, enclosureCost, resizeCost, snapRect } from './placement'
@@ -120,6 +120,7 @@ export function buildBuilding(state: GameState, slot: number, type: BuildingType
   const s = structuredClone(state)
   s.coins -= data.buildCost
   s.buildings.push({ slot, type, level: 1 })
+  ensureVetCandidate(s) // centre construit : un vétérinaire se présente tout de suite
   return { ok: true, state: s }
 }
 

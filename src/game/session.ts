@@ -114,9 +114,10 @@ function staffMessage(state: GameState): string {
 }
 
 /** Texte du centre vétérinaire offert ; `sick` : les malades déjà confiés à la vétérinaire au chargement. */
-function healthMessage(sick: number): string {
+function healthMessage(sick: number, villageLevel: number): string {
   let msg = "Nouveau à Clairbois : le centre vétérinaire ! Margaux l'a fait construire et Élise Fontaine, vétérinaire, soigne maintenant les malades toute seule."
   if (sick > 0) msg += sick === 1 ? ' 1 animal malade lui a été confié.' : ` ${sick} animaux malades lui ont été confiés.`
+  if (villageLevel >= 2) msg += ' Améliore le centre au niveau 2 pour soigner les blessures, puis au niveau 3 pour la grippe.'
   return msg
 }
 
@@ -149,7 +150,7 @@ export function startSession(store: Storage, nowMs: number, storageOk = true): S
   }
   let healthNotice: string | null = null
   if (loaded.fromVersion < 6) { // la migration a déjà offert le centre et la vétérinaire : on compte les malades avant le rattrapage
-    healthNotice = healthMessage(start.animals.filter((a) => a.health.status === 'malade').length)
+    healthNotice = healthMessage(start.animals.filter((a) => a.health.status === 'malade').length, start.village.level)
   }
   start.utcOffsetMin = localOffset(nowMs) // l'heure locale, avant le rattrapage
   const notice = applyStep6Adjustments(store, start) // avant le rattrapage : l'absence ne se passe pas à un prix démesuré

@@ -44,6 +44,21 @@ function pick<T>(state: GameState, table: ReadonlyArray<readonly [T, number]>): 
   return table[table.length - 1][0]
 }
 
+/**
+ * Garantie : si le centre existe et que personne ne soigne (aucun vétérinaire employé, aucun candidat vétérinaire),
+ * la liste des candidats compte un vétérinaire de niveau 1 (il prend la place du dernier candidat). En place.
+ */
+export function ensureVetCandidate(state: GameState): void {
+  if (!state.buildings.some((b) => b.type === 'centreVeto')) return
+  if (state.staff.employees.some((e) => e.job === 'veterinaire')) return
+  const list = state.staff.candidates
+  if (list.some((c) => c.job === 'veterinaire')) return
+  const name = STAFF_NAMES[Math.floor(random(state) * STAFF_NAMES.length)]
+  const vet: Candidate = { id: state.nextId++, name, job: 'veterinaire', level: 1 }
+  if (list.length >= STAFF_TUNING.CANDIDATES) list[list.length - 1] = vet
+  else list.push(vet)
+}
+
 /** Tire une nouvelle liste de candidats, en place. Le premier tirage garantit un soigneur et un agent d'entretien. */
 export function renewCandidates(state: GameState, events?: GameEvent[]): void {
   const jobs = STAFF_TUNING.CANDIDATE_JOBS.filter(([j]) => JOBS[j as JobId].open) as [JobId, number][]
@@ -61,6 +76,7 @@ export function renewCandidates(state: GameState, events?: GameEvent[]): void {
     list.push({ id: state.nextId++, name, job, level })
   }
   state.staff.candidates = list
+  ensureVetCandidate(state)
   state.staff.renewals++
   state.staff.renewAt = state.time + STAFF_TUNING.RENEW_H * HOUR_MS
   events?.push({ kind: 'candidats', at: state.time })
@@ -120,6 +136,7 @@ export function fire(state: GameState, employeeId: number): ActionResult {
   const s = structuredClone(state)
   s.staff.employees = s.staff.employees.filter((e) => e.id !== employeeId)
   assignGaps(s)
+  ensureVetCandidate(s) // le dernier vétérinaire parti : un remplaçant se présente tout de suite
   return { ok: true, state: s }
 }
 

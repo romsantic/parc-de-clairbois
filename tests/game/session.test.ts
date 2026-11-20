@@ -310,7 +310,14 @@ describe('le centre vétérinaire : ancienne partie (étape 3)', () => {
   it('sauvegarde v5 : le message annonce le centre et Élise Fontaine, sans malade si personne ne l’est', () => {
     const s = asV5(bigPark())
     const r = startSession(save(s, 5, s.time), s.time)
-    expect(r.healthNotice).toBe("Nouveau à Clairbois : le centre vétérinaire ! Margaux l'a fait construire et Élise Fontaine, vétérinaire, soigne maintenant les malades toute seule.")
+    expect(r.healthNotice).toBe("Nouveau à Clairbois : le centre vétérinaire ! Margaux l'a fait construire et Élise Fontaine, vétérinaire, soigne maintenant les malades toute seule. Améliore le centre au niveau 2 pour soigner les blessures, puis au niveau 3 pour la grippe.")
+  })
+  it('sauvegarde v5 au niveau Village : le message ajoute le conseil d’amélioration ; au Hameau, non', () => {
+    const tip = 'Améliore le centre au niveau 2 pour soigner les blessures, puis au niveau 3 pour la grippe.'
+    const v = asV5(bigPark()); v.village.level = 2
+    expect(startSession(save(v, 5, v.time), v.time).healthNotice).toContain(tip)
+    const h = asV5(bigPark()); h.village.level = 1
+    expect(startSession(save(h, 5, h.time), h.time).healthNotice).not.toContain('Améliore')
   })
   it('sauvegarde v5 avec malades : « N animaux malades lui ont été confiés », compté avant le rattrapage', () => {
     const s = sickV5(3)

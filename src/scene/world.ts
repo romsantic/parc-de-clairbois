@@ -11,7 +11,7 @@ import type { LoadedModel } from './loadModels'
 import type { ModelKey } from '../assets/manifest'
 
 /** Taille du domaine (unités ≈ mètres). Le centre de la carte est (0, 0). */
-export const MAP = { halfX: 34, halfZ: 24 }
+export const MAP = { halfX: 34, halfZ: 28 }
 
 export interface World {
   scene: THREE.Scene

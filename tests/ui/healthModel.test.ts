@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { animal, emptyState, employee, enclosure, sick, T0 } from '../sim/helpers'
-import { healthHelp, healthLabel, vetCenterView } from '../../src/ui/healthModel'
+import { centreStatus, healthHelp, healthLabel, vetCenterView } from '../../src/ui/healthModel'
 import { HOUR_MS } from '../../src/data/tuning'
 import type { Animal, GameState, Health } from '../../src/sim/types'
 
@@ -108,4 +108,16 @@ describe('vetCenterView', () => {
   it('sans vétérinaire la file est vide (la fiche le dit autrement)', () => {
     expect(vetCenterView(world(1, 0, [mouton(1, sick(T0))])).queue).toEqual([])
   })
+})
+
+describe('centreStatus', () => {
+  const base = (vets: number, sickCount: number): GameState => emptyState({
+    buildings: [{ slot: 0, type: 'ferme', level: 1 }, { slot: 7, type: 'centreVeto', level: 1 }],
+    enclosures: [enclosure(1, 'mouton')],
+    animals: Array.from({ length: sickCount }, (_, i) => animal(i + 1, 'mouton', 'F', 1, { health: sick(T0) })),
+    staff: { ...emptyState().staff, employees: Array.from({ length: vets }, (_, i) => employee(i + 1, 'veterinaire')) },
+  })
+  it('sans vétérinaire : « aucun vétérinaire »', () => { expect(centreStatus(base(0, 2))).toBe('aucun vétérinaire') })
+  it('un vétérinaire et une file', () => { expect(centreStatus(base(1, 0))).toBe('1 vétérinaire · file : 0') })
+  it('deux vétérinaires : pluriel', () => { expect(centreStatus(base(2, 0))).toBe('2 vétérinaires · file : 0') })
 })
