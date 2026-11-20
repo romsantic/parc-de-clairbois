@@ -136,8 +136,8 @@
 |---|---|---|---|
 | 1 | État v6, données des maladies, centre et migration | agent · Sonnet | faite (574d168, 079394d) — 861 tests ; emplacement 7 en (10, −26), à juger à l'œil |
 | 2 | Les maladies vivent (apparition, contagion, repérage, aggravation, mort) | agent · Sonnet | faite (71239c2) — 875 tests |
-| 3 | Le centre soigne : file, soins, vaccination, quarantaine | agent · Sonnet | en cours |
-| 4 | Un parc bien tenu tient 3 jours (test, réglages, joueur automatique) | agent · Sonnet | à faire |
+| 3 | Le centre soigne : file, soins, vaccination, quarantaine | agent · Sonnet | faite (97dfb96) — 894 tests verts, 6 du joueur automatique rouges jusqu'à la tâche 4 |
+| 4 | Un parc bien tenu tient 3 jours (test, réglages, joueur automatique) | agent · Sonnet | en cours |
 | 5 | Missions (dont le premier pas du centre), Gazette, message de mise à jour | agent · Sonnet | à faire |
 | 6 | Le centre et les malades sur la carte | agent · Sonnet | à faire |
 | 7 | Interface : fiches et volet du centre, téléphone | agent · Sonnet | à faire |
