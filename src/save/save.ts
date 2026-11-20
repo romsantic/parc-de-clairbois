@@ -134,9 +134,12 @@ function looksLikeGame(s: unknown): s is GameState {
   if (!finite(g.ticketPrice) || g.ticketPrice < 0 || !finite(g.reputation) || g.reputation < 0 || g.reputation > 1 || !finite(g.totalVisitors)) return false
   if (!Array.isArray(g.buildings)) return false
   const slots = new Set<number>()
+  const types = new Set<string>()
   for (const b of g.buildings) {
     if (!b || !(b.type in BUILDINGS) || !intBetween(b.level, 1, maxBuildingLevel(b.type)) || !SLOTS.some((x) => x.id === b.slot) || slots.has(b.slot)) return false
+    if (types.has(b.type)) return false // un seul bâtiment de chaque type
     slots.add(b.slot)
+    types.add(b.type)
   }
   const m = g.merchant
   if (!m || !finite(m.restockAt) || !finite(m.restocks) || !Array.isArray(m.offers)) return false

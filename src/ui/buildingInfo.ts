@@ -46,6 +46,8 @@ export function buildingInfo(state: GameState, target: InfoTarget): BuildingInfo
     )
   } else if (b.type === 'personnel') {
     rows.push({ label: INFO_LABELS.staff, value: `${state.staff.employees.length} sur ${staffCap(state)} places` })
+  } else if (b.type === 'centreVeto') {
+    // Provisoire : la vraie fiche du centre (places, quarantaine, vaccination) arrive en tâche 7.
   } else {
     const flow = buildingIncomePerHour(state, target.slot)
     const especes = visibleSpecies(state)

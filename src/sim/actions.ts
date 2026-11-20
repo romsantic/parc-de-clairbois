@@ -6,7 +6,7 @@ import { ENTRANCE_ID } from '../data/paths'
 import { checkSegment, isLinked, linkPlan } from './paths'
 import { bump } from './stats'
 import { fairPrice } from './economy'
-import { canLevelUp, farmLevel } from './village'
+import { canLevelUp, farmLevel, isReservedType } from './village'
 import { animalsIn, capacity, cleanliness } from './enclosure'
 import { buyAnimal, restock, sellAnimal } from './merchant'
 import { claimMission, skipTutorial, updateMissions } from './missions'
@@ -127,7 +127,6 @@ export function cureAllInEnclosure(state: GameState, encId: number): ActionResul
 }
 
 /** Bâtiments qui ont leur propre emplacement (champ `only` de SLOTS), avec les textes de refus. */
-const RESERVED_TYPES: BuildingType[] = ['personnel', 'centreVeto']
 const RESERVED_TEXT: Partial<Record<BuildingType, string>> = { personnel: 'à la maison du personnel', centreVeto: 'au centre vétérinaire' }
 const RESERVED_ELSEWHERE: Partial<Record<BuildingType, string>> = {
   personnel: 'La maison du personnel se construit sur son emplacement, au fond du village.',
@@ -140,10 +139,10 @@ export function buildBuilding(state: GameState, slot: number, type: BuildingType
   if (!sl) return NOT_FOUND
   if (state.village.level < sl.unlockLevel) return { ok: false, reason: `Cet emplacement se débloque au niveau ${sl.unlockLevel} du village.` }
   if (sl.unlockLevel === 3) return { ok: false, reason: 'De nouveaux bâtiments arriveront bientôt ici.' } // pas de bâtiment au Bourg en V1
-  if (RESERVED_TYPES.includes(type) && state.buildings.some((b) => b.type === type)) return { ok: false, reason: `Clairbois a déjà ${BUILDINGS[type].withArticle}.` }
+  if (isReservedType(type) && state.buildings.some((b) => b.type === type)) return { ok: false, reason: `Clairbois a déjà ${BUILDINGS[type].withArticle}.` }
   if (state.buildings.some((b) => b.slot === slot)) return { ok: false, reason: 'Cet emplacement est déjà pris.' }
   if (sl.only && sl.only !== type) return { ok: false, reason: `Cet emplacement est réservé ${RESERVED_TEXT[sl.only]}.` }
-  if (!sl.only && RESERVED_TYPES.includes(type)) return { ok: false, reason: RESERVED_ELSEWHERE[type]! }
+  if (!sl.only && isReservedType(type)) return { ok: false, reason: RESERVED_ELSEWHERE[type]! }
   const data = BUILDINGS[type]
   if (state.village.level < data.unlockLevel) return { ok: false, reason: `Ce bâtiment se débloque au niveau ${data.unlockLevel} du village.` }
   if (state.buildings.some((b) => b.type === type)) return { ok: false, reason: `Clairbois a déjà ${data.withArticle}.` }

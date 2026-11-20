@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { animal, emptyState, enclosure, T0 } from './helpers'
-import { appeal, visibleAnimals, buildingIncomePerHour, fairPrice, incomePerHour, priceMultiplier, visitorsPerHour } from '../../src/sim/economy'
+import { appeal, visibleAnimals, buildingIncomePerHour, fairPrice, incomePerHour, priceMultiplier, spendPerClient, visitorsPerHour } from '../../src/sim/economy'
 import type { SpeciesId } from '../../src/data/species'
 import type { GameState } from '../../src/sim/types'
 import { newGame } from '../../src/sim/newGame'
 import { applyAction } from '../../src/sim/actions'
+import { advanceTo } from '../../src/sim/advance'
 
 /** Un animal par espèce, chacun dans son propre grand enclos (bonheur 1). */
 function withAnimals(species: SpeciesId[]): GameState {
@@ -144,5 +145,18 @@ describe('seuls les enclos reliés attirent', () => {
     const r = applyAction(g, { type: 'redimensionner', encId: e.id, rect: { x: -34, z: -8, w: e.rect.w, d: e.rect.d } })
     expect(r.ok).toBe(true)
     if (r.ok) expect(appeal(r.state)).toBe(0)
+  })
+})
+
+describe('centre vétérinaire : aucun revenu, jamais de NaN', () => {
+  it('au niveau 5, les revenus restent finis et les pièces aussi après quelques heures', () => {
+    const s = emptyState({ coins: 1000, buildings: [{ slot: 0, type: 'ferme', level: 1 }, { slot: 7, type: 'centreVeto', level: 5 }] })
+    const inc = incomePerHour(s)
+    expect(Number.isFinite(inc.village)).toBe(true)
+    expect(Number.isFinite(inc.clients)).toBe(true)
+    expect(buildingIncomePerHour(s, 7)).toEqual({ clients: 0, pieces: 0 })
+    expect(spendPerClient('centreVeto', 5, 3)).toBe(0)
+    const r = advanceTo(s, s.time + 6 * 3_600_000)
+    expect(Number.isFinite(r.state.coins)).toBe(true)
   })
 })

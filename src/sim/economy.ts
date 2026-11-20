@@ -70,6 +70,7 @@ export function visitorsPerHour(state: GameState, price: number = state.ticketPr
 /** Dépense d'un client dans un bâtiment (boutique : selon le nombre d'espèces du parc). */
 export function spendPerClient(type: BuildingType, level: number, especes: number): number {
   const data = BUILDINGS[type]
+  if (data.share === 0 || level - 1 >= data.spend.length) return 0 // ferme, maison du personnel, centre : pas de clients
   return type === 'boutique'
     ? (ECONOMY.BOUTIQUE_BASE + ECONOMY.BOUTIQUE_PER_SPECIES * especes) * data.spend[level - 1]
     : data.spend[level - 1]
@@ -79,6 +80,7 @@ export function spendPerClient(type: BuildingType, level: number, especes: numbe
 function buildingFlow(b: { type: BuildingType; level: number }, visiteurs: number, especes: number): { clients: number; pieces: number } {
   const data = BUILDINGS[b.type]
   const i = b.level - 1
+  if (data.share === 0 || i >= data.maxClientsPerH.length) return { clients: 0, pieces: 0 }
   const clients = Math.min(visiteurs * data.share, data.maxClientsPerH[i])
   return { clients, pieces: clients * spendPerClient(b.type, b.level, especes) }
 }

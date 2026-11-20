@@ -2,7 +2,7 @@ import type { BuildingType, GameState } from '../sim/types'
 import type { Action } from '../sim/actions'
 import { rationCost } from '../sim/actions'
 import { buildingIncomePerHour } from '../sim/economy'
-import { slotCanBuild } from '../sim/village'
+import { slotCanBuild, isReservedType } from '../sim/village'
 import { staffCap } from '../sim/staff'
 import { BUILDINGS, SLOTS } from '../data/economy'
 import { TUNING } from '../data/tuning'
@@ -57,7 +57,7 @@ export function buildBuildingBar(ctx: BuildingBarContext, slot: number, left: HT
       return none
     }
     left.append(text('b', 'Emplacement libre', 'nom'))
-    const types = (Object.keys(BUILDINGS) as BuildingType[]).filter((t) => BUILDINGS[t].buildCost !== null && (def?.only ? t === def.only : t !== 'personnel' && t !== 'centreVeto') && !s.buildings.some((x) => x.type === t))
+    const types = (Object.keys(BUILDINGS) as BuildingType[]).filter((t) => BUILDINGS[t].buildCost !== null && (def?.only ? t === def.only : !isReservedType(t)) && !s.buildings.some((x) => x.type === t))
     if (types.length === 0 || !slotCanBuild(s, slot)) {
       left.append(text('span', 'De nouveaux bâtiments arriveront bientôt', 'discret'))
       return none

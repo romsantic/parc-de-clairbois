@@ -30,12 +30,17 @@ export function missionGateOk(state: GameState, level: 2 | 3): boolean {
   return index > gateIndex || (index === gateIndex && current?.done === true)
 }
 
+/** Ce bâtiment a-t-il son propre emplacement (champ `only` de SLOTS) ? Maison du personnel, centre vétérinaire. */
+export function isReservedType(type: BuildingType): boolean {
+  return SLOTS.some((s) => s.only === type)
+}
+
 /** Un emplacement libre et débloqué peut-il encore recevoir un bâtiment ? (Pas au Bourg en V1 ; sinon s'il reste un type constructible.) */
 export function slotCanBuild(state: GameState, slotId: number): boolean {
   const sl = SLOTS.find((x) => x.id === slotId)
   if (!sl || sl.unlockLevel === 3) return false
   return (Object.keys(BUILDINGS) as BuildingType[]).some((t) =>
-    (sl.only ? t === sl.only : t !== 'personnel' && t !== 'centreVeto') && BUILDINGS[t].buildCost !== null && BUILDINGS[t].unlockLevel <= state.village.level && !state.buildings.some((b) => b.type === t))
+    (sl.only ? t === sl.only : !isReservedType(t)) && BUILDINGS[t].buildCost !== null && BUILDINGS[t].unlockLevel <= state.village.level && !state.buildings.some((b) => b.type === t))
 }
 
 /** Le village peut-il passer au niveau suivant ? (Simple question : le niveau ne change que par une action.) */

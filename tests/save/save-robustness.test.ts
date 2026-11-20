@@ -162,3 +162,11 @@ describe('copie de la sauvegarde v1', () => {
     expect(m.data[`${SAVE_KEY}-v2`]).toBeUndefined()
   })
 })
+
+describe('un seul bâtiment de chaque type', () => {
+  it('deux centres vétérinaires : illisible', () => {
+    const g = structuredClone(newGame(1, 1_800_000_000_000)) as any // eslint-disable-line @typescript-eslint/no-explicit-any
+    g.buildings.push({ slot: 7, type: 'centreVeto', level: 1 }, { slot: 1, type: 'centreVeto', level: 1 })
+    expect(loadGame(memory({ [SAVE_KEY]: JSON.stringify({ version: 6, savedAt: 1, state: g }) })).kind).toBe('illisible')
+  })
+})
