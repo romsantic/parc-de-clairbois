@@ -130,6 +130,19 @@
 
 **Décisions de l'étape V2-2 (en plus du plan voté)** : maison du personnel au fond du village, derrière les emplacements du Bourg, en (17, −19) (choix de Romain : pas de place près de la mairie) ; paie « versée » = argent vraiment pris dans la caisse (la Gazette dit ce qui manque) ; pas de salaire pendant le rattrapage d'une ancienne partie (règles V1 jusqu'au retour du joueur) ; la paie ne peut jamais effacer une dette ; candidats tirés dès la nouvelle partie et à l'arrivée de Léa ; avis uniques affichés 20 s. Joueur automatique avec le personnel : Village jour 2-3, Bourg 5-6, fin 16-17 (un peu plus rapide qu'avant : les agents nettoient sans arrêt — à rééquilibrer à l'étape 7), ~460 pièces de salaires par jour en fin. À regarder par Romain : l'allure de la maison du personnel, les employés qui marchent (pas vus en mouvement, panneau masqué). Laissé pour plus tard : un enclos peut dépasser sa capacité quand plusieurs mères attendent des petits en même temps (règle V1, à traiter avec les blessures de l'étape 3) ; plus de place dans x 8–24 pour les emplacements 7 et 8 (étapes 3 et 4) ; deux candidats peuvent porter le même prénom.
 
+**V2 — étape 3 : maladies et centre vétérinaire** (branche `claude/etape-v2-3-maladies-1c7710`, plan `docs/superpowers/plans/2026-11-19-v2-etape-3-maladies.md`, **voté par Romain le 19/11/2026**, D1–D10 avec D8 changée : premier pas « Construis le centre vétérinaire ») — lancée le 19/11/2026 après la fusion de l'étape 2. Écarts tranchés au lancement : **E1** vétérinaires recrutables dès que le centre existe (1 candidat sur 5) ; **E2** un vétérinaire expérimenté soigne 10 % plus vite par niveau.
+
+| # | Sous-tâche | Agent · modèle | État |
+|---|---|---|---|
+| 1 | État v6, données des maladies, centre et migration | agent · Sonnet | faite (574d168, 079394d) — 861 tests ; emplacement 7 en (10, −26), à juger à l'œil |
+| 2 | Les maladies vivent (apparition, contagion, repérage, aggravation, mort) | agent · Sonnet | en cours |
+| 3 | Le centre soigne : file, soins, vaccination, quarantaine | agent · Sonnet | à faire |
+| 4 | Un parc bien tenu tient 3 jours (test, réglages, joueur automatique) | agent · Sonnet | à faire |
+| 5 | Missions (dont le premier pas du centre), Gazette, message de mise à jour | agent · Sonnet | à faire |
+| 6 | Le centre et les malades sur la carte | agent · Sonnet | à faire |
+| 7 | Interface : fiches et volet du centre, téléphone | agent · Sonnet | à faire |
+| 8 | Vérification d'ensemble, relecture et publication | chef + relecture Opus | à faire |
+
 ## Liens
 
 - Jeu en ligne : https://romsantic.github.io/parc-de-clairbois/ (`?heure=14` force l'heure ; `?debug` affiche le panneau de test)
