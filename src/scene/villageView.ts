@@ -6,11 +6,12 @@ import type { World } from './world'
 import { fitHeight } from './animalActor'
 import { prepareStatic } from './materials'
 import { slotCanBuild } from '../sim/village'
+import { VET_SIGN } from '../data/visuals'
 
 const LEVEL_SCALE = [1, 1.08, 1.15] as const
 
 /** Un élément de décor d'un bâtiment : modèle, position locale, hauteur, rotation, niveau minimal. */
-interface Part { key: ModelKey; x: number; z: number; h: number; rot?: number; minLevel?: 1 | 2 | 3 }
+interface Part { key: ModelKey; x: number; z: number; h: number; rot?: number; minLevel?: 1 | 2 | 3 | 4 | 5 }
 
 /** Allure de chaque bâtiment : le bâtiment principal puis ses accessoires, certains au niveau 3. */
 const LOOKS: Record<BuildingType, { signY: number; parts: Part[] }> = {
@@ -37,9 +38,12 @@ const LOOKS: Record<BuildingType, { signY: number; parts: Part[] }> = {
     { key: 'tonneau', x: 2.9, z: 0.6, h: 1 },
     { key: 'caisse', x: -2.8, z: 1.8, h: 0.7, rot: 0.5, minLevel: 3 },
   ] },
-  // Provisoire (tâche 6 : vraie allure du centre) : une maison du village.
+  // Le centre : une maison, une enseigne à croix verte (faite en Three.js, voir vetSign), du matériel au niveau 3, un banc et une 2e enseigne au niveau 5.
   centreVeto: { signY: 4.8, parts: [
     { key: 'maison2', x: 0, z: -0.6, h: 3.6, rot: Math.PI },
+    { key: 'tonneau', x: 2.9, z: 0.6, h: 1, minLevel: 3 },
+    { key: 'caisse', x: -2.8, z: 1.8, h: 0.7, rot: 0.5, minLevel: 3 },
+    { key: 'banc2', x: 0, z: 2.6, h: 0.9, rot: Math.PI, minLevel: 5 },
   ] },
   auberge: { signY: 5.6, parts: [
     { key: 'auberge', x: 0, z: -0.6, h: 4.6, rot: Math.PI },
@@ -184,6 +188,30 @@ export function createVillageView(world: World, getState: () => GameState) {
     g.add(m)
   }
 
+  /** Enseigne du centre : poteau de bois, plaque crème et croix verte (boîtes Three.js), tournée vers la place. */
+  function vetSign(inner: THREE.Group, st: Own, x: number, z: number) {
+    const wood = new THREE.MeshStandardMaterial({ color: '#7a5230', roughness: 1 })
+    const plate = new THREE.MeshStandardMaterial({ color: VET_SIGN.PLATE, roughness: 0.9 })
+    const cross = new THREE.MeshStandardMaterial({ color: VET_SIGN.CROSS, roughness: 0.7 })
+    const post = new THREE.BoxGeometry(0.14, 1.9, 0.14)
+    const board = new THREE.BoxGeometry(1.1, 1.1, 0.1)
+    const bar = new THREE.BoxGeometry(0.8, 0.26, 0.06)
+    st.mats.push(wood, plate, cross); st.geos.push(post, board, bar)
+    const g = new THREE.Group()
+    g.position.set(x, 0, z)
+    const add = (geo: THREE.BufferGeometry, mat: THREE.Material, px: number, py: number, pz: number, rz = 0) => {
+      const m = new THREE.Mesh(geo, mat)
+      m.position.set(px, py, pz); m.rotation.z = rz
+      m.castShadow = true
+      g.add(m)
+    }
+    add(post, wood, 0, 0.95, 0)
+    add(board, plate, 0, 1.95, 0.06)
+    add(bar, cross, 0, 1.95, 0.13)
+    add(bar, cross, 0, 1.95, 0.13, Math.PI / 2)
+    inner.add(g)
+  }
+
   function build(id: number, key: string, type: BuildingType | null, level: number, state: SlotState): THREE.Group {
     const def = SLOTS.find((s) => s.id === id)!
     const g = new THREE.Group()
@@ -208,6 +236,10 @@ export function createVillageView(world: World, getState: () => GameState) {
         obj.rotation.y = part.rot ?? 0
         obj.position.set(part.x, 0, part.z)
         inner.add(obj)
+      }
+      if (type === 'centreVeto') {
+        vetSign(inner, st, 2, 1.9)
+        if (level >= 5) vetSign(inner, st, -2, 1.9)
       }
       g.add(inner)
       pickDisc(g, st)

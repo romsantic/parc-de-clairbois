@@ -126,3 +126,18 @@ export const WALK_ROUTE = {
   /** Les hauteurs de marche sont mises en cache par cases de ce côté. */
   HEIGHT_CELL: 0.1,
 } as const
+
+/** Icône au-dessus d'un animal malade (couleur selon le stade ; bleu quand le vétérinaire le soigne). */
+export const SICK_ICON = {
+  CARE: '#3b82c4',
+  STAGES: ['#e8c12a', '#e8862a', '#d23a2a'] as const,
+  /** Hauteur au-dessus de la tête (m) et taille de la croix (m). */
+  ABOVE_HEAD: 0.6,
+  SIZE: 0.9,
+  /** Pulsation du stade 3 : amplitude et vitesse (rad/s). */
+  PULSE_AMP: 0.15,
+  PULSE_SPEED: 4,
+} as const
+
+/** Centre vétérinaire : enseigne à croix verte. */
+export const VET_SIGN = { CROSS: '#2e9e4f', PLATE: '#f6f0e1', EDGE: '#8a6a3a' } as const

@@ -8,6 +8,7 @@ import { createFenceBuilder } from './fence'
 import { diffById } from './diff'
 import { requestModel } from './loadModels'
 import type { Bounds } from './wander'
+import { createSickIcons } from './sickIcons'
 
 const AGE_SCALE = { bebe: 0.5, jeune: 0.75, adulte: 1 } as const
 const rectKey = (r: Rect) => `${r.x},${r.z},${r.w},${r.d}`
@@ -19,6 +20,7 @@ const toBounds = (r: Rect): Bounds => ({ minX: r.x + 0.6, maxX: r.x + r.w - 0.6,
  */
 export function createParkView(world: World, getState: () => GameState, rng: () => number) {
   const fences = createFenceBuilder(world)
+  const sickIcons = createSickIcons(world)
   const encs = new Map<number, { group: THREE.Group; key: string }>()
   const actors = new Map<number, AnimalActor>()
   const pending = new Set<number>() // animaux dont le modèle est en cours de chargement
@@ -108,6 +110,12 @@ export function createParkView(world: World, getState: () => GameState, rng: () 
       syncEnclosures(s)
       syncAnimals(s)
       for (const a of actors.values()) { a.setNight(world.night); a.update(dt) }
+      // Un animal en quarantaine est au centre vétérinaire : on ne le voit plus dans son enclos.
+      for (const a of s.animals) {
+        const actor = actors.get(a.id)
+        if (actor) actor.object.visible = !(a.health.status === 'malade' && a.health.quarantined)
+      }
+      sickIcons.update(s, actors, dt)
       ageTimer += dt
       if (ageTimer > 2) { // les animaux grandissent : on remet leur taille à jour de temps en temps
         ageTimer = 0
