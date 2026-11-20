@@ -55,6 +55,9 @@ describe('advanceTo', () => {
     const t0 = s.time
     s.animals[0].health = { status: 'malade', disease: 'grippe', stage: 1, stageSince: t0, detectedAt: t0 + HOUR_MS, careUntil: t0 + 100 * DAY_MS, vetId: 1, quarantined: false }
     s.enclosures[0].vaccinatedUntil = t0 + 100 * DAY_MS
+    // le soin appartient à un vrai vétérinaire (sinon le centre l'annule) : centre construit, vétérinaire n° 1
+    s.buildings.push({ slot: 7, type: 'centreVeto', level: 3 })
+    s.staff.employees.push({ id: 1, name: 'Véto', job: 'veterinaire', xpH: 0, hiredAt: t0, encIds: [] })
     const r = advanceTo(s, t0 + 40 * DAY_MS)
     expect(r.skippedMs).toBe(10 * DAY_MS)
     const delta = r.skippedMs // un malade en soin ne bouge pas pendant les 30 jours rejoués : seul le saut décale ses dates

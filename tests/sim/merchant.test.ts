@@ -139,7 +139,7 @@ describe('revente', () => {
   })
   it('refuse un bébé et un malade', () => {
     expect(sellAnimal(s, 12)).toEqual({ ok: false, reason: 'Un bébé ne peut pas être vendu.' })
-    expect(sellAnimal(s, 13)).toEqual({ ok: false, reason: 'Soigne-le avant de le vendre.' })
+    expect(sellAnimal(s, 13)).toEqual({ ok: false, reason: "Il doit guérir avant d'être vendu." })
     expect(sellAnimal(s, 999).ok).toBe(false)
   })
   it("un enclos vidé accepte de nouveau n'importe quelle espèce du biome", () => {

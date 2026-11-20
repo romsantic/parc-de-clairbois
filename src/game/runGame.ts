@@ -173,8 +173,9 @@ export function runGame(store: Storage, storageOk = true, audio: AudioController
 function successMessage(a: Action, s: GameState, before: GameState): string {
   switch (a.type) {
     case 'nettoyer': return 'Enclos nettoyé'
-    case 'soignerTout': return 'Les animaux malades sont soignés'
-    case 'soigner': return 'Animal soigné'
+    case 'vacciner': return 'Enclos vacciné'
+    case 'isoler': return 'Animal en quarantaine'
+    case 'remettre': return 'Animal remis dans son enclos'
     case 'construire': return 'Nouvel enclos construit'
     case 'redimensionner': return 'Enclos redimensionné'
     case 'renommer': return 'Nom changé'

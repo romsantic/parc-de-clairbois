@@ -1,7 +1,8 @@
-import type { GameState } from '../sim/types'
+import type { DiseaseId, GameState } from '../sim/types'
 import type { Summary } from '../sim/summary'
 import type { ActionResult } from '../sim/actions'
-import { cleanEnclosure, cureAnimal, addRations, cureCost } from '../sim/actions'
+import { cleanEnclosure, addRations } from '../sim/actions'
+import { DISEASES } from '../data/diseases'
 import { SPECIES } from '../data/species'
 import { TUTORIAL } from '../data/missions'
 import { DAY_MS, HOUR_MS, TUNING } from '../data/tuning'
@@ -49,6 +50,7 @@ export function mountDebugPanel(ctl: DebugController): void {
   document.body.append(panel)
   let message = ''
   let confirmReset = false
+  let debugDisease: DiseaseId = 'indigestion'
   const fps = el('p', 'Images par seconde : …') // hors de render() : mis à jour une fois par seconde, sans tout redessiner
 
   const act = (r: ActionResult) => {
@@ -99,6 +101,17 @@ export function mountDebugPanel(ctl: DebugController): void {
     )
     panel.append(bar)
 
+    const diseaseRow = el('div', '', 'rangee')
+    const pick = el('select')
+    for (const [id, d] of Object.entries(DISEASES)) {
+      const o = el('option', d.name); o.value = id; o.selected = id === debugDisease
+      pick.append(o)
+    }
+    pick.setAttribute('aria-label', 'Maladie à donner')
+    pick.addEventListener('change', () => { debugDisease = pick.value as DiseaseId })
+    diseaseRow.append(el('span', 'Maladie de test : '), pick)
+    panel.append(diseaseRow)
+
     for (const e of s.enclosures) {
       const here = animalsIn(s, e.id)
       const head = el('div', '', 'rangee')
@@ -118,7 +131,12 @@ export function mountDebugPanel(ctl: DebugController): void {
           el('td', pct(satiety(a, s.time))), el('td', sick ? 'malade' : 'ok', sick ? 'rouge' : ''),
           el('td', gest), el('td', pct(happiness(s, a))))
         const td = el('td')
-        if (sick) td.append(button(`Soigner (${cureCost(SPECIES[a.species].price)})`, () => act(cureAnimal(ctl.get(), a.id))))
+        if (!sick) td.append(button('Rendre malade', () => {
+          const g = structuredClone(ctl.get())
+          const b = g.animals.find((x) => x.id === a.id)
+          if (b) b.health = { status: 'malade', disease: debugDisease, stage: 1, stageSince: g.time, detectedAt: g.time, careUntil: null, vetId: null, quarantined: false }
+          act({ ok: true, state: g })
+        }))
         tr.append(td)
         table.append(tr)
       }

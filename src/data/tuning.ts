@@ -34,8 +34,6 @@ export const TUNING = {
   ] as { capacity: number; cost?: number; level?: number }[],
 
   CLEAN_COST: 5,
-  CURE_MIN_COST: 50,
-  CURE_PRICE_SHARE: 0.25,
   NAME_MAX_LENGTH: 20,
 
   FENCE_COST_PER_M: 4,

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { cleanEnclosure, cureAnimal, addRations, renameAnimal } from '../../src/sim/actions'
+import { cleanEnclosure, addRations, renameAnimal } from '../../src/sim/actions'
 import { HOUR_MS } from '../../src/data/tuning'
 import { animal, sick, emptyState, enclosure, T0 } from './helpers'
 
@@ -25,18 +25,6 @@ describe('actions du joueur', () => {
   it('nettoyer sans assez de pièces est refusé', () => {
     expect(cleanEnclosure({ ...base(), coins: 4 }, 1)).toEqual({ ok: false, reason: 'Pas assez de pièces (il en faut 5).' })
   })
-  it('soigner un mouton coûte 50, un loup 625, et relance le compteur de faim', () => {
-    const s = base()
-    const r1 = cureAnimal(s, 1)
-    expect(r1.ok && r1.state.coins).toBe(950)
-    expect(r1.ok && r1.state.animals[0].health).toEqual({ status: 'ok' })
-    expect(r1.ok && r1.state.animals[0].lastFedAt).toBe(s.time)
-    const r2 = cureAnimal(s, 2)
-    expect(r2.ok && r2.state.coins).toBe(375)
-  })
-  it('soigner un animal en bonne santé est refusé', () => {
-    expect(cureAnimal(base(), 3)).toEqual({ ok: false, reason: "Cet animal n'est pas malade." })
-  })
   it('les rations sont bornées par la capacité ; garde-manger plein refusé', () => {
     const r = addRations(base(), 'fourrage', 20)
     expect(r.ok && r.state.pantry.fourrage).toBe(200)
@@ -52,7 +40,6 @@ describe('actions du joueur', () => {
   })
   it('un identifiant inconnu est refusé', () => {
     expect(cleanEnclosure(base(), 99)).toEqual({ ok: false, reason: 'Introuvable.' })
-    expect(cureAnimal(base(), 99)).toEqual({ ok: false, reason: 'Introuvable.' })
     expect(renameAnimal(base(), 99, 'Zoé')).toEqual({ ok: false, reason: 'Introuvable.' })
   })
 })

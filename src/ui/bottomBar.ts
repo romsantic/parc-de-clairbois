@@ -1,6 +1,5 @@
 import type { GameState } from '../sim/types'
 import type { Action } from '../sim/actions'
-import { cureCost } from '../sim/actions'
 import type { Pick } from '../scene/picking'
 import type { Zone } from '../data/zones'
 import { SPECIES } from '../data/species'
@@ -124,11 +123,6 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
           text('td', pct(satiety(a, s.time))), text('td', sick ? 'malade' : 'en forme', sick ? 'rouge' : 'vert'),
           text('td', gest), text('td', pct(happiness(s, a))))
         const act = document.createElement('td')
-        if (sick) {
-          const cure = iconButton(ICONS.soin, 'Soigner', { price: cureCost(SPECIES[a.species].price) })
-          cure.addEventListener('click', () => { if (ctx.dispatch({ type: 'soigner', animalId: a.id }, cure)) refreshDrawer() })
-          act.append(cure)
-        }
         const price = sellPrice(s, a)
         if (price !== null) {
           const armed = sellArmed === a.id
@@ -243,8 +237,6 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
       left.append(gauge, text('span', '', 'malades'), text('span', '', 'rouge soins'))
       const clean = guide(iconButton(ICONS.balai, 'Nettoyer', { price: TUNING.CLEAN_COST }), 'nettoyer')
       clean.addEventListener('click', () => ctx.dispatch({ type: 'nettoyer', encId: p.id }, clean))
-      const cure = iconButton(ICONS.soin, 'Soigner les malades')
-      cure.addEventListener('click', () => ctx.dispatch({ type: 'soignerTout', encId: p.id }, cure))
       const resize = iconButton(ICONS.agrandir, 'Redimensionner')
       resize.addEventListener('click', () => ctx.startResize(p.id))
       const details = guide(iconButton(ICONS.liste, 'Détails des animaux'), 'detailsEnclos')
@@ -253,7 +245,7 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
         enclosureDetails(p.id)
         ctx.dispatch({ type: 'vu', what: 'ficheEnclos' })
       })
-      actions.append(clean, cure, resize, details)
+      actions.append(clean, resize, details)
       // Plan de liaison calculé une seule fois ici (coûteux), pas à chaque rafraîchissement.
       if (!isLinked(s, p.id)) {
         left.append(text('span', NO_PATH_TEXT, 'rouge alerte'))
@@ -357,11 +349,6 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
       const m = left.querySelector<HTMLElement>('.malades')!
       m.textContent = sick.length ? `${sick.length} malade${sick.length > 1 ? 's' : ''}` : ''
       left.querySelector('.soins')!.textContent = careWarning(s, p.id)
-      const cureBtn = actions.querySelectorAll('button')[1]
-      const cost = sick.reduce((t, a) => t + cureCost(SPECIES[a.species].price), 0)
-      let price = cureBtn?.querySelector('small')
-      if (cureBtn && cost && !price) { price = document.createElement('small'); cureBtn.append(price) }
-      if (price) price.textContent = cost ? String(cost) : ''
     }
     // Le volet n'est redessiné que si ses animaux ont changé (sinon ses boutons seraient recréés sous le clic).
     if (p.kind === 'enclos') {

@@ -1,4 +1,4 @@
-import { SPECIES, type Food } from '../data/species'
+import type { Food } from '../data/species'
 import { BUILDINGS, FARM, SLOTS, maxBuildingLevel } from '../data/economy'
 import { TUNING } from '../data/tuning'
 import type { BuildingType, GameState, PathPoint, Rect } from './types'
@@ -12,6 +12,7 @@ import { buyAnimal, restock, sellAnimal } from './merchant'
 import { claimMission, skipTutorial, updateMissions } from './missions'
 import { assign, debtRefusal, fire, hire, redistributeAll } from './staff'
 import { assignGaps } from './care'
+import { vaccinate, isolate, release } from './vet'
 import { checkPlacement, enclosureCost, resizeCost, snapRect } from './placement'
 
 /** Résultat d'une action : nouvel état, ou raison du refus (en français, affichable telle quelle). */
@@ -19,8 +20,6 @@ export type ActionResult = { ok: true; state: GameState } | { ok: false; reason:
 
 const NOT_FOUND: ActionResult = { ok: false, reason: 'Introuvable.' }
 export const noMoney = (cost: number): ActionResult => ({ ok: false, reason: `Pas assez de pièces (il en faut ${cost}).` })
-
-export const cureCost = (price: number): number => Math.max(TUNING.CURE_MIN_COST, Math.round(price * TUNING.CURE_PRICE_SHARE))
 
 export function cleanEnclosure(state: GameState, encId: number): ActionResult {
   const enc = state.enclosures.find((e) => e.id === encId)
@@ -30,21 +29,6 @@ export function cleanEnclosure(state: GameState, encId: number): ActionResult {
   const s = structuredClone(state)
   s.coins -= TUNING.CLEAN_COST
   s.enclosures.find((e) => e.id === encId)!.cleanedAt = s.time
-  return { ok: true, state: s }
-}
-
-/** Soigne un animal malade ; son compteur de faim repart de zéro. */
-export function cureAnimal(state: GameState, animalId: number): ActionResult {
-  const a = state.animals.find((x) => x.id === animalId)
-  if (!a) return NOT_FOUND
-  if (a.health.status !== 'malade') return { ok: false, reason: "Cet animal n'est pas malade." }
-  const cost = cureCost(SPECIES[a.species].price)
-  if (state.coins < cost) return noMoney(cost)
-  const s = structuredClone(state)
-  s.coins -= cost
-  const b = s.animals.find((x) => x.id === animalId)!
-  b.health = { status: 'ok' } // V1 : disparaît avec le bouton « Soigner » (tâche 3)
-  b.lastFedAt = s.time
   return { ok: true, state: s }
 }
 
@@ -108,21 +92,6 @@ export function resizeEnclosure(state: GameState, encId: number, rect: Rect): Ac
   const s = structuredClone(state)
   s.coins -= p.cost
   s.enclosures.find((e) => e.id === encId)!.rect = r
-  return { ok: true, state: s }
-}
-
-/** Soigne tous les malades d'un enclos ; coût = somme des soins. */
-export function cureAllInEnclosure(state: GameState, encId: number): ActionResult {
-  if (!state.enclosures.some((e) => e.id === encId)) return NOT_FOUND
-  const sick = animalsIn(state, encId).filter((a) => a.health.status === 'malade')
-  if (sick.length === 0) return { ok: false, reason: 'Aucun animal malade ici.' }
-  const cost = sick.reduce((t, a) => t + cureCost(SPECIES[a.species].price), 0)
-  if (state.coins < cost) return noMoney(cost)
-  const s = structuredClone(state)
-  s.coins -= cost
-  for (const a of s.animals) {
-    if (a.enclosureId === encId && a.health.status === 'malade') { a.health = { status: 'ok' }; a.lastFedAt = s.time }
-  }
   return { ok: true, state: s }
 }
 
@@ -264,8 +233,9 @@ export function linkEnclosure(state: GameState, encId: number): ActionResult {
 /** Toutes les actions du joueur, pour l'interface. */
 export type Action =
   | { type: 'nettoyer'; encId: number }
-  | { type: 'soignerTout'; encId: number }
-  | { type: 'soigner'; animalId: number }
+  | { type: 'vacciner'; encId: number }
+  | { type: 'isoler'; animalId: number }
+  | { type: 'remettre'; animalId: number }
   | { type: 'construire'; rect: Rect }
   | { type: 'redimensionner'; encId: number; rect: Rect }
   | { type: 'renommer'; animalId: number; name: string }
@@ -303,8 +273,7 @@ export function applyAction(state: GameState, a: Action): ActionResult {
     case 'vendre': bump(s.stats, 'ventes'); break
     case 'acheterAnimal': bump(s.stats, 'achatsAnimaux'); assignGaps(s); break
     case 'construire': assignGaps(s); break
-    case 'soigner': bump(s.stats, 'soins'); break
-    case 'soignerTout': bump(s.stats, 'soins', state.animals.filter((x) => x.enclosureId === a.encId && x.health.status === 'malade').length); break
+    case 'vacciner': bump(s.stats, 'vaccinations'); break
     case 'billet': bump(s.stats, 'billetsRegles'); break
     case 'ameliorer': bump(s.stats, 'ameliorations'); break
     case 'vu': bump(s.stats, a.what === 'ficheEnclos' ? 'ficheEnclosVue' : 'autonomieVue'); break
@@ -315,7 +284,7 @@ export function applyAction(state: GameState, a: Action): ActionResult {
 }
 
 /** Actions qui dépensent : refusées tant que la caisse est dans le rouge. */
-const SPENDING = new Set<Action['type']>(['construire', 'batir', 'ameliorer', 'agrandirGardeManger', 'acheterAnimal', 'tracerChemin', 'relierEnclos', 'embaucher'])
+const SPENDING = new Set<Action['type']>(['construire', 'batir', 'ameliorer', 'agrandirGardeManger', 'acheterAnimal', 'tracerChemin', 'relierEnclos', 'embaucher', 'vacciner'])
 
 function run(state: GameState, a: Action): ActionResult {
   const debt = debtRefusal(state)
@@ -325,8 +294,9 @@ function run(state: GameState, a: Action): ActionResult {
   }
   switch (a.type) {
     case 'nettoyer': return cleanEnclosure(state, a.encId)
-    case 'soignerTout': return cureAllInEnclosure(state, a.encId)
-    case 'soigner': return cureAnimal(state, a.animalId)
+    case 'vacciner': return vaccinate(state, a.encId)
+    case 'isoler': return isolate(state, a.animalId)
+    case 'remettre': return release(state, a.animalId)
     case 'construire': return buildEnclosure(state, a.rect)
     case 'redimensionner': return resizeEnclosure(state, a.encId, a.rect)
     case 'renommer': return renameAnimal(state, a.animalId, a.name)

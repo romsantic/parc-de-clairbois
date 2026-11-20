@@ -248,14 +248,6 @@ function cleanAll(c: Ctx): boolean {
   return changed
 }
 
-function cureAll(c: Ctx): boolean {
-  let changed = false
-  for (const e of c.s.enclosures) {
-    if (animalsIn(c.s, e.id).some((a) => a.health.status === 'malade') && act(c, { type: 'soignerTout', encId: e.id })) changed = true
-  }
-  return changed
-}
-
 function setTicket(c: Ctx): boolean {
   const p = fairPrice(c.s)
   return c.s.ticketPrice !== p && act(c, { type: 'billet', price: p })
@@ -431,8 +423,6 @@ function visit(c: Ctx): void {
     const step = c.s.missions.tutorial.step
     let changed = claimAll(c)
     changed = tutorialStep(c) || changed
-    // Les soins passent toujours ; le reste attend son pas des premiers pas (pour que le pas compte).
-    changed = cureAll(c) || changed
     if (step >= 2) changed = feed(c) || changed
     if (step >= 3) changed = cleanAll(c) || changed
     if (step >= 4) changed = setTicket(c) || changed

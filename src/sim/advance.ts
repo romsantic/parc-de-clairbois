@@ -3,19 +3,21 @@ import type { GameEvent, GameState } from './types'
 import { feedStep } from './feeding'
 import { careStep } from './care'
 import { healthStep } from './health'
+import { vetStep } from './vet'
 import { breedingStep } from './breeding'
 import { economyStep } from './economy'
 import { merchantStep } from './merchant'
 import { missionsStep } from './missions'
 import { staffStep } from './staff'
 
-/** Un pas de 10 minutes, en place : repas, soins du personnel, santé, puis naissances et conceptions, puis recettes et marchand. */
+/** Un pas de 10 minutes, en place : repas, soins du personnel, santé, soins du centre vétérinaire, puis naissances et conceptions, puis recettes et marchand. */
 export function step(state: GameState): GameEvent[] {
   const events: GameEvent[] = []
   state.time += TUNING.STEP_MS
   feedStep(state, events)
   careStep(state, events)
   healthStep(state, events)
+  vetStep(state, events)
   breedingStep(state, events)
   economyStep(state, events)
   merchantStep(state, events)

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { buildEnclosure, resizeEnclosure, cureAllInEnclosure, applyAction, cleanEnclosure, previewEnclosure } from '../../src/sim/actions'
-import { animal, sick, emptyState, enclosure, T0 } from './helpers'
+import { buildEnclosure, resizeEnclosure, applyAction, cleanEnclosure, previewEnclosure } from '../../src/sim/actions'
+import { animal, emptyState, enclosure, T0 } from './helpers'
 
 const R = (x: number, z: number, w: number, d: number) => ({ x, z, w, d })
 const START = R(-26, -5, 12, 10)
@@ -55,20 +55,6 @@ describe("aperçu d'un enclos (éditeur)", () => {
   })
 })
 
-describe('soigner tout un enclos', () => {
-  it('soigne tous les malades, coût = somme', () => {
-    const s = base()
-    s.animals[0].health = sick(T0)
-    s.animals[1].health = sick(T0)
-    const r = cureAllInEnclosure(s, 1)
-    expect(r.ok && r.state.coins).toBe(900)
-    expect(r.ok && r.state.animals.every((a) => a.health.status === 'ok')).toBe(true)
-  })
-  it('refuse sans malade', () => {
-    expect(cureAllInEnclosure(base(), 1)).toEqual({ ok: false, reason: 'Aucun animal malade ici.' })
-  })
-})
-
 describe('nettoyer', () => {
   it("refuse un enclos déjà propre", () => {
     expect(cleanEnclosure(base(), 1)).toEqual({ ok: false, reason: "L'enclos est déjà propre." })
@@ -83,7 +69,6 @@ describe('applyAction', () => {
     expect(applyAction(base(), { type: 'redimensionner', encId: 1, rect: R(-26, -5, 14, 10) }).ok).toBe(true)
     expect(applyAction(base(), { type: 'renommer', animalId: 1, name: 'Zoé' }).ok).toBe(true)
     expect(applyAction(base(), { type: 'acheterRations', food: 'fourrage', n: 5 }).ok).toBe(true)
-    expect(applyAction(base(), { type: 'soignerTout', encId: 1 })).toEqual({ ok: false, reason: 'Aucun animal malade ici.' })
-    expect(applyAction(base(), { type: 'soigner', animalId: 1 })).toEqual({ ok: false, reason: "Cet animal n'est pas malade." })
+    expect(applyAction(base(), { type: 'isoler', animalId: 1 }).ok).toBe(false)
   })
 })

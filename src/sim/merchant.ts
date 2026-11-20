@@ -103,7 +103,7 @@ export function sellAnimal(state: GameState, animalId: number): ActionResult {
   if (!a) return { ok: false, reason: 'Introuvable.' }
   const price = sellPrice(state, a)
   if (price === null) return { ok: false, reason: 'Un bébé ne peut pas être vendu.' }
-  if (a.health.status === 'malade') return { ok: false, reason: 'Soigne-le avant de le vendre.' }
+  if (a.health.status === 'malade') return { ok: false, reason: "Il doit guérir avant d'être vendu." }
   const s = structuredClone(state)
   s.coins += price
   s.animals = s.animals.filter((x) => x.id !== animalId)

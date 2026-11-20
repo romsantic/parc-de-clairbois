@@ -257,8 +257,10 @@ describe('le personnel : ancienne partie', () => {
     expect(r.staffNotice).toContain('attendent un soigneur')
     expect(r.state.staff.candidates.length).toBeGreaterThan(0)
     expect(r.state.staff.coverAllUntil).toBe(0)
-    // même parc, sans personnel, tout suivi : référence
-    const ref = advanceTo({ ...structuredClone(g), staff: { ...g.staff, employees: [], coverAllUntil: Number.MAX_SAFE_INTEGER } }, now)
+    // même parc, sans soigneur, tout suivi : référence (avec le centre et la vétérinaire offerts par la mise à jour, sinon rien ne guérit
+    // et les animaux déjà malades ne peuvent plus retomber malades : la comparaison ne mesurerait plus la même chose)
+    const vets = r.state.staff.employees.filter((e) => e.job === 'veterinaire')
+    const ref = advanceTo({ ...structuredClone(g), buildings: structuredClone(r.state.buildings), staff: { ...g.staff, employees: structuredClone(vets), coverAllUntil: Number.MAX_SAFE_INTEGER } }, now)
     const refSum = summarize(ref.events, ref.state)
     expect(r.summary!.morts.length).toBeLessThanOrEqual(refSum.morts.length)
     expect(r.summary!.malades).toBeLessThanOrEqual(refSum.malades)

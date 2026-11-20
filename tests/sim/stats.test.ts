@@ -38,13 +38,11 @@ describe('compteurs (stats)', () => {
     expect(s.stats.counts.viandeAchetee).toBe(4)
     expect(s.stats.counts.fourrageAchete).toBe(10)
   })
-  it('vendre, soigner, billet, améliorer comptent', () => {
+  it('vendre, billet, améliorer comptent', () => {
     const base = emptyState({
       enclosures: [enclosure(1, 'mouton')],
       animals: [animal(1, 'mouton', 'F', 1), animal(2, 'mouton', 'M', 1, { health: sick(T0) }), animal(3, 'mouton', 'M', 1, { health: sick(T0) })],
     })
-    expect(ok(base, { type: 'soigner', animalId: 2 }).stats.counts.soins).toBe(1)
-    expect(ok(base, { type: 'soignerTout', encId: 1 }).stats.counts.soins).toBe(2)
     expect(ok(base, { type: 'vendre', animalId: 1 }).stats.counts.ventes).toBe(1)
     expect(ok(base, { type: 'billet', price: 3 }).stats.counts.billetsRegles).toBe(1)
     expect(ok(base, { type: 'ameliorer', slot: 0 }).stats.counts.ameliorations).toBe(1)

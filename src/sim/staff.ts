@@ -1,4 +1,5 @@
 import { JOBS, STAFF_TUNING, FIRST_KEEPER } from '../data/staff'
+import { VET_CENTER } from '../data/diseases'
 import { STAFF_NAMES } from '../data/names'
 import { TUNING, HOUR_MS } from '../data/tuning'
 import type { Candidate, Employee, GameEvent, GameState, JobId, StaffLevel } from './types'
@@ -46,6 +47,8 @@ function pick<T>(state: GameState, table: ReadonlyArray<readonly [T, number]>): 
 /** Tire une nouvelle liste de candidats, en place. Le premier tirage garantit un soigneur et un agent d'entretien. */
 export function renewCandidates(state: GameState, events?: GameEvent[]): void {
   const jobs = STAFF_TUNING.CANDIDATE_JOBS.filter(([j]) => JOBS[j as JobId].open) as [JobId, number][]
+  // Les vétérinaires ne se présentent qu'une fois le centre construit (JOBS.veterinaire.open ne sert qu'à l'affichage)
+  if (state.buildings.some((b) => b.type === 'centreVeto')) jobs.push(['veterinaire', VET_CENTER.CANDIDATE_WEIGHT])
   const list: Candidate[] = []
   for (let i = 0; i < STAFF_TUNING.CANDIDATES; i++) {
     let job = pick(state, jobs)
