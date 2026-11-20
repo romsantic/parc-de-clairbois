@@ -4,6 +4,8 @@ import { SPECIES } from '../../src/data/species'
 import { capacity } from '../../src/sim/enclosure'
 import { emptyStats } from '../../src/sim/stats'
 import { HOUR_MS } from '../../src/data/tuning'
+import { redistribute } from '../../src/sim/care'
+import { dailyWages } from '../../src/sim/staff'
 
 /** Petites fabriques pour les tests de la simulation. */
 export const T0 = 1_800_000_000_000 - (1_800_000_000_000 % 600_000) // aligné sur le pas
@@ -157,4 +159,57 @@ export function sick(since: number = T0, over: Partial<Extract<Health, { status:
 /** Un employé (par défaut : débutant, embauché à T0, sans enclos). */
 export function employee(id: number, job: JobId, over: Partial<Employee> = {}): Employee {
   return { id, name: `Employé${id}`, job, xpH: 0, hiredAt: T0, encIds: [], ...over }
+}
+
+/** Remplit le garde-manger pour `days` jours de consommation (capacité relevée si besoin). */
+function stockFor(s: GameState, days: number): void {
+  const perDay = { fourrage: 0, viande: 0 }
+  for (const a of s.animals) perDay[SPECIES[a.species].diet[0]] += SPECIES[a.species].rationsPerDay
+  const need = days * (perDay.fourrage + perDay.viande)
+  s.pantry = { fourrage: days * perDay.fourrage, viande: days * perDay.viande, capacity: Math.max(s.pantry.capacity, Math.ceil(need * 1.1)) }
+}
+
+/**
+ * Parc bien tenu : `bigPark()` + personnel qui couvre tous les animaux et tous les enclos (règles de l'étape 2, plus de « tout est suivi »),
+ * maison du personnel, centre vétérinaire niveau 3 (emplacement 7) avec 2 vétérinaires, garde-manger pour 4 jours,
+ * caisse = 3 jours de salaires + 3 000, aucun enclos vacciné (le centre 3 ne vaccine pas).
+ */
+export function wellKeptPark(): GameState {
+  const s = bigPark()
+  s.staff.coverAllUntil = 0 // la couverture vient vraiment des soigneurs ajoutés
+  s.buildings.push({ slot: 6, type: 'personnel', level: 3 }, { slot: 7, type: 'centreVeto', level: 3 })
+  let id = 6000
+  for (let i = 0; i < 4; i++) s.staff.employees.push(employee(id++, 'soigneur', { xpH: 700, hiredAt: s.time }))
+  for (let i = 0; i < 2; i++) s.staff.employees.push(employee(id++, 'entretien', { xpH: 700, hiredAt: s.time }))
+  for (let i = 0; i < 2; i++) s.staff.employees.push(employee(id++, 'veterinaire', { hiredAt: s.time }))
+  redistribute(s)
+  stockFor(s, 4)
+  s.coins = 3 * dailyWages(s) + 3000
+  return s
+}
+
+/** Parc du Hameau : niveau 1, 3 enclos de prairie, soigneur offert, centre niveau 1, 1 vétérinaire, garde-manger pour 4 jours. */
+export function hameauPark(): GameState {
+  const R = (x: number, z: number, w: number, d: number) => ({ x, z, w, d })
+  const layout: [SpeciesId, Enclosure['rect']][] = [['mouton', R(-34, -8, 10, 8)], ['cochon', R(-24, -8, 10, 8)], ['ane', R(-14, -8, 10, 8)]]
+  const enclosures: Enclosure[] = []
+  const animals: Animal[] = []
+  let animalId = 1
+  layout.forEach(([sp, rect], i) => {
+    const enc = enclosure(i + 1, sp, rect.w, rect.d, { rect })
+    enclosures.push(enc)
+    // que des femelles : pas de portée qui dépasse la capacité (blessures que le centre niveau 1 ne soigne pas : question ouverte pour Romain)
+    for (let k = 0; k < Math.min(3, capacity(enc)); k++) animals.push(animal(animalId++, sp, 'F', enc.id))
+  })
+  const s = linkedPark(emptyState({
+    nextId: animalId, village: { level: 1, clientsServed: 0 },
+    buildings: [{ slot: 0, type: 'ferme', level: 1 }, { slot: 7, type: 'centreVeto', level: 1 }],
+    enclosures, animals,
+  }))
+  s.staff.coverAllUntil = 0
+  s.staff.employees.push(employee(6000, 'soigneur', { hiredAt: s.time }), employee(6001, 'veterinaire', { hiredAt: s.time }))
+  redistribute(s)
+  stockFor(s, 4)
+  s.coins = 3 * dailyWages(s) + 3000
+  return s
 }

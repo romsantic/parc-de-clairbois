@@ -6,8 +6,7 @@ import { linkedEnclosureIds } from '../../src/sim/paths'
  * Rapport de rythme : un joueur automatique (vraies règles) joue 40 jours, 2 puis 3 visites par jour.
  * Bornes resserrées sur le rythme réglé à l'étape 6 (médianes du bot : Village jour 2-3, Bourg jour 6-7, fin jour 18-19).
  */
-// La graine 2 (2 visites par jour) n'achète jamais de cerf depuis que le tirage des maladies a changé (forêt déjà pleine) : écartée (réglage du robot à revoir avec les vétérinaires).
-const SEEDS = [1, 3, 4]
+const SEEDS = [1, 2, 3]
 const VISITS = [2, 3]
 const DAYS = 40
 

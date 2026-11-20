@@ -17,6 +17,8 @@ import { START_PATH } from '../../src/data/paths'
 import { canLevelUp, population } from '../../src/sim/village'
 import { careCoverage } from '../../src/sim/care'
 import { dailyWages, staffCap } from '../../src/sim/staff'
+import { centerLevel, quarantinePlaces, quarantineUsed } from '../../src/sim/vet'
+import { VET_CENTER } from '../../src/data/diseases'
 import { STAFF_TUNING } from '../../src/data/staff'
 import type { BuildingType, GameState, Rect } from '../../src/sim/types'
 
@@ -360,6 +362,13 @@ function bestCandidate(s: GameState, job: 'soigneur' | 'entretien'): number | nu
   return best ? best.id : null
 }
 
+/** Le moins cher des candidats vétérinaires (niveau le plus bas). */
+function cheapestVet(s: GameState): number | null {
+  let best: { id: number; level: number } | null = null
+  for (const c of s.staff.candidates) if (c.job === 'veterinaire' && (!best || c.level < best.level)) best = c
+  return best ? best.id : null
+}
+
 /** Agents voulus : un dès 3 enclos, puis un par `CLEANER_ENCLOSURES[0]` enclos. */
 const agentsWanted = (s: GameState): number => (s.enclosures.length >= 3 ? Math.ceil(s.enclosures.length / STAFF_TUNING.CLEANER_ENCLOSURES[0]) : 0)
 
@@ -370,9 +379,10 @@ function hireStaff(c: Ctx): boolean {
   if (s.coins - reserve() < 3 * dailyWages(s) + 200) return false
   const uncovered = s.animals.length - careCoverage(s).covered.size
   const agents = s.staff.employees.filter((e) => e.job === 'entretien').length
-  const job = uncovered > 0 ? 'soigneur' : agents < agentsWanted(s) ? 'entretien' : null
+  const needVet = centerLevel(s) > 0 && !s.staff.employees.some((e) => e.job === 'veterinaire')
+  const job = needVet ? 'veterinaire' : uncovered > 0 ? 'soigneur' : agents < agentsWanted(s) ? 'entretien' : null
   if (!job) return false
-  const id = bestCandidate(s, job)
+  const id = job === 'veterinaire' ? cheapestVet(s) : bestCandidate(s, job)
   if (id === null) return false
   if (s.staff.employees.length >= staffCap(s)) {
     const house = s.buildings.find((b) => b.type === 'personnel')
@@ -380,6 +390,30 @@ function hireStaff(c: Ctx): boolean {
     return house.level < 3 && act(c, { type: 'ameliorer', slot: house.slot })
   }
   return act(c, { type: 'embaucher', candidateId: id })
+}
+
+// ---------------------------------------------------------------------------------------------
+// Centre vétérinaire
+
+/** Il bâtit le centre dès qu'il a 250 pièces de côté, le monte au niveau 2 au Village et au niveau 3 avant le Bourg (dès qu'il en a les moyens). */
+function buildVetCentre(c: Ctx): boolean {
+  const s = c.s
+  const level = centerLevel(s)
+  if (level === 0) return s.coins - reserve() >= BUILDINGS.centreVeto.buildCost! && act(c, { type: 'batir', slot: VET_CENTER.SLOT, building: 'centreVeto' })
+  const wanted = s.village.level >= 2 ? 3 : 1
+  const cost = BUILDINGS.centreVeto.upgradeCost[level - 1]
+  return level < wanted && s.coins - reserve() >= cost && act(c, { type: 'ameliorer', slot: VET_CENTER.SLOT })
+}
+
+/** Il met les grippés repérés en quarantaine tant qu'il y a de la place. */
+function isolateFlu(c: Ctx): boolean {
+  let changed = false
+  for (const a of c.s.animals) {
+    if (quarantineUsed(c.s) >= quarantinePlaces(c.s)) break
+    const h = a.health
+    if (h.status === 'malade' && h.disease === 'grippe' && h.detectedAt !== null && !h.quarantined && act(c, { type: 'isoler', animalId: a.id })) changed = true
+  }
+  return changed
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -425,9 +459,11 @@ function visit(c: Ctx): void {
     changed = tutorialStep(c) || changed
     if (step >= 2) changed = feed(c) || changed
     if (step >= 3) changed = cleanAll(c) || changed
+    changed = isolateFlu(c) || changed
     if (step >= 4) changed = setTicket(c) || changed
     if (step >= 7) {
       if (canLevelUp(c.s).ok && act(c, { type: 'monterNiveau' })) changed = true
+      else if (buildVetCentre(c)) changed = true
       else if (buildBuildings(c)) changed = true
       else if (hireStaff(c)) changed = true
       else if (buyAnimals(c)) changed = true

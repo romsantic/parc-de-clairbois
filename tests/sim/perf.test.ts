@@ -3,7 +3,7 @@ import { advanceTo } from '../../src/sim/advance'
 import { capacity } from '../../src/sim/enclosure'
 import { checkPlacement } from '../../src/sim/placement'
 import { DAY_MS } from '../../src/data/tuning'
-import { bigPark, crowdedPark, emptyState, T0 } from './helpers'
+import { bigPark, crowdedPark, emptyState, employee, T0 } from './helpers'
 import { redistribute } from '../../src/sim/care'
 import type { GameState } from '../../src/sim/types'
 
@@ -55,11 +55,13 @@ describe('crowdedPark (150 animaux, test de charge)', () => {
   it('30 jours de rattrapage passent en moins de 2 s (parc entretenu, presque personne ne meurt)', () => {
     // Garde-manger sans fond et enclos nettoyés chaque jour : les animaux vivent tout le mois (pire cas).
     const month = () => cpuMs(() => {
-      let s = { ...crowdedPark(), pantry: { fourrage: 1e6, viande: 1e6, capacity: 2e6 } }
+      // Le parc surpeuplé tombe malade (blessures) : un centre vétérinaire de niveau 5 et 3 vétérinaires le soignent, caisse bien garnie.
+      let s = { ...crowdedPark(), coins: 1e6, pantry: { fourrage: 1e6, viande: 1e6, capacity: 2e6 } }
+      s.buildings.push({ slot: 7, type: 'centreVeto', level: 5 })
+      for (let i = 0; i < 3; i++) s.staff.employees.push(employee(7000 + i, 'veterinaire', { xpH: 700, hiredAt: s.time }))
       for (let d = 1; d <= 30; d++) {
         s = advanceTo(s, T0 + d * DAY_MS).state
         for (const e of s.enclosures) e.cleanedAt = s.time
-        for (const a of s.animals) a.health = { status: 'ok' } // les vétérinaires arrivent à la tâche 3 : en attendant, personne ne meurt de blessure (parc très surpeuplé)
       }
       return s
     })
