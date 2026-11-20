@@ -4,8 +4,7 @@ import type { Pick } from '../scene/picking'
 import type { Zone } from '../data/zones'
 import { SPECIES } from '../data/species'
 import { TUNING, HOUR_MS } from '../data/tuning'
-import { VET_CENTER } from '../data/diseases'
-import { centerLevel, quarantinePlaces, quarantineUsed, vaccineCost } from '../sim/vet'
+import { isolateRefusal, vaccinateRefusal, vaccineCost } from '../sim/vet'
 import { healthHelp, healthLabel } from './healthModel'
 import { animalsIn, capacity, cleanliness } from '../sim/enclosure'
 import { ageStage, satiety } from '../sim/animal'
@@ -147,7 +146,7 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
             back.title = 'Remettre dans l’enclos'
             back.addEventListener('click', () => { ctx.dispatch({ type: 'remettre', animalId: a.id }, back); refreshDrawer() })
             act.append(back)
-          } else if (h.detectedAt !== null && centerLevel(s) >= VET_CENTER.QUARANTINE_LEVEL && quarantineUsed(s) < quarantinePlaces(s)) {
+          } else if (isolateRefusal(s, a.id) === null) {
             const iso = labeled(ICONS.quarantaine, 'Isoler', 'sante-bouton')
             iso.title = 'Mettre en quarantaine : il ne contamine plus les autres'
             iso.addEventListener('click', () => { ctx.dispatch({ type: 'isoler', animalId: a.id }, iso); refreshDrawer() })
@@ -436,7 +435,7 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
           const protText = leftMs >= 24 * HOUR_MS ? `Protégé encore ${Math.ceil(leftMs / (24 * HOUR_MS))} j` : `Protégé encore ${Math.ceil(leftMs / HOUR_MS)} h`
           if (vaccProtected.textContent !== protText) vaccProtected.textContent = protText
         }
-        const canVaccinate = centerLevel(s) >= VET_CENTER.VACCINE_LEVEL && here.length > 0 && leftMs <= VET_CENTER.VACCINE_RENEW_BELOW_H * HOUR_MS
+        const canVaccinate = vaccinateRefusal(s, p.id) === null
         vaccButton.hidden = !canVaccinate
         if (canVaccinate) {
           const cost = vaccineCost(s, p.id)
@@ -450,7 +449,7 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
     // Le volet n'est redessiné que si ses animaux ont changé (sinon ses boutons seraient recréés sous le clic).
     if (p.kind === 'enclos') {
       const s = ctx.get()
-      const k = JSON.stringify([s.time, animalsIn(s, p.id), encStaffNames(s, p.id), s.coins, centerLevel(s)])
+      const k = JSON.stringify([s.time, animalsIn(s, p.id), encStaffNames(s, p.id), s.coins, s.buildings.map((x) => x.level)])
       if (k !== drawerSeen && isDrawerOpen(`enclos:${p.id}`) && refreshDrawer()) drawerSeen = k // sinon on réessaiera au prochain passage
     }
   }

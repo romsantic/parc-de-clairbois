@@ -4,7 +4,7 @@ import { step } from '../../src/sim/advance'
 import { applyAction } from '../../src/sim/actions'
 import { renewCandidates } from '../../src/sim/staff'
 import {
-  canTreat, careCost, careDurationMs, careQueue, centerLevel, quarantinePlaces, quarantineUsed, untreatable, vaccineCost, workingVets,
+  canTreat, careCost, careDurationMs, careQueue, centerLevel, isolateRefusal, quarantinePlaces, quarantineUsed, untreatable, vaccinateRefusal, vaccineCost, workingVets,
 } from '../../src/sim/vet'
 import { HOUR_MS, TUNING } from '../../src/data/tuning'
 import type { Animal, GameEvent, GameState, Health } from '../../src/sim/types'
@@ -321,5 +321,25 @@ describe('candidats vétérinaires', () => {
     expect(jobs.has('veterinaire')).toBe(true)
     expect(jobs.has('soigneur')).toBe(true)
     expect(jobs.has('entretien')).toBe(true)
+  })
+})
+
+describe('règles partagées avec l\'interface', () => {
+  it('isolateRefusal : null quand permis, sinon le même texte que l\'action', () => {
+    const ok = world(3, 1, [mouton(1, sick(T0))])
+    expect(isolateRefusal(ok, 1)).toBeNull()
+    expect(applyAction(ok, { type: 'isoler', animalId: 1 }).ok).toBe(true)
+    const small = world(2, 1, [mouton(1, sick(T0))])
+    const r = applyAction(small, { type: 'isoler', animalId: 1 })
+    expect(isolateRefusal(small, 1)).toBe('Le centre vétérinaire doit être au niveau 3.')
+    expect(r.ok === false && r.reason).toBe(isolateRefusal(small, 1))
+    expect(isolateRefusal(world(3, 1, [mouton(1, sick(T0, { detectedAt: null }))]), 1)).toBe("Sa maladie n'a pas encore été repérée.")
+  })
+  it('vaccinateRefusal : ne regarde pas l\'argent', () => {
+    const ok = world(4, 1, [mouton(1)], { coins: 0 })
+    expect(vaccinateRefusal(ok, 1)).toBeNull()
+    expect(applyAction(ok, { type: 'vacciner', encId: 1 }).ok).toBe(false) // refusé pour l'argent, pas par la règle
+    expect(vaccinateRefusal(world(4, 0, [mouton(1)]), 1)).toBe('Il faut un vétérinaire au centre.')
+    expect(vaccinateRefusal(world(4, 1, []), 1)).toBe('Aucun animal dans cet enclos.')
   })
 })

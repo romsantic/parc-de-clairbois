@@ -120,17 +120,24 @@ export function vetStep(state: GameState, events: GameEvent[]): void {
   }
 }
 
-/** Vaccine tous les animaux d'un enclos contre la grippe, pour VACCINE_DAYS jours. */
-export function vaccinate(state: GameState, encId: number): ActionResult {
+/** Pourquoi on ne peut pas vacciner cet enclos (hors argent) ; null si c'est permis. L'interface s'en sert pour montrer le bouton. */
+export function vaccinateRefusal(state: GameState, encId: number): string | null {
   const enc = state.enclosures.find((e) => e.id === encId)
-  if (!enc) return { ok: false, reason: 'Introuvable.' }
-  if (centerLevel(state) < VET_CENTER.VACCINE_LEVEL) return { ok: false, reason: `Le centre vétérinaire doit être au niveau ${VET_CENTER.VACCINE_LEVEL}.` }
-  if (workingVets(state).length === 0) return { ok: false, reason: 'Il faut un vétérinaire au centre.' }
-  if (animalsIn(state, encId).length === 0) return { ok: false, reason: 'Aucun animal dans cet enclos.' }
+  if (!enc) return 'Introuvable.'
+  if (centerLevel(state) < VET_CENTER.VACCINE_LEVEL) return `Le centre vétérinaire doit être au niveau ${VET_CENTER.VACCINE_LEVEL}.`
+  if (workingVets(state).length === 0) return 'Il faut un vétérinaire au centre.'
+  if (animalsIn(state, encId).length === 0) return 'Aucun animal dans cet enclos.'
   if (enc.vaccinatedUntil !== null) {
     const left = enc.vaccinatedUntil - state.time
-    if (left > VET_CENTER.VACCINE_RENEW_BELOW_H * HOUR_MS) return { ok: false, reason: `Cet enclos est encore protégé ${Math.ceil(left / HOUR_MS)} h.` }
+    if (left > VET_CENTER.VACCINE_RENEW_BELOW_H * HOUR_MS) return `Cet enclos est encore protégé ${Math.ceil(left / HOUR_MS)} h.`
   }
+  return null
+}
+
+/** Vaccine tous les animaux d'un enclos contre la grippe, pour VACCINE_DAYS jours. */
+export function vaccinate(state: GameState, encId: number): ActionResult {
+  const refusal = vaccinateRefusal(state, encId)
+  if (refusal) return { ok: false, reason: refusal }
   const cost = vaccineCost(state, encId)
   if (state.coins < cost) return noMoney(cost)
   const s = structuredClone(state)
@@ -139,17 +146,24 @@ export function vaccinate(state: GameState, encId: number): ActionResult {
   return { ok: true, state: s }
 }
 
+/** Pourquoi on ne peut pas isoler cet animal ; null si c'est permis. L'interface s'en sert pour montrer le bouton. */
+export function isolateRefusal(state: GameState, animalId: number): string | null {
+  const a = state.animals.find((x) => x.id === animalId)
+  if (!a) return 'Introuvable.'
+  if (centerLevel(state) < VET_CENTER.QUARANTINE_LEVEL) return `Le centre vétérinaire doit être au niveau ${VET_CENTER.QUARANTINE_LEVEL}.`
+  const h = sickOf(a)
+  if (!h) return "Cet animal n'est pas malade."
+  if (h.detectedAt === null) return "Sa maladie n'a pas encore été repérée."
+  if (h.quarantined) return 'Il est déjà en quarantaine.'
+  const places = quarantinePlaces(state)
+  if (quarantineUsed(state) >= places) return `La quarantaine est pleine (${places} places).`
+  return null
+}
+
 /** Met un malade repéré en quarantaine : il ne contamine plus. */
 export function isolate(state: GameState, animalId: number): ActionResult {
-  const a = state.animals.find((x) => x.id === animalId)
-  if (!a) return { ok: false, reason: 'Introuvable.' }
-  if (centerLevel(state) < VET_CENTER.QUARANTINE_LEVEL) return { ok: false, reason: `Le centre vétérinaire doit être au niveau ${VET_CENTER.QUARANTINE_LEVEL}.` }
-  const h = sickOf(a)
-  if (!h) return { ok: false, reason: "Cet animal n'est pas malade." }
-  if (h.detectedAt === null) return { ok: false, reason: "Sa maladie n'a pas encore été repérée." }
-  if (h.quarantined) return { ok: false, reason: 'Il est déjà en quarantaine.' }
-  const places = quarantinePlaces(state)
-  if (quarantineUsed(state) >= places) return { ok: false, reason: `La quarantaine est pleine (${places} places).` }
+  const refusal = isolateRefusal(state, animalId)
+  if (refusal) return { ok: false, reason: refusal }
   const s = structuredClone(state)
   ;(s.animals.find((x) => x.id === animalId)!.health as Sick).quarantined = true
   return { ok: true, state: s }
