@@ -130,3 +130,39 @@ describe('maisons et décors', () => {
     expect(buildingInfo(park(), { kind: 'decor', index: 999 })).toBeNull()
   })
 })
+
+describe('fiche du centre vétérinaire', () => {
+  const centre = (level: number, animals: GameState['animals'] = []) => park({
+    buildings: [{ slot: 0, type: 'ferme', level: 1 }, { slot: 7, type: 'centreVeto', level }], animals,
+  })
+  it('niveau, maladies soignées, quarantaine, prochain niveau et bouton Améliorer', () => {
+    const info = buildingInfo(centre(1), { kind: 'emplacement', slot: 7 })!
+    expect(info.title).toBe('Centre vétérinaire')
+    expect(row(info, 'Niveau')).toBe('1/5')
+    expect(row(info, 'Soigne')).toBe('Parasites, Indigestion')
+    expect(row(info, 'Quarantaine')).toBe('Pas avant le niveau 3')
+    expect(row(info, 'Prochain niveau')).toBe('Niveau 2 : blessures')
+    expect(info.upgrade).toEqual({ label: 'Améliorer (500 pièces)', cost: 500 })
+  })
+  it('niveau maximum : pas de bouton', () => {
+    const info = buildingInfo(centre(5), { kind: 'emplacement', slot: 7 })!
+    expect(info.upgrade).toBeNull()
+    expect(row(info, 'Prochain niveau')).toBe('Niveau maximum')
+    expect(row(info, 'Vaccination')).toBeDefined()
+  })
+  it('la file montre 5 malades puis « et N autres »', () => {
+    const sickOnes = Array.from({ length: 8 }, (_, i) => animal(10 + i, 'mouton', 'F', 1, {
+      health: { status: 'malade', disease: 'indigestion', stage: 1, stageSince: 0, detectedAt: 0, careUntil: null, vetId: null, quarantined: false },
+    }))
+    const s = centre(1, sickOnes)
+    s.staff.employees.push({ id: 1, name: 'V', job: 'veterinaire', xpH: 0, hiredAt: 0, encIds: [] })
+    const info = buildingInfo(s, { kind: 'emplacement', slot: 7 })!
+    expect(info.queue).toHaveLength(6)
+    expect(info.queue[5]).toBe('et 3 autres')
+  })
+  it('les autres bâtiments n\'ont ni file ni bouton Améliorer dans la fiche', () => {
+    const info = buildingInfo(park(), { kind: 'emplacement', slot: 1 })!
+    expect(info.queue).toEqual([])
+    expect(info.upgrade).toBeNull()
+  })
+})

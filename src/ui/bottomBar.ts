@@ -3,7 +3,10 @@ import type { Action } from '../sim/actions'
 import type { Pick } from '../scene/picking'
 import type { Zone } from '../data/zones'
 import { SPECIES } from '../data/species'
-import { TUNING } from '../data/tuning'
+import { TUNING, HOUR_MS } from '../data/tuning'
+import { VET_CENTER } from '../data/diseases'
+import { centerLevel, quarantinePlaces, quarantineUsed, vaccineCost } from '../sim/vet'
+import { healthHelp, healthLabel } from './healthModel'
 import { animalsIn, capacity, cleanliness } from '../sim/enclosure'
 import { ageStage, satiety } from '../sim/animal'
 import { happiness } from '../sim/happiness'
@@ -45,6 +48,15 @@ const AGE = { bebe: 'bébé', jeune: 'jeune', adulte: 'adulte' } as const
 const pct = (x: number) => `${Math.round(x * 100)} %`
 const SELL_CONFIRM_DELAY_MS = 400
 const text = (tag: string, t: string, cls = '') => { const e = document.createElement(tag); e.textContent = t; if (cls) e.className = cls; return e }
+
+/** Bouton de texte précédé d'une icône ; le texte est dans un <span> (modifiable sans toucher à l'icône). */
+function labeled(icon: string, label: string, cls: string): HTMLButtonElement {
+  const b = document.createElement('button')
+  b.type = 'button'; b.className = cls
+  b.innerHTML = icon
+  b.append(text('span', label))
+  return b
+}
 
 /** Barre de commande compacte en bas de l'écran, qui s'agrandit en volet à la demande (spec §7). */
 export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
@@ -88,6 +100,11 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
   /** Destruction d'un chemin : 1er clic arme (avertissement), 2e clic confirme ; désarmée au bout de 4 s. */
   const pathGuard = createConfirmGuard()
   let pathGuardTimer = 0
+  /** Vaccination d'un enclos : même principe en deux clics. */
+  const vaccGuard = createConfirmGuard()
+  let vaccTimer = 0
+  let vaccButton: HTMLButtonElement | null = null
+  let vaccProtected: HTMLElement | null = null
 
   function enclosureDetails(encId: number) {
     openDrawer(`enclos:${encId}`, 'Animaux de l’enclos', (body) => {
@@ -116,13 +133,27 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
         name.setAttribute('aria-label', `Nom de ${a.name}`)
         name.addEventListener('change', () => { ctx.dispatch({ type: 'renommer', animalId: a.id, name: name.value }, name); name.blur() })
         const nameCell = document.createElement('td'); nameCell.append(name)
-        const sick = a.health.status === 'malade'
+        const lab = healthLabel(s, a)
         const gest = a.pregnantSince === null ? '—'
           : pct(Math.min(1, (s.time - a.pregnantSince) / (SPECIES[a.species].gestationH * 3_600_000)))
         tr.append(nameCell, text('td', a.sex === 'F' ? '♀' : '♂'), text('td', AGE[ageStage(a, s.time)]),
-          text('td', pct(satiety(a, s.time))), text('td', sick ? 'malade' : 'en forme', sick ? 'rouge' : 'vert'),
+          text('td', pct(satiety(a, s.time))), text('td', lab.text, `sante ${lab.tone}`),
           text('td', gest), text('td', pct(happiness(s, a))))
         const act = document.createElement('td')
+        const h = a.health
+        if (h.status === 'malade') {
+          if (h.quarantined) {
+            const back = labeled(ICONS.quarantaine, 'Remettre', 'sante-bouton')
+            back.title = 'Remettre dans l’enclos'
+            back.addEventListener('click', () => { ctx.dispatch({ type: 'remettre', animalId: a.id }, back); refreshDrawer() })
+            act.append(back)
+          } else if (h.detectedAt !== null && centerLevel(s) >= VET_CENTER.QUARANTINE_LEVEL && quarantineUsed(s) < quarantinePlaces(s)) {
+            const iso = labeled(ICONS.quarantaine, 'Isoler', 'sante-bouton')
+            iso.title = 'Mettre en quarantaine : il ne contamine plus les autres'
+            iso.addEventListener('click', () => { ctx.dispatch({ type: 'isoler', animalId: a.id }, iso); refreshDrawer() })
+            act.append(iso)
+          }
+        }
         const price = sellPrice(s, a)
         if (price !== null) {
           const armed = sellArmed === a.id
@@ -149,6 +180,13 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
         }
         tr.append(act)
         table.append(tr)
+        const help = healthHelp(s, a)
+        if (help) {
+          const helpRow = document.createElement('tr'); helpRow.className = 'aide-sante'
+          const td = text('td', help, 'discret'); td.setAttribute('colspan', '8')
+          helpRow.append(td)
+          table.append(helpRow)
+        }
       }
       body.append(table)
     })
@@ -170,9 +208,37 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
         go.addEventListener('click', () => toggleVillagePanel(panelCtx))
         body.append(go)
       }
+      const queueBox = document.createElement('div')
+      body.append(queueBox)
+      // Améliorer (centre vétérinaire) : 1er clic arme, 2e confirme ; désarmé au bout de 4 s.
+      const upGuard = createConfirmGuard()
+      let upTimer = 0
+      const slot = target.kind === 'emplacement' ? target.slot : -1
+      const up = document.createElement('button')
+      up.type = 'button'; up.className = 'principal ameliorer-centre'; up.hidden = true
+      up.addEventListener('click', () => {
+        const r = upGuard.click()
+        if (r === 'ignored') return
+        clearTimeout(upTimer)
+        if (r === 'armed') { upTimer = window.setTimeout(() => { upGuard.reset(); fill() }, 4000); fill(); return }
+        ctx.dispatch({ type: 'ameliorer', slot }, up)
+        fill()
+      })
+      body.append(up)
       const fill = () => {
         const info = buildingInfo(ctx.get(), target)
         if (!info) return
+        queueBox.replaceChildren()
+        if (info.queue.length) {
+          const ul = document.createElement('ul'); ul.className = 'file-soins'
+          for (const line of info.queue) ul.append(text('li', line))
+          queueBox.append(text('h3', INFO_LABELS.queueTitle), ul)
+        }
+        up.hidden = !info.upgrade
+        if (info.upgrade) {
+          up.textContent = upGuard.armed() ? `Confirmer ? (${info.upgrade.cost} pièces)` : info.upgrade.label
+          up.classList.toggle('confirmer', upGuard.armed())
+        }
         list.replaceChildren(...info.rows.flatMap((r) => [text('dt', r.label), text('dd', r.value)]))
         missing.replaceChildren(...info.missing.map((m) => text('p', m, 'rouge')))
       }
@@ -225,6 +291,7 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
 
   function build(p: Pick) {
     left.replaceChildren(); actions.replaceChildren(); slotUpdate = null
+    vaccGuard.reset(); clearTimeout(vaccTimer); vaccButton = null; vaccProtected = null
     disarmPath() // l'avertissement et son minuteur ne survivent pas à un changement de fiche
     const s = ctx.get()
     if (p.kind === 'enclos') {
@@ -246,6 +313,19 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
         ctx.dispatch({ type: 'vu', what: 'ficheEnclos' })
       })
       actions.append(clean, resize, details)
+      // Vaccination : bouton et mention « Protégé encore… » posés ici, montrés ou cachés à chaque rafraîchissement.
+      vaccProtected = text('span', '', 'protege'); vaccProtected.hidden = true
+      vaccButton = labeled(ICONS.vaccin, '', 'vacciner'); vaccButton.hidden = true
+      const vb = vaccButton
+      vb.addEventListener('click', () => {
+        const r = vaccGuard.click()
+        if (r === 'ignored') return
+        clearTimeout(vaccTimer)
+        if (r === 'armed') { vaccTimer = window.setTimeout(() => { vaccGuard.reset(); update() }, 4000); update(); return }
+        ctx.dispatch({ type: 'vacciner', encId: p.id }, vb)
+        update()
+      })
+      actions.append(vaccProtected, vb)
       // Plan de liaison calculé une seule fois ici (coûteux), pas à chaque rafraîchissement.
       if (!isLinked(s, p.id)) {
         left.append(text('span', NO_PATH_TEXT, 'rouge alerte'))
@@ -341,7 +421,7 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
       const enc = s.enclosures.find((e) => e.id === p.id)
       if (!enc) return
       const here = animalsIn(s, p.id)
-      const sick = here.filter((a) => a.health.status === 'malade')
+      const sick = here.filter((a) => a.health.status === 'malade' && a.health.detectedAt !== null) // seulement ceux que le joueur connaît
       left.querySelector('.compte')!.textContent = `${here.length}/${capacity(enc)}`
       const c = cleanliness(enc, s.time)
       const fill = left.querySelector<HTMLElement>('.jauge i')!
@@ -349,11 +429,28 @@ export function mountBottomBar(ctx: BottomBarContext): { refresh(): void } {
       const m = left.querySelector<HTMLElement>('.malades')!
       m.textContent = sick.length ? `${sick.length} malade${sick.length > 1 ? 's' : ''}` : ''
       left.querySelector('.soins')!.textContent = careWarning(s, p.id)
+      if (vaccButton && vaccProtected) {
+        const leftMs = enc.vaccinatedUntil === null ? 0 : enc.vaccinatedUntil - s.time
+        vaccProtected.hidden = leftMs <= 0
+        if (leftMs > 0) {
+          const protText = leftMs >= 24 * HOUR_MS ? `Protégé encore ${Math.ceil(leftMs / (24 * HOUR_MS))} j` : `Protégé encore ${Math.ceil(leftMs / HOUR_MS)} h`
+          if (vaccProtected.textContent !== protText) vaccProtected.textContent = protText
+        }
+        const canVaccinate = centerLevel(s) >= VET_CENTER.VACCINE_LEVEL && here.length > 0 && leftMs <= VET_CENTER.VACCINE_RENEW_BELOW_H * HOUR_MS
+        vaccButton.hidden = !canVaccinate
+        if (canVaccinate) {
+          const cost = vaccineCost(s, p.id)
+          const label = vaccGuard.armed() ? `Confirmer (${cost} pièces) ?` : `Vacciner l'enclos (${cost} pièces)`
+          const span = vaccButton.querySelector('span')!
+          if (span.textContent !== label) span.textContent = label
+          vaccButton.classList.toggle('confirmer', vaccGuard.armed())
+        }
+      }
     }
     // Le volet n'est redessiné que si ses animaux ont changé (sinon ses boutons seraient recréés sous le clic).
     if (p.kind === 'enclos') {
       const s = ctx.get()
-      const k = JSON.stringify([s.time, animalsIn(s, p.id), encStaffNames(s, p.id)])
+      const k = JSON.stringify([s.time, animalsIn(s, p.id), encStaffNames(s, p.id), s.coins, centerLevel(s)])
       if (k !== drawerSeen && isDrawerOpen(`enclos:${p.id}`) && refreshDrawer()) drawerSeen = k // sinon on réessaiera au prochain passage
     }
   }

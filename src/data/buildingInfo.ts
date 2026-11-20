@@ -33,4 +33,9 @@ export const INFO_LABELS = {
   population: 'Habitants',
   next: 'Prochain niveau',
   info: 'Informations',
+  treats: 'Soigne',
+  vets: 'Vétérinaires',
+  quarantine: 'Quarantaine',
+  vaccination: 'Vaccination',
+  queueTitle: "File d'attente",
 }

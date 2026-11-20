@@ -310,6 +310,7 @@ body[data-highlight="autonomie"] [data-guide="autonomie"],
 body[data-highlight="marchand"] [data-guide="marchand"],
 body[data-highlight="ferme"] [data-guide="ferme"],
 body[data-highlight="emplacementLibre"] [data-guide="emplacementLibre"],
+body[data-highlight="emplacementCentre"] [data-guide="emplacementCentre"],
 body[data-highlight="prairie"] [data-guide="prairie"] {
   box-shadow: 0 0 0 3px #f2b13a, 0 0 12px 4px rgba(242, 177, 58, .65);
   animation: anneau 1.5s ease-in-out infinite;
@@ -428,4 +429,29 @@ button.recuperer .cadeau svg { width: 18px; height: 18px; display: block; }
   .volet .carte-perso .boutons button { flex: 1 1 auto; }
   .volet .liste-enclos label { min-height: 44px; }
   .volet .liste-enclos input { width: 22px; height: 22px; }
+}
+
+/* ---------- Santé et centre vétérinaire (V2 étape 3) ---------- */
+.volet td.sante { font-weight: 600; }
+.volet td.sante.vert { color: #2f6a12; }
+.volet td.sante.jaune { color: #8a6a00; }
+.volet td.sante.orange { color: #b25a10; }
+.volet td.sante.rouge { color: #b23a2a; }
+.volet td.sante.bleu { color: #2a5f8f; }
+.volet tr.aide-sante td { border-bottom: 1px solid #e3d8bb; padding-top: 0; }
+.volet button.sante-bouton, .barre-bas button.vacciner { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.volet button.sante-bouton { padding: 2px 8px; font-size: 13px; }
+.volet button.sante-bouton svg, .barre-bas button.vacciner svg { width: 16px; height: 16px; flex: none; }
+.barre-bas button.vacciner { padding: 4px 10px; background: #e3f0f7; color: #1f4a6b; border-color: #9cc3dc; }
+.barre-bas button.vacciner.confirmer { background: #f2b13a; color: #3a2a00; border-color: #c88a1a; }
+.zone-actions .protege { align-self: center; color: #2f6a12; font-weight: 600; font-size: 13px; white-space: nowrap; }
+.volet button.principal.confirmer { background: #f2b13a; color: #3a2a00; border-color: #c88a1a; }
+.volet ul.file-soins { margin: 4px 0; padding-left: 18px; }
+@media (max-width: 640px), (pointer: coarse) {
+  .volet button.sante-bouton, .barre-bas button.vacciner, .volet button.ameliorer-centre { min-height: 44px; min-width: 44px; }
+  .volet button.ameliorer-centre { width: 100%; margin-top: 8px; }
+}
+@media (max-width: 640px) {
+  .barre-bas button.vacciner { white-space: normal; text-align: left; flex: 1 1 auto; }
+  .zone-actions .protege { white-space: normal; }
 }

@@ -15,7 +15,7 @@ export interface BuildingBarContext {
 }
 
 const text = (tag: string, t: string, cls = '') => { const e = document.createElement(tag); e.textContent = t; if (cls) e.className = cls; return e }
-const BUILD_ICON: Record<BuildingType, string> = { ferme: ICONS.garde, cafe: ICONS.cafe, boutique: ICONS.boutique, auberge: ICONS.auberge, personnel: ICONS.personnel, centreVeto: ICONS.personnel } // centreVeto : icône provisoire (tâche 7)
+const BUILD_ICON: Record<BuildingType, string> = { ferme: ICONS.garde, cafe: ICONS.cafe, boutique: ICONS.boutique, auberge: ICONS.auberge, personnel: ICONS.personnel, centreVeto: ICONS.centre }
 
 /** Ce qui doit changer pour que la barre d'un emplacement soit reconstruite. */
 export function slotKey(s: GameState, slot: number): string {
@@ -68,6 +68,7 @@ export function buildBuildingBar(ctx: BuildingBarContext, slot: number, left: HT
       const label = locked ? `${d.name} (se débloque au niveau ${d.unlockLevel})` : `Construire ${d.withArticle}`
       const btn = iconButton(BUILD_ICON[t], label, { price: d.buildCost ?? 0, disabled: locked })
       if (t === 'cafe') guide(btn, 'emplacementLibre')
+      if (t === 'centreVeto') guide(btn, 'emplacementCentre')
       btn.addEventListener('click', () => ctx.dispatch({ type: 'batir', slot, building: t }, btn))
       actions.append(btn)
     }

@@ -1,6 +1,7 @@
 import type { Action } from '../sim/actions'
 import { applyAction } from '../sim/actions'
 import { JOBS } from '../data/staff'
+import { centerLevel } from '../sim/vet'
 import { closeDrawer, isDrawerOpen, openDrawer } from './drawer'
 import { createConfirmGuard, type ConfirmGuard } from './confirmGuard'
 import { formatCountdown } from './format'
@@ -138,14 +139,21 @@ export function toggleStaffPanel(ctx: PanelContext): void {
       }
 
       list.append(text('h3', 'Bientôt'))
-      for (const j of Object.values(JOBS).filter((x) => !x.open)) list.append(text('p', j.name, 'discret bientot'))
+      for (const [id, j] of Object.entries(JOBS).filter(([, x]) => !x.open)) {
+        if (id === 'veterinaire') {
+          // Avec un centre, les candidats vétérinaires arrivent : plus de « Bientôt » ; sans centre, on dit quoi faire.
+          if (centerLevel(s) === 0) list.append(text('p', 'Vétérinaire : construis d’abord le centre vétérinaire', 'discret bientot'))
+          continue
+        }
+        list.append(text('p', j.name, 'discret bientot'))
+      }
     }
 
     function update() {
       const s = ctx.get()
       // Les fiches ne sont refaites que si un texte affiché change (pas à chaque point d'expérience).
       const k = JSON.stringify([
-        staffHeader(s), debtLine(s),
+        staffHeader(s), debtLine(s), centerLevel(s) > 0,
         s.staff.employees.map((e) => [e.id, employeeLine(s, e), e.encIds]),
         s.staff.candidates.map((c) => [c.id, candidateLine(c), (() => { const r = applyAction(s, { type: 'embaucher', candidateId: c.id }); return r.ok ? '' : r.reason })()]),
         s.enclosures.map((e) => enclosureLabel(s, e.id)),

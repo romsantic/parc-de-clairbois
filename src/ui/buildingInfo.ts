@@ -8,6 +8,7 @@ import { canLevelUp, missionGateOk, population } from '../sim/village'
 import type { GameState } from '../sim/types'
 import { formatAmount, formatCoins } from './format'
 import { gateMissionText } from './missionModel'
+import { vetCenterView } from './healthModel'
 
 export type InfoTarget = { kind: 'emplacement'; slot: number } | { kind: 'decor'; index: number }
 
@@ -23,7 +24,14 @@ export interface BuildingInfo {
   missing: string[]
   /** Mairie : texte du bouton qui ouvre le volet du village ; null ailleurs. */
   villageButton: string | null
+  /** Centre vétérinaire : les premiers de la file d'attente (« Rex · En soin… », « et 3 autres »). */
+  queue: string[]
+  /** Centre vétérinaire : le bouton Améliorer (prix compris) ; null ailleurs ou au niveau maximum. */
+  upgrade: { label: string; cost: number } | null
 }
+
+/** Combien de malades de la file la fiche du centre détaille. */
+const QUEUE_SHOWN = 5
 
 /** « 1,5 pièce » : la dépense d'un client est souvent fractionnaire. */
 const spendText = (n: number) => `${formatAmount(n)} pièce${n >= 2 ? 's' : ''}`
@@ -37,6 +45,7 @@ export function buildingInfo(state: GameState, target: InfoTarget): BuildingInfo
   const d = BUILDINGS[b.type]
   const i = b.level - 1
   const rows: InfoRow[] = [{ label: INFO_LABELS.level, value: `${b.level}/${maxBuildingLevel(b.type)}` }]
+  let queue: string[] = []
   if (b.type === 'ferme') {
     const free = FARM.freeFourragePerDay[i]
     rows.push(
@@ -47,8 +56,16 @@ export function buildingInfo(state: GameState, target: InfoTarget): BuildingInfo
   } else if (b.type === 'personnel') {
     rows.push({ label: INFO_LABELS.staff, value: `${state.staff.employees.length} sur ${staffCap(state)} places` })
   } else if (b.type === 'centreVeto') {
-    // Provisoire : la vraie fiche du centre (places, quarantaine, vaccination) arrive en tâche 7.
-  } else {
+    const v = vetCenterView(state)
+    rows.push(
+      { label: INFO_LABELS.treats, value: v.treats.join(', ') },
+      { label: INFO_LABELS.vets, value: v.vets },
+      { label: INFO_LABELS.quarantine, value: v.quarantine },
+    )
+    if (v.vaccination) rows.push({ label: INFO_LABELS.vaccination, value: v.vaccination })
+    rows.push({ label: INFO_LABELS.next, value: v.nextUnlock ?? INFO_LABELS.maxLevel })
+    queue = v.queue.slice(0, QUEUE_SHOWN).map((q) => `${q.name} · ${q.label}`)
+    if (v.queue.length > QUEUE_SHOWN) queue.push(`et ${v.queue.length - QUEUE_SHOWN} autre${v.queue.length - QUEUE_SHOWN > 1 ? 's' : ''}`)  } else {
     const flow = buildingIncomePerHour(state, target.slot)
     const especes = visibleSpecies(state)
     rows.push(
@@ -59,13 +76,14 @@ export function buildingInfo(state: GameState, target: InfoTarget): BuildingInfo
   }
   const cost = d.upgradeCost[i]
   rows.push({ label: INFO_LABELS.upgrade, value: cost === undefined ? INFO_LABELS.maxLevel : `${formatCoins(cost)} pour le niveau ${b.level + 1}` })
-  return { title: d.name, role: BUILDING_ROLE[b.type], rows, missing: [], villageButton: null }
+  const upgrade = b.type === 'centreVeto' && cost !== undefined ? { label: `Améliorer (${formatCoins(cost)})`, cost } : null
+  return { title: d.name, role: BUILDING_ROLE[b.type], rows, missing: [], villageButton: null, queue, upgrade }
 }
 
 function decorInfo(state: GameState, index: number): BuildingInfo | null {
   const v = VILLAGE_PROPS[index]
   if (!v) return null
-  if (v.key !== 'mairie') return { title: v.name, role: v.sentence, rows: [], missing: [], villageButton: null }
+  if (v.key !== 'mairie') return { title: v.name, role: v.sentence, rows: [], missing: [], villageButton: null, queue: [], upgrade: null }
   const level = state.village.level
   const pop = population(state)
   const rows: InfoRow[] = [
@@ -86,5 +104,5 @@ function decorInfo(state: GameState, index: number): BuildingInfo | null {
     }
     if (missing.length === 0 && canLevelUp(state).ok) missing.push(MAIRIE_INFO.ready)
   }
-  return { title: MAIRIE_INFO.title, role: MAIRIE_INFO.role, rows, missing, villageButton: MAIRIE_INFO.openVillage }
+  return { title: MAIRIE_INFO.title, role: MAIRIE_INFO.role, rows, missing, villageButton: MAIRIE_INFO.openVillage, queue: [], upgrade: null }
 }
