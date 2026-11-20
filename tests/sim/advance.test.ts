@@ -48,4 +48,18 @@ describe('advanceTo', () => {
     advanceTo(s, s.time + DAY_MS)
     expect(s).toEqual(copy)
   })
+  it("absence de 40 jours : stageSince, detectedAt, careUntil et vaccinatedUntil sont décalés du temps sauté", () => {
+    const s = start()
+    s.pantry.fourrage = 5000
+    s.pantry.capacity = 10000
+    const t0 = s.time
+    s.animals[0].health = { status: 'malade', disease: 'grippe', stage: 1, stageSince: t0, detectedAt: t0 + HOUR_MS, careUntil: t0 + 100 * DAY_MS, vetId: 1, quarantined: false }
+    s.enclosures[0].vaccinatedUntil = t0 + 100 * DAY_MS
+    const r = advanceTo(s, t0 + 40 * DAY_MS)
+    expect(r.skippedMs).toBe(10 * DAY_MS)
+    const delta = r.skippedMs // un malade en soin ne bouge pas pendant les 30 jours rejoués : seul le saut décale ses dates
+    const a = r.state.animals.find((x) => x.id === s.animals[0].id)!
+    expect(a.health).toMatchObject({ status: 'malade', stage: 1, stageSince: t0 + delta, detectedAt: t0 + HOUR_MS + delta, careUntil: t0 + 100 * DAY_MS + delta })
+    expect(r.state.enclosures[0].vaccinatedUntil).toBe(t0 + 100 * DAY_MS + delta)
+  })
 })

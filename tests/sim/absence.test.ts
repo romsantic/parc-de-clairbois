@@ -81,6 +81,8 @@ describe('parc bien tenu', () => {
     const s = bigPark()
     s.pantry = { fourrage: 400, viande: 400, capacity: 800 }
     s.staff.coverAllUntil = 0
+    // pas de naissances : une portée peut dépasser la capacité de l'enclos, et la blessure d'un enclos surpeuplé tuerait sans vétérinaire (tâche 3)
+    for (const a of s.animals) a.sex = 'F'
     s.staff.payDay = Math.floor(s.time / DAY_MS)
     s.staff.renewAt = Number.MAX_SAFE_INTEGER
     const keepers = Math.ceil(s.animals.length / 12)

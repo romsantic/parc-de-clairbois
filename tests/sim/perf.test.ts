@@ -59,6 +59,7 @@ describe('crowdedPark (150 animaux, test de charge)', () => {
       for (let d = 1; d <= 30; d++) {
         s = advanceTo(s, T0 + d * DAY_MS).state
         for (const e of s.enclosures) e.cleanedAt = s.time
+        for (const a of s.animals) a.health = { status: 'ok' } // les vétérinaires arrivent à la tâche 3 : en attendant, personne ne meurt de blessure (parc très surpeuplé)
       }
       return s
     })

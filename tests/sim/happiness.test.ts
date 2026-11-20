@@ -25,6 +25,13 @@ describe('happiness', () => {
     s.animals[0].health = sick(T0)
     expect(happiness(s, s.animals[0])).toBeCloseTo(0.8)
   })
+  it('parasites rendent triste : × 0,7 du bonheur d’un malade sans parasites', () => {
+    const s = pair()
+    s.animals[0].health = sick(T0)
+    const sans = happiness(s, s.animals[0])
+    s.animals[0].health = sick(T0, { disease: 'parasites' })
+    expect(happiness(s, s.animals[0])).toBeCloseTo(sans * 0.7)
+  })
   it('enclos surpeuplé → l’espace baisse le bonheur', () => {
     const s = emptyState({ enclosures: [enclosure(1, 'mouton', 4, 10)], // capacité 2
       animals: [1, 2, 3, 4].map((i) => animal(i, 'mouton', i % 2 ? 'F' : 'M', 1)) })

@@ -12,10 +12,7 @@ export const TUNING = {
   AUTONOMY_URGENT_H: 6,
 
   HUNGRY_AFTER_H: 12,
-  SICK_AFTER_H: 24,
-  DEATH_AFTER_SICK_H: 48,
   DIRTY_AFTER_H: 24,
-  DIRTY_SICK_PER_DAY: 0.15,
 
   BREED_PER_HOUR: 0.1,
   /** Repos d'une mère après une mise bas, en multiples de la gestation de l'espèce. */

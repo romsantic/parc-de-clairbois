@@ -1,4 +1,5 @@
 import { TUNING } from '../data/tuning'
+import { HEALTH_TUNING } from '../data/diseases'
 import { autonomyHours, consumptionPerHour } from '../sim/feeding'
 import { closeDrawer, isDrawerOpen, openDrawer } from './drawer'
 import { formatAmount, formatAutonomy } from './format'
@@ -15,7 +16,7 @@ export function toggleAutonomyPanel(ctx: PanelContext): void {
     const auto = text('p', '', 'gros')
     const stock = text('p', '')
     const eat = text('p', '')
-    const rappel = text('p', `Le chiffre passe à l'orange sous ${formatAmount(TUNING.AUTONOMY_WARN_H)} h et au rouge sous ${formatAmount(TUNING.AUTONOMY_URGENT_H)} h. Sans nourriture, les animaux ont faim au bout de ${TUNING.HUNGRY_AFTER_H} h et tombent malades au bout de ${TUNING.SICK_AFTER_H} h.`, 'discret')
+    const rappel = text('p', `Le chiffre passe à l'orange sous ${formatAmount(TUNING.AUTONOMY_WARN_H)} h et au rouge sous ${formatAmount(TUNING.AUTONOMY_URGENT_H)} h. Sans nourriture, les animaux ont faim au bout de ${TUNING.HUNGRY_AFTER_H} h et ont une indigestion au bout de ${HEALTH_TUNING.INDIGESTION_AFTER_H} h.`, 'discret')
     body.append(auto, stock, eat, rappel)
     function update() {
       const s = ctx.get()
