@@ -37,6 +37,8 @@ export interface Session {
   pathsNotice: string | null
   /** Message à montrer une fois (première soigneuse offerte à une ancienne partie) ; null sinon. */
   staffNotice: string | null
+  /** Message à montrer une fois (centre vétérinaire et vétérinaire offerts à une ancienne partie) ; null sinon. */
+  healthNotice: string | null
   /** Identifiant de cet onglet : seul lui sauvegarde tant qu'aucun autre n'a repris la partie. */
   owner: string
 }
@@ -111,10 +113,17 @@ function staffMessage(state: GameState): string {
   return msg
 }
 
+/** Texte du centre vétérinaire offert ; `sick` : les malades déjà confiés à la vétérinaire au chargement. */
+function healthMessage(sick: number): string {
+  let msg = "Nouveau à Clairbois : le centre vétérinaire ! Margaux l'a fait construire et Élise Fontaine, vétérinaire, soigne maintenant les malades toute seule."
+  if (sick > 0) msg += sick === 1 ? ' 1 animal malade lui a été confié.' : ` ${sick} animaux malades lui ont été confiés.`
+  return msg
+}
+
 /** Charge la partie (ou en crée une), rattrape le temps d'absence et prend la main sur la sauvegarde. */
 export function startSession(store: Storage, nowMs: number, storageOk = true): Session {
   const owner = newOwner()
-  const base = { summary: null, skippedMs: 0, absentMs: 0, owner, priceNotice: null as string | null, pathsNotice: null as string | null, staffNotice: null as string | null }
+  const base = { summary: null, skippedMs: 0, absentMs: 0, owner, priceNotice: null as string | null, pathsNotice: null as string | null, staffNotice: null as string | null, healthNotice: null as string | null }
   if (!storageOk) return { ...base, state: freshGame(nowMs), problem: null, canSave: false }
   const loaded = loadGame(store, undefined, nowMs)
   if (loaded.kind === 'trop-recente' || loaded.kind === 'migration-impossible') {
@@ -138,6 +147,10 @@ export function startSession(store: Storage, nowMs: number, storageOk = true): S
     start = giftFirstKeeper(start, nowMs)
     staffNotice = staffMessage(start)
   }
+  let healthNotice: string | null = null
+  if (loaded.fromVersion < 6) { // la migration a déjà offert le centre et la vétérinaire : on compte les malades avant le rattrapage
+    healthNotice = healthMessage(start.animals.filter((a) => a.health.status === 'malade').length)
+  }
   start.utcOffsetMin = localOffset(nowMs) // l'heure locale, avant le rattrapage
   const notice = applyStep6Adjustments(store, start) // avant le rattrapage : l'absence ne se passe pas à un prix démesuré
   const r = advanceTo(start, nowMs)
@@ -148,7 +161,7 @@ export function startSession(store: Storage, nowMs: number, storageOk = true): S
     restock(r.state)
   }
   const canSave = saveGame(store, r.state, nowMs, owner) === 'ok'
-  return { ...base, state: r.state, summary: summarize(r.events, r.state), skippedMs: r.skippedMs, absentMs: loaded.savedAt === undefined ? 0 : Math.max(0, nowMs - loaded.savedAt), problem: null, canSave, priceNotice: notice, pathsNotice, staffNotice }
+  return { ...base, state: r.state, summary: summarize(r.events, r.state), skippedMs: r.skippedMs, absentMs: loaded.savedAt === undefined ? 0 : Math.max(0, nowMs - loaded.savedAt), problem: null, canSave, priceNotice: notice, pathsNotice, staffNotice, healthNotice }
 }
 
 /**

@@ -2,6 +2,8 @@
 import type { GameState } from '../sim/types'
 import type { Summary } from '../sim/summary'
 import { autonomyHours } from '../sim/feeding'
+import { careQueue, untreatable, workingVets } from '../sim/vet'
+import { DISEASES } from '../data/diseases'
 import { MISSIONS_TUNING } from '../data/missions'
 import { dailyLines, currentLine } from './missionModel'
 import { formatAbsence, formatAutonomy, formatThousands } from './format'
@@ -33,6 +35,36 @@ export function gazetteHeadline(s: Summary): string {
   return 'Une journée calme à Clairbois'
 }
 
+/** Phrases de la rubrique « Santé » : maladies repérées, soins, file d'attente, malades que personne ne peut soigner. */
+function healthLines(s: Summary, state?: GameState): string[] {
+  const lines: string[] = []
+  if (s.malades > 0) {
+    // Le plus fréquent d'abord, puis par ordre alphabétique.
+    const parts = Object.entries(s.maladies)
+      .map(([d, n]) => ({ name: DISEASES[d as keyof typeof DISEASES].name.toLowerCase(), n: n ?? 0 }))
+      .filter((p) => p.n > 0)
+      .sort((a, b) => b.n - a.n || a.name.localeCompare(b.name, 'fr'))
+      .map((p) => `${p.n} ${p.name}`)
+    // Un seul malade : « (indigestion) » ; plusieurs : « (1 grippe, 1 parasites) ».
+    const detail = parts.length === 0 ? '' : s.malades === 1 ? ` (${parts[0].replace(/^1 /, '')})` : ` (${parts.join(', ')})`
+    lines.push(s.malades === 1 ? `Un animal est tombé malade${detail}.` : `${s.malades} animaux sont tombés malades${detail}.`)
+  }
+  if (s.soignes > 0) lines.push(`Le vétérinaire a soigné ${plural(s.soignes, 'animal', 'animaux')} pour ${plural(ago(s.soinsCout), 'pièce', 'pièces')}.`)
+  if (state) {
+    const queue = workingVets(state).length > 0 ? careQueue(state).length : 0 // sans vétérinaire, la ligne « Personne ne peut soigner » dit tout
+    if (queue > 0) lines.push(`File d’attente au centre : ${plural(queue, 'animal', 'animaux')}.`)
+    const stuck = untreatable(state)
+    if (stuck.length > 0) {
+      if (workingVets(state).length === 0) lines.push(`Personne ne peut soigner ${plural(stuck.length, 'animal', 'animaux')} : il faut le centre vétérinaire et un vétérinaire.`)
+      else {
+        const level = Math.min(...stuck.map((a) => DISEASES[(a.health as { disease: keyof typeof DISEASES }).disease].centerLevel))
+        lines.push(`${plural(stuck.length, 'animal attend', 'animaux attendent')} que le centre passe au niveau ${level}.`)
+      }
+    }
+  }
+  return lines
+}
+
 /** Prépare l'édition : titre, durée d'absence et rubriques (rien pour ce qui vaut 0, sauf pièces et visiteurs). */
 export function gazetteEdition(s: Summary, absentMs: number, state?: GameState): GazetteEdition {
   const items: GazetteItem[] = []
@@ -48,8 +80,8 @@ export function gazetteEdition(s: Summary, absentMs: number, state?: GameState):
     const left = !state ? '' : state.animals.length === 0 ? ' Plus aucun animal à nourrir.' : ` Il reste ${formatAutonomy(autonomyHours(state)).text} d'autonomie.`
     items.push({ label: 'Garde-manger', text: `Les animaux ont mangé ${eaten}.${left}` })
   }
-  if (s.malades > 0) items.push({ label: 'Santé', text: s.malades === 1 ? 'Un animal est tombé malade.' : `${s.malades} animaux sont tombés malades.` })
-  if (s.morts.length > 0) items.push({ label: 'Disparus', text: s.morts.map((m) => m.name).join(', ') })
+  for (const text of healthLines(s, state)) items.push({ label: 'Santé', text })
+  if (s.morts.length > 0) items.push({ label: 'Disparus', text: s.morts.map((m) => (m.cause ? `${m.name} (${DISEASES[m.cause].name.toLowerCase()})` : m.name)).join(', ') })
   const toClaim = new Set(state ? [currentLine(state), ...dailyLines(state)].filter((l) => l && l.done && !l.claimed).map((l) => l!.title) : [])
   const versees = new Set(s.missionsVersees)
   for (const title of s.missions) items.push({ label: 'Mission réussie', text: versees.has(title) ? `${title} (récompense versée)` : toClaim.has(title) ? `${title} (à récupérer)` : title })

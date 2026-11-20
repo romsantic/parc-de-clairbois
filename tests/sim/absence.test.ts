@@ -29,8 +29,8 @@ describe("scénarios d'absence (spec §10)", () => {
     const r = advanceTo(sheepFor(5, 0), T0 + 5 * DAY_MS)
     expect(r.state.animals).toHaveLength(0)
     expect(summarize(r.events).morts).toEqual([
-      { name: 'Bête1', species: 'mouton' },
-      { name: 'Bête2', species: 'mouton' },
+      { name: 'Bête1', species: 'mouton', cause: 'indigestion' },
+      { name: 'Bête2', species: 'mouton', cause: 'indigestion' },
     ])
   })
   it("une absence d'un an est plafonnée à 30 jours et reste rapide", () => {

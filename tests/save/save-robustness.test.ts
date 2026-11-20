@@ -61,7 +61,7 @@ describe('sauvegarde v2 abîmée (relecture)', () => {
     'niveau de village 4': (g) => { g.village.level = 4 },
     'premiers pas : étape -1': (g) => { g.missions.tutorial.step = -1 },
     'premiers pas : étape 2,5': (g) => { g.missions.tutorial.step = 2.5 },
-    'premiers pas : étape 10': (g) => { g.missions.tutorial.step = 10 },
+    'premiers pas : étape 11': (g) => { g.missions.tutorial.step = 11 },
     'histoire : index -1': (g) => { g.missions.story.index = -1 },
     'histoire : index 2,5': (g) => { g.missions.story.index = 2.5 },
     'histoire : index trop grand': (g) => { g.missions.story.index = 1000 },

@@ -1,11 +1,17 @@
 import type { SpeciesId } from '../data/species'
-import type { GameEvent, GameState, StaffLevel } from './types'
+import type { DiseaseId, GameEvent, GameState, StaffLevel } from './types'
 import { missionDef } from './missions'
 
 export interface Summary {
   naissances: number
-  morts: { name: string; species: SpeciesId }[]
+  morts: { name: string; species: SpeciesId; cause?: DiseaseId }[]
+  /** Maladies repérées pendant la période (le repérage, pas l'apparition). */
   malades: number
+  /** Les mêmes, par maladie. */
+  maladies: Partial<Record<DiseaseId, number>>
+  /** Soins commencés par le vétérinaire, et pièces dépensées. */
+  soignes: number
+  soinsCout: number
   fourrage: number
   viande: number
   pieces: number
@@ -28,11 +34,12 @@ export interface Summary {
 
 /** Résumé de ce qui s'est passé (pendant une absence, par exemple). */
 export function summarize(events: GameEvent[], state?: GameState): Summary {
-  const s: Summary = { naissances: 0, morts: [], malades: 0, fourrage: 0, viande: 0, pieces: 0, visiteurs: 0, missions: [], missionsVersees: [], quotidiennesRenouvelees: false, serie: state?.missions.daily.streak ?? 0, salaires: 0, salairesDus: 0, niveaux: [] }
+  const s: Summary = { naissances: 0, morts: [], malades: 0, maladies: {}, soignes: 0, soinsCout: 0, fourrage: 0, viande: 0, pieces: 0, visiteurs: 0, missions: [], missionsVersees: [], quotidiennesRenouvelees: false, serie: state?.missions.daily.streak ?? 0, salaires: 0, salairesDus: 0, niveaux: [] }
   for (const e of events) {
     if (e.kind === 'naissance') s.naissances++
-    else if (e.kind === 'malade') s.malades++
-    else if (e.kind === 'mort') s.morts.push({ name: e.name, species: e.species })
+    else if (e.kind === 'malade') { s.malades++; s.maladies[e.disease] = (s.maladies[e.disease] ?? 0) + 1 }
+    else if (e.kind === 'soigne') { s.soignes++; s.soinsCout += e.cost }
+    else if (e.kind === 'mort') s.morts.push({ name: e.name, species: e.species, ...(e.cause ? { cause: e.cause } : {}) })
     else if (e.kind === 'repas') { s.fourrage += e.fourrage; s.viande += e.viande }
     else if (e.kind === 'recettes') { s.pieces += e.billets + e.village; s.visiteurs += e.visiteurs }
     else if (e.kind === 'quotidiennes') s.quotidiennesRenouvelees = true

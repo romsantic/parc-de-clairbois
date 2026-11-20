@@ -117,6 +117,10 @@ export function markerPosition(state: GameState, id: HighlightId | null): { x: n
       const slot = freeSlot(state)
       return slot ? { x: slot.x, z: slot.z } : null
     }
+    case 'emplacementCentre': {
+      const slot = SLOTS.find((s) => s.only === 'centreVeto')
+      return slot ? { x: slot.x, z: slot.z } : null
+    }
     case 'prairie': return prairieSpot(state)
     default: return null
   }

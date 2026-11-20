@@ -57,6 +57,7 @@ export function runGame(store: Storage, storageOk = true, audio: AudioController
   if (session.priceNotice) showNotice(session.priceNotice, 20000)
   if (session.pathsNotice) showNotice(session.pathsNotice, 20000)
   if (session.staffNotice) showNotice(session.staffNotice, 20000)
+  if (session.healthNotice) showNotice(session.healthNotice, 20000)
   if (!storageOk) showNotice('Ton navigateur bloque la sauvegarde : la partie ne sera pas conservée après fermeture.')
 
   let state = session.state

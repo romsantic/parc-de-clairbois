@@ -19,7 +19,7 @@ export type Objective =
 export interface Reward { coins?: number; fourrage?: number; viande?: number }
 
 /** Élément de l'interface à mettre en évidence pendant les premiers pas. */
-export type HighlightId = 'detailsEnclos' | 'ferme' | 'nettoyer' | 'billet' | 'emplacementLibre' | 'prairie' | 'marchand' | 'autonomie'
+export type HighlightId = 'detailsEnclos' | 'ferme' | 'nettoyer' | 'billet' | 'emplacementLibre' | 'emplacementCentre' | 'prairie' | 'marchand' | 'autonomie'
 
 export interface MissionDef {
   id: string
@@ -106,7 +106,7 @@ const FERMIER = 'Le fermier'
 const AUBERGISTE = "L'aubergiste"
 const GARDE = 'La garde forestière'
 
-/** Les 9 premiers pas avec Margaux, dans l'ordre. */
+/** Les 10 premiers pas avec Margaux, dans l'ordre. L'index de `pas-cafe` (4) est écrit en dur dans la migration v5 → v6 (un test le compare). */
 export const TUTORIAL: MissionDef[] = [
   {
     id: 'pas-fiche', title: "Ouvre la fiche de l'enclos des moutons", giver: MARGAUX, highlight: 'detailsEnclos',
@@ -132,6 +132,11 @@ export const TUTORIAL: MissionDef[] = [
     id: 'pas-cafe', title: 'Construis le café', giver: MARGAUX, highlight: 'emplacementLibre',
     text: "Les visiteurs ont soif ! Un café rapporte des pièces et attire de nouveaux habitants. Touche l'emplacement libre pour le construire.",
     objective: { kind: 'batiment', building: 'cafe' }, reward: { coins: 150 },
+  },
+  {
+    id: 'pas-centre', title: 'Construis le centre vétérinaire', giver: MARGAUX, highlight: 'emplacementCentre',
+    text: "Les animaux peuvent tomber malades, et on ne les soigne plus d'un clic : il faut un centre vétérinaire. Touche l'emplacement réservé au village pour le construire, puis embauche un vétérinaire.",
+    objective: { kind: 'batiment', building: 'centreVeto' }, reward: { coins: 150 },
   },
   {
     id: 'pas-enclos', title: 'Pose un deuxième enclos dans la prairie', giver: MARGAUX, highlight: 'prairie',
@@ -221,7 +226,7 @@ export const STORY: MissionDef[] = [
 export const STORY_DONE_MESSAGE = 'Toutes les missions sont faites, merci ! De nouvelles aventures arriveront bientôt.'
 
 /** Condition pour qu'une quotidienne puisse être tirée. */
-export type DailyCondition = 'toujours' | 'ferme' | 'animalVendable' | 'couple' | 'malade'
+export type DailyCondition = 'toujours' | 'ferme' | 'animalVendable' | 'couple' | 'malade' | 'vaccinable'
 
 /**
  * Une quotidienne du pool. `{n}` dans le titre est remplacé par la cible ; `titleOne` sert quand la cible est 1.
@@ -288,8 +293,14 @@ export const DAILY_POOL: DailyDef[] = [
     reward: (p) => coinsReward(p),
   },
   {
-    id: 'quot-soin', title: 'Soigne un animal', giver: GARDE, possible: 'malade',
-    text: 'Un animal malade a besoin de toi.', objective: { kind: 'compteur', stat: 'soins', n: 1 },
+    id: 'quot-soin', title: 'Fais soigner un animal', giver: GARDE, possible: 'malade',
+    text: 'Un animal malade attend le vétérinaire au centre.', objective: { kind: 'compteur', stat: 'soins', n: 1 },
+    target: () => 1,
+    reward: (p) => coinsReward(p),
+  },
+  {
+    id: 'quot-vacciner', title: 'Vaccine un enclos', giver: GARDE, possible: 'vaccinable',
+    text: 'Protège un enclos de la grippe au centre vétérinaire.', objective: { kind: 'compteur', stat: 'vaccinations', n: 1 },
     target: () => 1,
     reward: (p) => coinsReward(p),
   },

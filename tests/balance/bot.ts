@@ -17,10 +17,10 @@ import { START_PATH } from '../../src/data/paths'
 import { canLevelUp, population } from '../../src/sim/village'
 import { careCoverage } from '../../src/sim/care'
 import { dailyWages, staffCap } from '../../src/sim/staff'
-import { centerLevel, quarantinePlaces, quarantineUsed } from '../../src/sim/vet'
+import { canTreat, centerLevel, quarantinePlaces, quarantineUsed, untreatable } from '../../src/sim/vet'
 import { VET_CENTER } from '../../src/data/diseases'
 import { STAFF_TUNING } from '../../src/data/staff'
-import type { BuildingType, GameState, Rect } from '../../src/sim/types'
+import type { BuildingType, DiseaseId, GameState, Rect } from '../../src/sim/types'
 
 /**
  * Joueur automatique : il joue UNIQUEMENT par les vraies règles (applyAction, advanceTo),
@@ -400,9 +400,16 @@ function buildVetCentre(c: Ctx): boolean {
   const s = c.s
   const level = centerLevel(s)
   if (level === 0) return s.coins - reserve() >= BUILDINGS.centreVeto.buildCost! && act(c, { type: 'batir', slot: VET_CENTER.SLOT, building: 'centreVeto' })
-  const wanted = s.village.level >= 2 ? 3 : 1
+  // Un malade que le centre ne sait pas soigner : le joueur attentif met l'argent de côté pour monter le centre (urgence).
+  const urgent = centreTooSmall(s)
+  const wanted = Math.max(s.village.level >= 2 ? 3 : 1, urgent ? level + 1 : 0)
   const cost = BUILDINGS.centreVeto.upgradeCost[level - 1]
-  return level < wanted && s.coins - reserve() >= cost && act(c, { type: 'ameliorer', slot: VET_CENTER.SLOT })
+  return level < wanted && s.coins - (urgent ? 0 : reserve()) >= cost && act(c, { type: 'ameliorer', slot: VET_CENTER.SLOT })
+}
+
+/** Un malade repéré attend un centre plus grand (et un vétérinaire travaille déjà ou pas : le centre existe). */
+function centreTooSmall(s: GameState): boolean {
+  return centerLevel(s) > 0 && untreatable(s).some((a) => !canTreat(s, (a.health as { disease: DiseaseId }).disease))
 }
 
 /** Il met les grippés repérés en quarantaine tant qu'il y a de la place. */
@@ -432,6 +439,7 @@ function tutorialStep(c: Ctx): boolean {
     }
     case 'pas-billet': return act(c, { type: 'billet', price: fairPrice(c.s) })
     case 'pas-cafe': return act(c, { type: 'batir', slot: SLOT_OF.cafe!, building: 'cafe' })
+    case 'pas-centre': return buildVetCentre(c)
     case 'pas-enclos': {
       moveStartPen(c)
       const rect = findRect(c, 'cochon', c.s.coins)
@@ -464,6 +472,7 @@ function visit(c: Ctx): void {
     if (step >= 7) {
       if (canLevelUp(c.s).ok && act(c, { type: 'monterNiveau' })) changed = true
       else if (buildVetCentre(c)) changed = true
+      else if (centreTooSmall(c.s)) { /* on garde l'argent pour le centre */ }
       else if (buildBuildings(c)) changed = true
       else if (hireStaff(c)) changed = true
       else if (buyAnimals(c)) changed = true

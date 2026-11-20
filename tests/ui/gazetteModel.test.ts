@@ -1,7 +1,8 @@
-import { emptyState, enclosure, animal } from '../sim/helpers'
+import { emptyState, enclosure, animal, employee, sick, T0 } from '../sim/helpers'
 import { describe, it, expect } from 'vitest'
 import { gazetteEdition, gazetteHeadline, formatDateFr } from '../../src/ui/gazetteModel'
 import { summarize, type Summary } from '../../src/sim/summary'
+import type { GameEvent, GameState } from '../../src/sim/types'
 
 const calm = (): Summary => summarize([])
 const H = 3_600_000
@@ -107,5 +108,77 @@ describe('personnel : Gazette', () => {
     expect(gazetteHeadline(debt)).toBe('Caisse vide : les salaires n’ont pas été payés en entier')
     expect(gazetteHeadline({ ...debt, morts: [{ name: 'Rex', species: 'loup' as const }] })).toBe('Triste nouvelle : Rex nous a quittés')
     expect(gazetteHeadline({ ...calm(), salaires: 40, salairesDus: 40, naissances: 2 })).toBe('2 naissances au parc !')
+  })
+})
+
+describe('résumé : santé (étape 3)', () => {
+  const ev = (...e: GameEvent[]) => summarize(e)
+  const malade = (disease: 'grippe' | 'parasites' | 'indigestion' | 'blessure'): GameEvent => ({ kind: 'malade', at: 1, animalId: 1, disease })
+  it('compte repérages, maladies, soins et leur coût, et la cause des morts', () => {
+    const s = ev(malade('grippe'), malade('parasites'), malade('grippe'),
+      { kind: 'soigne', at: 2, animalId: 1, disease: 'grippe', cost: 100 }, { kind: 'soigne', at: 3, animalId: 2, disease: 'parasites', cost: 20 },
+      { kind: 'mort', at: 4, animalId: 3, name: 'Noisette', species: 'mouton', cause: 'grippe' }, { kind: 'mort', at: 5, animalId: 4, name: 'Bête2', species: 'loup' })
+    expect(s.malades).toBe(3)
+    expect(s.maladies).toEqual({ grippe: 2, parasites: 1 })
+    expect(s.soignes).toBe(2)
+    expect(s.soinsCout).toBe(120)
+    expect(s.morts).toEqual([{ name: 'Noisette', species: 'mouton', cause: 'grippe' }, { name: 'Bête2', species: 'loup' }])
+  })
+  it('calme : tout à zéro', () => {
+    expect(calm()).toMatchObject({ soignes: 0, soinsCout: 0, maladies: {}, malades: 0 })
+  })
+})
+
+describe('Gazette : rubrique Santé (étape 3)', () => {
+  const santé = (s: Summary, state?: GameState) => gazetteEdition(s, H, state).items.filter((i) => i.label === 'Santé').map((i) => i.text)
+  const withDiseases = (m: Summary['maladies']): Summary => ({ ...calm(), maladies: m, malades: Object.values(m).reduce((a, b) => a + (b ?? 0), 0) })
+  it('0 malade : rien', () => {
+    expect(santé(calm())).toEqual([])
+  })
+  it('1 malade : « Un animal est tombé malade (indigestion). »', () => {
+    expect(santé(withDiseases({ indigestion: 1 }))).toEqual(['Un animal est tombé malade (indigestion).'])
+  })
+  it('plusieurs malades : détail par maladie', () => {
+    expect(santé(withDiseases({ grippe: 1, parasites: 1 }))).toEqual(['2 animaux sont tombés malades (1 grippe, 1 parasites).'])
+    expect(santé(withDiseases({ parasites: 3, blessure: 1 }))).toEqual(['4 animaux sont tombés malades (3 parasites, 1 blessure).'])
+  })
+  it('soins : seulement s’il y en a eu', () => {
+    expect(santé({ ...calm(), soignes: 3, soinsCout: 240 })).toEqual(['Le vétérinaire a soigné 3 animaux pour 240 pièces.'])
+    expect(santé({ ...calm(), soignes: 1, soinsCout: 20 })).toEqual(['Le vétérinaire a soigné 1 animal pour 20 pièces.'])
+  })
+  const park = (over: Partial<GameState>, n = 1, health = sick(T0)): GameState => emptyState({
+    enclosures: [enclosure(1, 'mouton')],
+    animals: Array.from({ length: n }, (_, i) => animal(i + 1, 'mouton', 'F', 1, { health: { ...health } })),
+    ...over,
+  })
+  const centre = (level: number, vets: number): Partial<GameState> => ({
+    buildings: [{ slot: 0, type: 'ferme', level: 1 }, ...(level > 0 ? [{ slot: 7, type: 'centreVeto' as const, level }] : [])],
+    staff: { ...emptyState().staff, employees: Array.from({ length: vets }, (_, i) => employee(i + 1, 'veterinaire')) },
+  })
+  it('file d’attente au centre', () => {
+    expect(santé(calm(), park(centre(1, 1), 2))).toEqual(['File d’attente au centre : 2 animaux.'])
+    expect(santé(calm(), park(centre(1, 1), 1))).toEqual(['File d’attente au centre : 1 animal.'])
+    expect(santé(calm(), park(centre(1, 1), 0))).toEqual([])
+  })
+  it('personne ne peut soigner : sans centre ou sans vétérinaire', () => {
+    expect(santé(calm(), park(centre(0, 0), 1))).toEqual(['Personne ne peut soigner 1 animal : il faut le centre vétérinaire et un vétérinaire.'])
+    expect(santé(calm(), park(centre(1, 0), 2))).toEqual(['Personne ne peut soigner 2 animaux : il faut le centre vétérinaire et un vétérinaire.'])
+  })
+  it('centre trop petit : « attend que le centre passe au niveau 3 »', () => {
+    const flu = sick(T0, { disease: 'grippe' })
+    expect(santé(calm(), park(centre(1, 1), 1, flu))).toEqual(['1 animal attend que le centre passe au niveau 3.'])
+    expect(santé(calm(), park(centre(2, 1), 2, flu))).toEqual(['2 animaux attendent que le centre passe au niveau 3.'])
+  })
+  it('un malade non repéré n’est ni en file ni sans soin', () => {
+    expect(santé(calm(), park(centre(0, 0), 1, sick(T0, { detectedAt: null })))).toEqual([])
+  })
+  it('l’ordre : maladies, soins, file', () => {
+    const s: Summary = { ...withDiseases({ parasites: 1 }), soignes: 1, soinsCout: 20 }
+    expect(santé(s, park(centre(1, 1), 1))).toEqual(['Un animal est tombé malade (parasites).', 'Le vétérinaire a soigné 1 animal pour 20 pièces.', 'File d’attente au centre : 1 animal.'])
+  })
+  it('Disparus : la cause entre parenthèses quand on la connaît', () => {
+    const s = { ...calm(), morts: [{ name: 'Noisette', species: 'mouton' as const, cause: 'grippe' as const }, { name: 'Bête2', species: 'loup' as const, cause: 'indigestion' as const }, { name: 'Rex', species: 'loup' as const }] }
+    const t = Object.fromEntries(gazetteEdition(s, H).items.map((i) => [i.label, i.text]))
+    expect(t['Disparus']).toBe('Noisette (grippe), Bête2 (indigestion), Rex')
   })
 })

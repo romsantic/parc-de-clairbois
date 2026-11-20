@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { animal, sick, bigPark, crowdedPark, emptyState, enclosure, storyAt, T0 } from './helpers'
+import { animal, sick, bigPark, crowdedPark, emptyState, employee, enclosure, storyAt, T0 } from './helpers'
 import { applyAction, type Action } from '../../src/sim/actions'
 import { advanceTo, step } from '../../src/sim/advance'
 import { claimMission, dayKey, missionDef, updateMissions } from '../../src/sim/missions'
@@ -119,6 +119,8 @@ describe('tirage', () => {
       const s = withDaily({
         rng, enclosures: [enclosure(1, 'mouton'), enclosure(2, 'cochon')],
         animals: [animal(1, 'mouton', 'F', 1), animal(2, 'mouton', 'M', 1), animal(3, 'cochon', 'F', 2, { health: sick(T0) })],
+        buildings: [{ slot: 0, type: 'ferme', level: 1 }, { slot: 7, type: 'centreVeto', level: 4 }],
+        staff: { ...emptyState().staff, employees: [employee(1, 'veterinaire')] },
       })
       for (const id of ids(s)) vues.add(poolId(id))
     }
@@ -450,5 +452,66 @@ describe('anciennes quotidiennes (partie v3, « quot-pieces#2 »)', () => {
     const coins = s.coins
     s = ok(s, { type: 'recuperer', track: 'quotidienne', id: 'quot-achat#2' })
     expect(s.coins).toBe(coins + 80)
+  })
+})
+
+describe('quotidiennes de santé (étape 3)', () => {
+  const centre = (level: number, vets: number) => ({
+    buildings: [{ slot: 0, type: 'ferme' as const, level: 1 as const }, ...(level > 0 ? [{ slot: 7, type: 'centreVeto' as const, level }] : [])],
+    staff: { ...emptyState().staff, employees: Array.from({ length: vets }, (_, i) => employee(i + 1, 'veterinaire')) },
+  })
+  const park = (rng: number, over: Partial<GameState>): GameState => withDaily({
+    rng, enclosures: [enclosure(1, 'mouton')], animals: [animal(1, 'mouton', 'F', 1, { health: sick(T0) })], ...over,
+  })
+  const seen = (over: Partial<GameState>, n = 80): Set<string> => {
+    const out = new Set<string>()
+    for (let rng = 1; rng <= n; rng++) for (const id of ids(park(rng, over))) out.add(poolId(id))
+    return out
+  }
+  it('« Fais soigner un animal » : textes, garde forestière, compteur « soins », même id', () => {
+    const d = DAILY_POOL.find((p) => p.id === 'quot-soin')!
+    expect(d).toMatchObject({ title: 'Fais soigner un animal', text: 'Un animal malade attend le vétérinaire au centre.', giver: 'La garde forestière', possible: 'malade' })
+    expect(d.objective).toEqual({ kind: 'compteur', stat: 'soins', n: 1 })
+  })
+  it('jamais tirée sans vétérinaire (ni sans centre), même avec un malade repéré', () => {
+    expect(seen(centre(1, 0)).has('quot-soin')).toBe(false)
+    expect(seen(centre(0, 1)).has('quot-soin')).toBe(false)
+  })
+  it('tirée avec un malade dans la file et un vétérinaire', () => {
+    expect(seen(centre(1, 1)).has('quot-soin')).toBe(true)
+  })
+  it('jamais tirée si le malade n’est pas repéré ou si le centre ne peut pas le soigner', () => {
+    expect(seen({ ...centre(1, 1), animals: [animal(1, 'mouton', 'F', 1, { health: sick(T0, { detectedAt: null }) })] }).has('quot-soin')).toBe(false)
+    expect(seen({ ...centre(1, 1), animals: [animal(1, 'mouton', 'F', 1, { health: sick(T0, { disease: 'grippe' }) })] }).has('quot-soin')).toBe(false)
+  })
+  it('tirée aussi quand le seul malade est déjà en soin', () => {
+    const inCare = animal(1, 'mouton', 'F', 1, { health: sick(T0, { careUntil: T0 + HOUR_MS, vetId: 1 }) })
+    expect(seen({ ...centre(1, 1), animals: [inCare] }).has('quot-soin')).toBe(true)
+  })
+  it('« Vaccine un enclos » : textes, compteur « vaccinations », cible 1', () => {
+    const d = DAILY_POOL.find((p) => p.id === 'quot-vacciner')!
+    expect(d).toMatchObject({ title: 'Vaccine un enclos', text: 'Protège un enclos de la grippe au centre vétérinaire.', possible: 'vaccinable' })
+    expect(d.objective).toEqual({ kind: 'compteur', stat: 'vaccinations', n: 1 })
+    expect(d.target(parkPace(emptyState()))).toBe(1)
+    expect(d.reward(parkPace(emptyState()), 1).coins).toBeGreaterThanOrEqual(DAILY_TUNING.REWARD_MIN)
+  })
+  it('« Vaccine un enclos » : seulement au centre 4, avec un vétérinaire, un enclos occupé non protégé', () => {
+    const healthy = [animal(1, 'mouton', 'F', 1)]
+    expect(seen({ ...centre(3, 1), animals: healthy }).has('quot-vacciner')).toBe(false)
+    expect(seen({ ...centre(4, 0), animals: healthy }).has('quot-vacciner')).toBe(false)
+    expect(seen({ ...centre(4, 1), animals: healthy }).has('quot-vacciner')).toBe(true)
+    expect(seen({ ...centre(5, 1), animals: healthy }).has('quot-vacciner')).toBe(true)
+    expect(seen({ ...centre(4, 1), animals: [] }).has('quot-vacciner')).toBe(false)
+  })
+  it('« Vaccine un enclos » : pas tirée si tous les enclos sont protégés, tirée s’il reste moins de 24 h', () => {
+    const healthy = [animal(1, 'mouton', 'F', 1)]
+    const protectedFor = (h: number) => [enclosure(1, 'mouton', 12, 10, { vaccinatedUntil: T0 + h * HOUR_MS })]
+    expect(seen({ ...centre(4, 1), animals: healthy, enclosures: protectedFor(48) }).has('quot-vacciner')).toBe(false)
+    expect(seen({ ...centre(4, 1), animals: healthy, enclosures: protectedFor(12) }).has('quot-vacciner')).toBe(true)
+  })
+  it('une quotidienne v3 « quot-soin#2 » reste lisible (30 pièces × 2, cible 1)', () => {
+    const def = missionDef('quotidienne', 'quot-soin#2')!
+    expect(def.objective).toEqual({ kind: 'compteur', stat: 'soins', n: 1 })
+    expect(def.reward).toEqual({ coins: 60 })
   })
 })

@@ -28,12 +28,20 @@ const started = (over: Partial<GameState> = {}): GameState => {
 const idOf = (s: GameState): string | undefined => currentMission(s)?.def.id
 
 describe('données des missions', () => {
-  it('9 premiers pas, 11 missions d\'histoire, portes aux bons index', () => {
-    expect(TUTORIAL).toHaveLength(9)
+  it('10 premiers pas, 11 missions d\'histoire, portes aux bons index', () => {
+    expect(TUTORIAL).toHaveLength(10)
     expect(STORY).toHaveLength(11)
     expect(STORY.findIndex((m) => m.gate === 2)).toBe(3)
     expect(STORY.findIndex((m) => m.gate === 3)).toBe(7)
     expect(STORY.findIndex((m) => m.gate === 'fin')).toBe(10)
+  })
+  it('« Construis le centre vétérinaire » : Margaux, juste après le café, emplacement 7 en évidence', () => {
+    const i = TUTORIAL.findIndex((m) => m.id === 'pas-cafe')
+    expect(TUTORIAL[i + 1]).toMatchObject({
+      id: 'pas-centre', title: 'Construis le centre vétérinaire', giver: 'Margaux, la maire',
+      highlight: 'emplacementCentre', objective: { kind: 'batiment', building: 'centreVeto' },
+    })
+    expect(TUTORIAL[i + 1].reward.coins).toBe(150)
   })
   it('les identifiants sont uniques', () => {
     const ids = [...TUTORIAL, ...STORY].map((m) => m.id)
@@ -97,26 +105,30 @@ describe('premiers pas', () => {
     expect(currentMission(s)!.mp.base).toBe(50)
     expect(currentMission(s)!.mp.done).toBe(false)
   })
-  it('ancienne partie : café et 2 enclos déjà là → pas n°5 réussi aussitôt, n°6 réussi aussitôt après récupération', () => {
+  it('ancienne partie : café, centre et 2 enclos déjà là → les pas n°5, n°6 et n°7 réussis aussitôt, un à un', () => {
     const s = emptyState({
-      buildings: [{ slot: 0, type: 'ferme', level: 1 }, { slot: 1, type: 'cafe', level: 1 }],
+      buildings: [{ slot: 0, type: 'ferme', level: 1 }, { slot: 1, type: 'cafe', level: 1 }, { slot: 7, type: 'centreVeto', level: 1 }],
       enclosures: [enclosure(1, 'mouton'), enclosure(2, null)],
     })
     s.missions.tutorial.step = 4
     updateMissions(s, [])
     expect(idOf(s)).toBe('pas-cafe')
     expect(currentMission(s)!.mp.done).toBe(true)
-    const t = ok(s, { type: 'recuperer', track: 'tutoriel' })
-    expect(t.coins).toBe(1150)
+    const c = ok(s, { type: 'recuperer', track: 'tutoriel' })
+    expect(c.coins).toBe(1150)
+    expect(idOf(c)).toBe('pas-centre') // une partie migrée a le centre offert : réussi aussitôt
+    expect(currentMission(c)!.mp.done).toBe(true)
+    const t = ok(c, { type: 'recuperer', track: 'tutoriel' })
+    expect(t.coins).toBe(1300)
     expect(idOf(t)).toBe('pas-enclos')
     expect(currentMission(t)!.mp.done).toBe(true)
     const u = ok(t, { type: 'recuperer', track: 'tutoriel' })
     expect(idOf(u)).toBe('pas-cochons')
     expect(currentMission(u)!.mp.done).toBe(false)
   })
-  it('gestation : une femelle qui devient gestante réussit le pas n°8', () => {
+  it('gestation : une femelle qui devient gestante réussit le pas n°9', () => {
     const s = emptyState()
-    s.missions.tutorial.step = 7
+    s.missions.tutorial.step = 8
     updateMissions(s, [])
     s.stats.counts.gestations += 1
     updateMissions(s, [])
@@ -139,11 +151,11 @@ describe('premiers pas', () => {
 
 describe('passer les premiers pas', () => {
   const atStep3 = (): GameState => { const s = emptyState(); s.missions.tutorial.step = 2; updateMissions(s, []); return s }
-  it('au pas n°3 : récompenses des pas 3 à 9 versées, histoire au palier 1', () => {
+  it('au pas n°3 : récompenses des pas 3 à 10 versées, histoire au palier 1', () => {
     const s = ok(atStep3(), { type: 'passerTutoriel' })
-    expect(s.coins).toBe(1000 + 10 + 20 + 150 + 150 + 100 + 50)
+    expect(s.coins).toBe(1000 + 10 + 20 + 150 + 150 + 150 + 100 + 50)
     expect(s.pantry.fourrage).toBe(20)
-    expect(s.missions.tutorial).toMatchObject({ step: 9, current: null, skipped: true })
+    expect(s.missions.tutorial).toMatchObject({ step: 10, current: null, skipped: true })
     expect(idOf(s)).toBe(STORY[0].id)
     expect(currentMission(s)!.track).toBe('histoire')
   })
@@ -155,25 +167,25 @@ describe('passer les premiers pas', () => {
   it('la mission en cours déjà réussie mais pas récupérée est versée aussi, une seule fois', () => {
     const s = ok(started(), { type: 'vu', what: 'ficheEnclos' })
     const t = ok(s, { type: 'passerTutoriel' })
-    expect(t.coins).toBe(1000 + 20 + 10 + 20 + 150 + 150 + 100 + 50)
+    expect(t.coins).toBe(1000 + 20 + 10 + 20 + 150 + 150 + 150 + 100 + 50)
   })
 })
 
 describe('histoire', () => {
   it('fin des premiers pas : l\'histoire commence au premier palier', () => {
     let s = emptyState()
-    s.missions.tutorial.step = 8
+    s.missions.tutorial.step = 9
     updateMissions(s, [])
     s.stats.counts.autonomieVue = 1
     updateMissions(s, [])
     s = ok(s, { type: 'recuperer', track: 'tutoriel' })
-    expect(s.missions.tutorial.step).toBe(9)
+    expect(s.missions.tutorial.step).toBe(10)
     expect(idOf(s)).toBe(STORY[0].id)
     expect(s.missions.story.index).toBe(0)
   })
   it('tutoriel fini au niveau 2 : l\'histoire démarre au premier palier Village', () => {
     const s = emptyState({ village: { level: 2, clientsServed: 0 } })
-    s.missions.tutorial.step = 8
+    s.missions.tutorial.step = 9
     updateMissions(s, [])
     s.stats.counts.autonomieVue = 1
     updateMissions(s, [])
@@ -183,7 +195,7 @@ describe('histoire', () => {
   })
   it('une partie migrée au niveau 2 garde son index', () => {
     const s = emptyState({ village: { level: 2, clientsServed: 0 }, missions: storyAt(4) })
-    s.missions.tutorial.step = 8
+    s.missions.tutorial.step = 9
     updateMissions(s, [])
     s.stats.counts.autonomieVue = 1
     updateMissions(s, [])
@@ -358,7 +370,7 @@ describe('résumé d\'absence : missions', () => {
       enclosures: [enclosure(1, 'mouton')], animals: [animal(1, 'mouton', 'F', 1), animal(2, 'mouton', 'M', 1)],
       pantry: { fourrage: 500, viande: 0, capacity: 1000 },
     })
-    s.missions.tutorial = { step: 7, current: { id: 'pas-gestation', base: 0, done: false, claimed: false }, skipped: false }
+    s.missions.tutorial = { step: 8, current: { id: 'pas-gestation', base: 0, done: false, claimed: false }, skipped: false }
     const r = advanceTo(s, T0 + 5 * DAY_MS)
     expect(r.state.missions.tutorial.current?.done).toBe(true)
     expect(summarize(r.events, r.state).missions).toContain('Attends la première gestation')

@@ -38,7 +38,7 @@ export function emptyState(over: Partial<GameState> = {}): GameState {
 /** Missions avec l'histoire placée à l'index donné (4 = palier Village, 8 = palier Bourg : les portes sont ouvertes). */
 export function storyAt(index: number): GameState['missions'] {
   return {
-    tutorial: { step: 9, current: null, skipped: false },
+    tutorial: { step: 10, current: null, skipped: false },
     story: { index, current: null },
     daily: { dayKey: -1, list: [], streak: 0, lastFullDay: null, coupons: 0 },
     unread: false,

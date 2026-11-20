@@ -241,10 +241,11 @@ describe('chemins : chemin offert aux anciennes parties', () => {
 })
 
 describe('le personnel : ancienne partie', () => {
-  const asV4 = (g: ReturnType<typeof bigPark>) => { const s = structuredClone(g) as unknown as Record<string, unknown>; delete s.staff; s.version = 4; return s }
+  const asV4 = (g: ReturnType<typeof bigPark>) => { const s = structuredClone(g) as unknown as Record<string, any>; delete s.staff; s.version = 4; s.missions.tutorial.step = 9; return s } // eslint-disable-line @typescript-eslint/no-explicit-any
+  // (une vraie sauvegarde v4 ou v5 a 9 premiers pas ; le 10e est ajouté par la migration vers la v6)
   const save = (g: ReturnType<typeof bigPark>, version: 4 | 5 = 4) => {
     const m = memory()
-    m.data[SAVE_KEY] = JSON.stringify({ version, savedAt: g.time, state: version === 4 ? asV4(g) : g })
+    m.data[SAVE_KEY] = JSON.stringify({ version, savedAt: g.time, state: version === 4 ? asV4(g) : { ...g, missions: { ...g.missions, tutorial: { ...g.missions.tutorial, step: 9 } } } })
     return m
   }
   it('sauvegarde v4 : Léa arrive, le message le dit, et le rattrapage ne fait ni mort ni malade de plus', () => {
@@ -281,5 +282,51 @@ describe('le personnel : ancienne partie', () => {
     expect(a.staff.employees).toHaveLength(1)
     expect(a.staff.coverAllUntil).toBe(123_000)
     expect(giftFirstKeeper(a, 999_000)).toBe(a)
+  })
+})
+
+describe('le centre vétérinaire : ancienne partie (étape 3)', () => {
+  const asV5 = (g: ReturnType<typeof bigPark>) => {
+    const s = structuredClone(g) as unknown as Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
+    s.version = 5
+    s.missions.tutorial.step = 9 // une vraie sauvegarde v5 a 9 premiers pas
+    s.buildings = s.buildings.filter((b: { type: string }) => b.type !== 'centreVeto')
+    s.staff.employees = s.staff.employees.filter((e: { job: string }) => e.job !== 'veterinaire')
+    delete s.stats.counts.vaccinations
+    for (const e of s.enclosures) delete e.vaccinatedUntil
+    s.animals = s.animals.map((a: object) => ({ ...a, health: { status: 'ok' } }))
+    return s
+  }
+  const sickV5 = (n: number) => {
+    const s = asV5(bigPark())
+    for (let i = 0; i < n; i++) s.animals[i].health = { status: 'malade', since: s.time - 2 * 3_600_000 }
+    return s
+  }
+  const save = (s: unknown, version: number, savedAt: number) => {
+    const m = memory()
+    m.data[SAVE_KEY] = JSON.stringify({ version, savedAt, state: s })
+    return m
+  }
+  it('sauvegarde v5 : le message annonce le centre et Élise Fontaine, sans malade si personne ne l’est', () => {
+    const s = asV5(bigPark())
+    const r = startSession(save(s, 5, s.time), s.time)
+    expect(r.healthNotice).toBe("Nouveau à Clairbois : le centre vétérinaire ! Margaux l'a fait construire et Élise Fontaine, vétérinaire, soigne maintenant les malades toute seule.")
+  })
+  it('sauvegarde v5 avec malades : « N animaux malades lui ont été confiés », compté avant le rattrapage', () => {
+    const s = sickV5(3)
+    const r = startSession(save(s, 5, s.time), s.time + 6 * 3_600_000)
+    expect(r.healthNotice).toContain('Élise Fontaine')
+    expect(r.healthNotice).toContain('3 animaux malades lui ont été confiés.')
+  })
+  it('un seul malade : accord au singulier', () => {
+    const s = sickV5(1)
+    expect(startSession(save(s, 5, s.time), s.time).healthNotice).toContain('1 animal malade lui a été confié.')
+  })
+  it('sauvegarde v6 : pas de message', () => {
+    const g = bigPark()
+    expect(startSession(save(g, 6, g.time), g.time + DAY_MS).healthNotice).toBeNull()
+  })
+  it('partie neuve : pas de message', () => {
+    expect(startSession(memory(), NOW).healthNotice).toBeNull()
   })
 })

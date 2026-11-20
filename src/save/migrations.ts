@@ -70,8 +70,12 @@ export const MIGRATIONS: Record<number, Migration> = {
       employees.push({ id: nextId, name: 'Élise Fontaine', job: 'veterinaire', xpH: 0, hiredAt: old.time, encIds: [] } as never)
       nextId += 1
     }
+    // Un pas de plus dans les premiers pas (« Construis le centre vétérinaire », juste après le café, index 4) :
+    // qui est au-delà du café (ou a fini) avance d'un cran, personne ne recule.
+    const tutorial = old.missions.tutorial as { step: number }
+    const missions = tutorial.step > 4 ? { ...old.missions, tutorial: { ...tutorial, step: tutorial.step + 1 } } : old.missions
     return {
-      ...old, version: 6, nextId, animals, buildings,
+      ...old, version: 6, nextId, animals, buildings, missions,
       enclosures: (old.enclosures as object[]).map((e) => ({ ...e, vaccinatedUntil: null })),
       stats: { ...old.stats, counts: { ...old.stats.counts, vaccinations: 0 } },
       staff: { ...old.staff, employees },

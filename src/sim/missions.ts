@@ -1,12 +1,14 @@
 import { SPECIES } from '../data/species'
 import { DAILY_LEGACY, DAILY_POOL, MISSIONS_TUNING, STORY, TUTORIAL, type DailyCondition, type MissionDef, type Objective, type Reward } from '../data/missions'
-import { DAY_MS } from '../data/tuning'
+import { DAY_MS, HOUR_MS } from '../data/tuning'
+import { VET_CENTER } from '../data/diseases'
 import type { ActionResult } from './actions'
 import { ageStage } from './animal'
 import { careCoverage } from './care'
 import { incomePerHour, parkPace } from './economy'
 import { autonomyHours } from './feeding'
 import { sellPrice } from './merchant'
+import { careQueue, centerLevel, workingVets } from './vet'
 import { random } from './random'
 import { population } from './village'
 import type { GameEvent, GameState, MissionProgress } from './types'
@@ -137,7 +139,13 @@ const POSSIBLE: Record<DailyCondition, (s: GameState) => boolean> = {
       return adults.some((a) => a.sex === 'F' && covered.has(a.id)) && adults.some((a) => a.sex === 'M')
     })
   },
-  malade: (s) => s.animals.some((a) => a.health.status === 'malade'),
+  // Un malade à faire soigner (dans la file ou déjà en soin) et un vétérinaire au travail.
+  malade: (s) => workingVets(s).length > 0
+    && (careQueue(s).length > 0 || s.animals.some((a) => a.health.status === 'malade' && a.health.careUntil !== null)),
+  // Un enclos occupé, pas protégé de la grippe (ou bientôt plus), un vétérinaire et un centre qui vaccine.
+  vaccinable: (s) => centerLevel(s) >= VET_CENTER.VACCINE_LEVEL && workingVets(s).length > 0
+    && s.enclosures.some((e) => s.animals.some((a) => a.enclosureId === e.id)
+      && (e.vaccinatedUntil === null || e.vaccinatedUntil - s.time <= VET_CENTER.VACCINE_RENEW_BELOW_H * HOUR_MS)),
 }
 
 /** Tire les quotidiennes du jour parmi celles possibles (hasard de la partie, donc reproductible). */

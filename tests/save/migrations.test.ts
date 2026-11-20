@@ -3,6 +3,7 @@ import { loadGame, SAVE_KEY, type Storage } from '../../src/save/save'
 import { newGame } from '../../src/sim/newGame'
 import { CURRENT_VERSION, MIGRATIONS } from '../../src/save/migrations'
 import { VET_CENTER } from '../../src/data/diseases'
+import { TUTORIAL } from '../../src/data/missions'
 import { advanceTo } from '../../src/sim/advance'
 import type { GameState } from '../../src/sim/types'
 
@@ -247,6 +248,34 @@ describe('migration v5 -> v6 (maladies et centre vétérinaire)', () => {
     const s = okState(v5State())
     const r = advanceTo(s, s.time + 600_000)
     expect(r.state.animals.some((a) => a.id === 10)).toBe(true)
+  })
+})
+
+describe('migration v5 -> v6 : le pas « Construis le centre vétérinaire » (D8)', () => {
+  const stepAfter = (step: number, skipped = false) => {
+    const old = v5State()
+    old.missions.tutorial = { step, current: null, skipped }
+    return okState(old).missions.tutorial
+  }
+  const CAFE = TUTORIAL.findIndex((m) => m.id === 'pas-cafe')
+  it('le pas du café est à l’index 4 et le nouveau pas juste après (la migration l’écrit en dur)', () => {
+    expect(CAFE).toBe(4)
+    expect(TUTORIAL[CAFE + 1].id).toBe('pas-centre')
+  })
+  it('au pas du café ou avant : rien ne bouge', () => {
+    expect(stepAfter(CAFE).step).toBe(CAFE)
+    expect(stepAfter(0).step).toBe(0)
+  })
+  it('après le café : un cran de plus, personne ne recule', () => {
+    expect(stepAfter(CAFE + 1).step).toBe(CAFE + 2)
+    expect(stepAfter(7).step).toBe(8)
+  })
+  it('premiers pas finis (9 pas avant) : finis aussi avec 10 pas', () => {
+    expect(stepAfter(9).step).toBe(TUTORIAL.length)
+  })
+  it('« skipped » n’est pas touché', () => {
+    expect(stepAfter(9, true)).toMatchObject({ step: TUTORIAL.length, skipped: true })
+    expect(stepAfter(2, true).skipped).toBe(true)
   })
 })
 
