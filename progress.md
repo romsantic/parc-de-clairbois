@@ -92,7 +92,7 @@
 |---|---|---|
 | 1 | Chemins à construire | ✅ fusionnée dans `main` (4935132) avec l'accord de Romain le 19/11/2026, publiée et vérifiée en ligne |
 | 2 | Personnel et maison du personnel | plan prêt et voté (branche `etape-v2-2-personnel`) — ✅ fusionnée dans `main` (9ccfb50) avec l'accord de Romain le 19/11/2026, publiée et vérifiée en ligne |
-| 3 | Maladies et centre vétérinaire | ✅ fusionnée dans `main` (33a1c5f) avec l'accord de Romain le 20/11/2026, publiée |
+| 3 | Maladies et centre vétérinaire | ✅ fusionnée dans `main` (33a1c5f) avec l'accord de Romain le 20/11/2026, publiée et vérifiée en ligne |
 | 4 | Ferme qui produit (parcelles, fermier, grange) | plan prêt et voté (branche `etape-v2-4-ferme`) |
 | 5 | Confort, décoration, déchets, satisfaction, animateur | plan prêt et voté (branche `etape-v2-5-confort`) |
 | 6 | Niveaux 4–6, carte agrandie, espèces, potager, restaurant, marchand itinérant | plan prêt et voté (branche `etape-v2-6-niveaux-especes`) |
