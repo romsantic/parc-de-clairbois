@@ -92,7 +92,7 @@
 |---|---|---|
 | 1 | Chemins à construire | ✅ fusionnée dans `main` (4935132) avec l'accord de Romain le 19/11/2026, publiée et vérifiée en ligne |
 | 2 | Personnel et maison du personnel | plan prêt et voté (branche `etape-v2-2-personnel`) — ✅ fusionnée dans `main` (9ccfb50) avec l'accord de Romain le 19/11/2026, publiée et vérifiée en ligne |
-| 3 | Maladies et centre vétérinaire | plan prêt et voté (branche `etape-v2-3-maladies`) |
+| 3 | Maladies et centre vétérinaire | ✅ fusionnée dans `main` (33a1c5f) avec l'accord de Romain le 20/11/2026, publiée |
 | 4 | Ferme qui produit (parcelles, fermier, grange) | plan prêt et voté (branche `etape-v2-4-ferme`) |
 | 5 | Confort, décoration, déchets, satisfaction, animateur | plan prêt et voté (branche `etape-v2-5-confort`) |
 | 6 | Niveaux 4–6, carte agrandie, espèces, potager, restaurant, marchand itinérant | plan prêt et voté (branche `etape-v2-6-niveaux-especes`) |
@@ -141,11 +141,11 @@
 | 5 | Missions (dont le premier pas du centre), Gazette, message de mise à jour | agent · Sonnet | faite (992668c) — 935 tests |
 | 6 | Le centre et les malades sur la carte | agent · Sonnet | faite (c881ca9) — 941 tests |
 | 7 | Interface : fiches et volet du centre, téléphone | agent · Sonnet | faite (8994aa3, 09e20c4) — 962 tests |
-| 8 | Vérification d'ensemble, relecture et publication | chef + relecture Opus | vérifiée et relue (105acc4) — 978 tests ; **en attente de l'accord de Romain pour fusionner** |
+| 8 | Vérification d'ensemble, relecture et publication | chef + relecture Opus | vérifiée et relue (105acc4) — 978 tests ; **fusionnée dans `main` (33a1c5f) avec l'accord de Romain le 20/11/2026** |
 
 **Sous-tâche 8 (20/11/2026)** — vérification dans le navigateur : icône jaune au-dessus d'un malade, fiche « Indigestion · léger » + « Personne ne peut le soigner… » sans centre, premier pas « Construis le centre vétérinaire » (étape 6 sur 10) avec l'emplacement 7 signalé, centre bâti pour 250 (maison + enseigne à croix verte), vétérinaire embauchée, soin seul en 2 h, volet du centre lisible. Pas vus dans le navigateur (couverts par les tests) : ancienne partie v5, grippe, quarantaine, vaccination, niveaux 2 à 5. Relecture finale Opus : « avec corrections », toutes faites en 105acc4 et revérifiées — **plantage des promeneurs** au bout de leur trajet (défaut présent depuis V2-1, rendu fréquent par le petit tour du vétérinaire ; aussi dans `main` aujourd'hui), un vétérinaire toujours proposé quand le centre existe et qu'on n'en a pas, phrase « améliore le centre » dans le message des parties au Village ou plus, barre du bas du centre (vétérinaires et file), caméra élargie (`MAP.halfZ` 28) pour voir l'emplacement 7, soin interrompu remboursé, Gazette plus précise.
 
-**Décisions de l'étape V2-3 (en plus du plan voté)** : E1 vétérinaires recrutables dès que le centre existe (poids 0,2, et au moins un candidat garanti tant qu'on n'a pas de vétérinaire) ; E2 +10 % de vitesse de soin par niveau du vétérinaire ; premier pas `pas-centre` après `pas-cafe` (les parties au-delà du café avancent d'un cran) ; un soin annulé redémarre le stade et est remboursé ; emplacement 7 en (10, −26), contre la forêt. Aucun chiffre de maladie changé. Joueur automatique : Village j2, Bourg j5-6, fin j14-15, 0 mort. **Questions ouvertes pour Romain** : (1) limiter chaque portée à la place libre de l'enclos (sinon blessures en enclos surpeuplé ; le centre niveau 1 ne soigne pas les blessures) ; (2) offrir aux anciennes parties au Village/Bourg un centre déjà au niveau 2 ou 3 au lieu du niveau 1. Laissé pour plus tard : petites finitions notées par les relectures (allocations par image des icônes, textes de déblocage écrits en dur, deux boutons Améliorer dont un sans confirmation, une quarantaine qui soulage aussi le surpeuplement).
+**Décisions de l'étape V2-3 (en plus du plan voté)** : E1 vétérinaires recrutables dès que le centre existe (poids 0,2, et au moins un candidat garanti tant qu'on n'a pas de vétérinaire) ; E2 +10 % de vitesse de soin par niveau du vétérinaire ; premier pas `pas-centre` après `pas-cafe` (les parties au-delà du café avancent d'un cran) ; un soin annulé redémarre le stade et est remboursé ; emplacement 7 en (10, −26), contre la forêt. Aucun chiffre de maladie changé. Joueur automatique : Village j2, Bourg j5-6, fin j14-15, 0 mort. **Réponses de Romain (20/11/2026)** : pas de limite des portées à la place libre (les enclos surpeuplés et leurs blessures sont « le challenge ») ; les anciennes parties gardent un centre de niveau 1 ; règle générale : juger le jeu final, pas la partie en cours. Laissé pour plus tard : petites finitions notées par les relectures (allocations par image des icônes, textes de déblocage écrits en dur, deux boutons Améliorer dont un sans confirmation, une quarantaine qui soulage aussi le surpeuplement).
 
 ## Liens
 
@@ -249,4 +249,4 @@ Après la V1 : V2 à V5 décrites en fin de spec (personnel et centre vétérina
 
 ## Suite
 
-- La V1 est publiée. V2 : étapes 1 (chemins) et 2 (personnel) fusionnées et publiées le 19/11/2026 ; étape 3 (maladies et centre vétérinaire) construite, vérifiée et relue le 20/11/2026, en attente de l'accord de Romain pour fusionner (branche `claude/etape-v2-3-maladies-1c7710`).
+- La V1 est publiée. V2 : étapes 1 (chemins) et 2 (personnel) fusionnées et publiées le 19/11/2026 ; étape 3 (maladies et centre vétérinaire) fusionnée et publiée le 20/11/2026 ; étape 4 (ferme) à lancer dans sa propre session (fusionner `main` dans sa branche d'abord : sauvegarde v6, emplacement 7 pris par le centre, `MAP.halfZ` 28, correctif des promeneurs).
