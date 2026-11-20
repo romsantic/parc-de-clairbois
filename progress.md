@@ -139,8 +139,8 @@
 | 3 | Le centre soigne : file, soins, vaccination, quarantaine | agent · Sonnet | faite (97dfb96) — 894 tests verts, 6 du joueur automatique rouges jusqu'à la tâche 4 |
 | 4 | Un parc bien tenu tient 3 jours (test, réglages, joueur automatique) | agent · Sonnet | faite (c41f32f) — 903 tests ; aucun chiffre changé ; joueur auto : Village j2, Bourg j5-6, fin j14-15, 0 mort |
 | 5 | Missions (dont le premier pas du centre), Gazette, message de mise à jour | agent · Sonnet | faite (992668c) — 935 tests |
-| 6 | Le centre et les malades sur la carte | agent · Sonnet | en cours |
-| 7 | Interface : fiches et volet du centre, téléphone | agent · Sonnet | à faire |
+| 6 | Le centre et les malades sur la carte | agent · Sonnet | faite (c881ca9) — 941 tests ; emplacement 7 hors du cadre de la caméra (z −26 > 24), à voir |
+| 7 | Interface : fiches et volet du centre, téléphone | agent · Sonnet | en cours |
 | 8 | Vérification d'ensemble, relecture et publication | chef + relecture Opus | à faire |
 
 ## Liens
