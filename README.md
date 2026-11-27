@@ -54,6 +54,7 @@ Your park is stored in your browser, so keep playing on the same device and brow
 | V3 | *The great discoveries*: expeditions and exotic animals | 🚧 In progress |
 | V4 | Laboratory and rare variants | 🔭 Planned |
 | V5 | Seasons and weather | 🔭 Planned |
+| V6 | Take a stroll through your own park | 🔭 Planned |
 
 ## Built with
 
